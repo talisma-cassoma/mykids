@@ -1,0 +1,49 @@
+name: EAS Optimized Deploy
+
+on:
+  push:
+    branches:
+      - main
+      - staging
+
+jobs:
+  ota_or_build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'yarn'
+
+      - name: Setup Expo
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EAS_UPDATE_ACCESS_TOKEN }}
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Set profile and branch variables
+        run: |
+          if [ "${{ github.ref_name }}" == "staging" ]; then
+            echo "PROFILE=staging" >> $GITHUB_ENV
+            echo "BRANCH=staging" >> $GITHUB_ENV
+          else
+            echo "PROFILE=production" >> $GITHUB_ENV
+            echo "BRANCH=production" >> $GITHUB_ENV
+          fi
+
+      - name: Publish OTA update Android
+        run: eas update --branch ${{ env.BRANCH }} --platform android --non-interactive --message "${{ github.event.head_commit.message }}"
+
+      - name: Publish OTA update iOS
+        run: eas update --branch ${{ env.BRANCH }} --platform ios --non-interactive --message "${{ github.event.head_commit.message }}"
+
+      - name: Build Android APK
+        if: contains(github.event.head_commit.message, '[build]')
+        run: eas build --platform android --profile ${{ env.PROFILE }} --non-interactive --no-wait

@@ -4,6 +4,7 @@ import { useAuth } from "@/context/auth";
 import SignInWithGoogleButton from "./SignInWithGoogleButton";
 import { Image, useColorScheme, View, StyleSheet } from "react-native";
 import { SignInWithAppleButton } from "./SignInWithAppleButton";
+import { Redirect } from "expo-router";
 
 export default function LoginForm() {
   const { signIn, isLoading } = useAuth();
@@ -36,6 +37,10 @@ export default function LoginForm() {
             <SignInWithGoogleButton onPress={signIn} disabled={isLoading} />
             <SignInWithAppleButton />
           </View>
+          <View >
+            <Redirect href="/matchingWordGame" />
+          </View>
+
         </View>
       </View>
     </ThemedView>

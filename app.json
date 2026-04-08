@@ -1,16 +1,16 @@
 {
   "expo": {
-    "name": "expo-auth-example",
-    "slug": "expo-authjs-example",
+    "name": "mykids",
+    "slug": "mykids",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "betoauthexample",
+    "scheme": "mykids",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.beto.expoauthexample",
+      "bundleIdentifier": "com.talismadev.mykids",
       "usesAppleSignIn": true,
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
@@ -18,30 +18,31 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "foregroundImage": "./assets/images/icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.beto.expoauthexample"
+      "package": "com.talismadev.mykids"
     },
     "web": {
       "bundler": "metro",
       "output": "server",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/icon.png"
     },
     "plugins": [
       [
         "expo-router",
         {
-          "origin": "https://beto.dev"
+          "origin": ""
         }
       ],
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
+          "image": "./assets/images/icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff"
+          "backgroundColor": "#ffffff",
+          "borderRadius": 12
         }
       ],
       "expo-secure-store",
@@ -50,13 +51,13 @@
     "experiments": {
       "typedRoutes": true
     },
-    "owner": "expo-production",
+    "owner": "talismadev",
     "extra": {
       "router": {
-        "origin": "https://beto-auth-example.expo.app"
+        "origin": ""
       },
       "eas": {
-        "projectId": "53446019-1898-4ce4-a56e-d7c4a9c48b2b"
+        "projectId": "76663d96-851b-42e0-a786-d1f78f1255fa"
       },
       "expoConfig": {}
     }

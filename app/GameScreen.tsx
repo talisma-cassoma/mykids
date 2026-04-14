@@ -1,100 +1,73 @@
-import React, { useState, useEffect } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, FlatList, Image } from "react-native";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
+import { View, Text, TouchableOpacity, StyleSheet, FlatList, Image, TextInput } from "react-native";
 import * as Speech from 'expo-speech';
 import { Celebrate } from "@/components/Celebrate";
 import { Score } from "@/components/Score";
 import { ProgressBar } from "@/components/ProgressBar";
 import { CountdownTimer } from "@/components/CountdownTimer";
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useWordPairGame, gameData } from "@/context/wordPairGameContext";
+import { useWordPairGame, gameData, WordPair } from "@/context/wordPairGameContext";
 import { usePlayer } from "@/context/playerContext";
 import { PlayAndPauseToggleButton } from "@/components/PlayAndPauseToggleButton";
+import { WriteTheWordsGame } from "@/components/writeTheWordsGame";
+import { MactchingWordsGame } from "@/components/matchingWordGame";
 
-interface WordPair {
-  id: string;
-  fr: string;
-  ar: string;
-}
-interface GameStage {
-  phase: string;
-  wordPairs: WordPair[];
-}
-export default function MatchingWordGameScreen() {
-
+export default function GameScreen() {
   const {
+    currentPhase,
     currentPhaseIndex,
-    timeLeft,
     showCelebrate,
     incrementScore,
-    score,
+    phaseScore,   
     totalWords,
-    setPhaseCompleted,
+    matched,
+    setMatched,
+    stageScores,
+    gameType,
+    setGameType
   } = useWordPairGame();
 
   const [leftWords, setLeftWords] = useState<WordPair[]>([]);
   const [rightWords, setRightWords] = useState<WordPair[]>([]);
   const [selectedLeft, setSelectedLeft] = useState<WordPair | null>(null);
   const [selectedRight, setSelectedRight] = useState<WordPair | null>(null);
-  const [matched, setMatched] = useState<string[]>([]);
-  //const [currentPhaseIndex, setCurrentPhaseIndex] = useState(0);
-  const currentPhase = gameData[currentPhaseIndex];
+
 
   const { isPlay } = usePlayer();
-  const isPhaseComplete = matched.length === currentPhase.wordPairs.length;
-  const totalOfWordPairs = gameData.reduce((total, stage) => {
-    return total + stage.wordPairs.length;
-  }, 0);
+  const totalOfWordPairs = useMemo(() =>
+    gameData.reduce((total, stage) => total + stage.wordPairs.length, 0)
+    , []);
 
-  const completedWordsBefore = gameData
-    .slice(0, currentPhaseIndex)
-    .reduce((sum, phase) => sum + phase.wordPairs.length, 0);
+  const completedWordsBefore = useMemo(() =>
+    gameData
+      .slice(0, currentPhaseIndex)
+      .reduce((sum, phase) => sum + phase.wordPairs.length, 0)
+    , [currentPhaseIndex]);
 
   const currentProgress = completedWordsBefore + matched.length;
 
   const progressPercent = (currentProgress / totalOfWordPairs) * 100;
 
-  const speak = (text: string, lang: string) => {
-    Speech.stop(); // évite les conflits audio
+  const speak = useCallback((text: string, lang: string) => {
+    Speech.stop();
+    Speech.speak(text, { language: lang, pitch: 1, rate: 0.9 });
+  }, []);
 
-    Speech.speak(text, {
-      language: lang,
-      pitch: 1,
-      rate: 0.9,
-    });
-  };
+
+  const isMatch = selectedLeft?.id === selectedRight?.id;
 
   useEffect(() => {
-    if (matched.length === currentPhase.wordPairs.length) {
-      setPhaseCompleted(true); // 🔥 TRÈS IMPORTANT
-    }
-  }, [matched]);
+    if (!selectedLeft || !selectedRight) return;
 
-  useEffect(() => {
-
-    if (selectedLeft && selectedRight) {
-      if (selectedLeft.id === selectedRight.id) {
-        setMatched((prev) => [...prev, selectedLeft.id]);
-        incrementScore();
-        // speak(selectedLeft.fr, 'fr-FR');
-        // setTimeout(() => speak(selectedRight.ar, 'ar-MA'), 500);
-      }
-      setSelectedLeft(null);
-      setSelectedRight(null);
+    if (isMatch) {
+      setMatched((prev) => [...prev, selectedLeft.id]);
+      incrementScore();
     }
+
+    setSelectedLeft(null);
+    setSelectedRight(null);
   }, [selectedLeft, selectedRight]);
 
-  useEffect(() => {
-    const shuffledRight = [...currentPhase.wordPairs]
-      .map((item) => ({ ...item }))
-      .sort(() => Math.random() - 0.5);
-
-    setLeftWords(currentPhase.wordPairs);
-    setRightWords(shuffledRight);
-    setMatched([]);
-
-    setSelectedLeft(null);   // 🔥 ajout
-    setSelectedRight(null);  // 🔥 ajout
-  }, [currentPhaseIndex]);
 
   const renderLeft = ({ item }: { item: WordPair }) => {
     const isMatched = matched.includes(item.id);
@@ -137,6 +110,19 @@ export default function MatchingWordGameScreen() {
       </TouchableOpacity>
     );
   };
+  const randomGame = () => {
+    return Math.random() < 0.5 ? (
+      <WriteTheWordsGame />
+    ) : (
+      <MactchingWordsGame renderLeft={renderLeft} renderRight={renderRight} />
+    );
+  }
+
+
+  useEffect(() => {
+    const random = Math.random() < 0.5 ? "write" : "match";
+    setGameType(random);
+  }, [currentPhaseIndex]);
 
   return (
     <SafeAreaView style={{ flex: 1 }} edges={['top', 'bottom']}>
@@ -146,36 +132,37 @@ export default function MatchingWordGameScreen() {
             <PlayAndPauseToggleButton />
             <ProgressBar progress={Math.round(progressPercent)} />
             <View style={{ flexDirection: "row", justifyContent: "space-between", width: "100%" }}>
-              <Score score={score} total={totalWords} />
-              <CountdownTimer timeInSeconds={timeLeft} />
+              <Score score={phaseScore} total={totalWords} />
+              <CountdownTimer />
             </View>
           </View>
           <Text style={styles.title}>trouvez le mot correspondant</Text>
-          <Text style={[styles.title, {textDecorationLine: 'underline', fontStyle: 'italic'}]}>{currentPhase.phase}</Text>
+          <Text style={[styles.title, { textDecorationLine: 'underline', fontStyle: 'italic' }]}>{currentPhase.phase}</Text>
           {isPlay ? (
-           
-            <View style={styles.row}>
-              <FlatList
-                data={leftWords}
-                renderItem={renderLeft}
-                keyExtractor={(item) => item.id}
-                style={{ flex: 1, width: 200, }}
-              />
-              <FlatList
-                data={rightWords}
-                renderItem={renderRight}
-                keyExtractor={(item) => item.id}
-                style={{ flex: 1, width: 200 }}
-              />
-            </View>
+            gameType === "write" ? (
+              <WriteTheWordsGame />
+            ) : (
+              <MactchingWordsGame renderLeft={renderLeft} renderRight={renderRight} />
+            )
           ) : (
-             <View style={{ flex: 1, justifyContent: "center", alignItems: "center", }}>
+            <View style={{ flex: 1, justifyContent: "flex-start", alignItems: "center", width: "100%" }}>
               <Image
-                source={require("@/assets/images/celebrate.gif")}
+                source={require("@/assets/images/flame.png")}
                 style={{
                   width: 100,
-                  height: 100, }}
+                  height: 100
+                }}
               />
+              <Text>
+                pause
+              </Text>
+                  <View style={{flexDirection:"column", alignItems:"center", justifyContent:"center"}}>
+            {stageScores.map((stage, i) => (
+                <Text key={i}>
+                    {stage.phaseName} ({stage.gameType}) : {stage.score} / {stage.total}
+                </Text>
+            ))}
+            </View>
             </View>
           )}
         </View>

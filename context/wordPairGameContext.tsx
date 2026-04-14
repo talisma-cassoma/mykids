@@ -1,30 +1,46 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
+import { usePlayer } from "@/context/playerContext";
+import * as Speech from 'expo-speech';
 
-interface WordPair {
+export interface WordPair {
   id: string;
   fr: string;
   ar: string;
 }
 
-interface GameStage {
+export interface GameStage {
   phase: string;
   wordPairs: WordPair[];
 }
 
-interface WordPairGameContextType {
-  currentPhaseIndex: number;
-  setCurrentPhaseIndex: React.Dispatch<React.SetStateAction<number>>;
-  timeLeft: number;
-  setTimeLeft: React.Dispatch<React.SetStateAction<number>>;
-  showCelebrate: boolean;
-  setShowCelebrate: React.Dispatch<React.SetStateAction<boolean>>;
-  phaseCompleted: boolean;
-  setPhaseCompleted: React.Dispatch<React.SetStateAction<boolean>>;
+export interface StageScore {
+  phaseIndex: number;
+  phaseName: string;
   score: number;
-  //setScore: React.Dispatch<React.SetStateAction<number>>;
-  totalWords: number;
-  incrementScore: () => void;
+  total: number;
+  gameType: "match" | "write";
 }
+
+interface WordPairGameContextType {
+
+  setCurrentPhaseIndex: React.Dispatch<React.SetStateAction<number>>;
+  currentPhaseIndex: number;
+  timeLeft: number;
+  showCelebrate: boolean;
+  phaseScore: number;
+  totalWords: number;
+  currentPhase: GameStage;
+  incrementScore: () => void;
+  matched: string[];
+  setMatched: React.Dispatch<React.SetStateAction<string[]>>;
+  speak: (text: string, lang: string) => void;
+  stageScores: StageScore[];
+  setStageScores: React.Dispatch<React.SetStateAction<StageScore[]>>;
+  gameType: "match" | "write";
+  setGameType: React.Dispatch<React.SetStateAction<"match" | "write">>;
+}
+
+const INITIAL_TIME = 10;
 
 // Example JSON data (can be moved to a separate file)
 export const gameData: GameStage[] = [
@@ -80,92 +96,224 @@ export const useWordPairGame = () => {
 };
 
 export const WordPairGameProvider = ({ children }: { children: React.ReactNode }) => {
-  const [currentPhaseIndex, setCurrentPhaseIndex] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(60);
-  const [showCelebrate, setShowCelebrate] = useState(false);
-  const [phaseCompleted, setPhaseCompleted] = useState(false);
+  const { isPlay } = usePlayer();
 
-  const [score, setScore] = useState(0); // ✅ score par phase
+  const [currentPhaseIndex, setCurrentPhaseIndex] = useState(0);
+  const [timeLeft, setTimeLeft] = useState(INITIAL_TIME);
+  const [showCelebrate, setShowCelebrate] = useState(false);
+  const [matched, setMatched] = useState<string[]>([]);
+  const [phaseScore, setPhaseScore] = useState(0);
+  const [gameType, setGameType] = useState<"match" | "write">("match");
 
   const currentPhase = gameData[currentPhaseIndex];
-  
- const totalWords = currentPhase.wordPairs.length;
+  const totalWords = currentPhase.wordPairs.length;
 
-  // ✅ seule fonction pour changer de phase
-  const handleNextPhase = () => {
-    setCurrentPhaseIndex((prev) => {
-      if (prev < gameData.length - 1) {
-        return prev + 1;
-      } else {
-        setShowCelebrate(true);
-        setTimeout(() => {
-          setShowCelebrate(false);
-          resetGame();
-        }, 2000);
-        return prev;
-      }
-    });
+  // ✅ Derivado (sem estado extra)
+  const isPhaseCompleted = matched.length === totalWords;
+  const [stageScores, setStageScores] = useState<StageScore[]>([]);
+
+  const speak = useCallback((text: string, lang: string) => {
+    Speech.stop();
+    Speech.speak(text, { language: lang, pitch: 1, rate: 0.9 });
+  }, []);
+
+  // 🔄 Reset de fase (centralizado)
+  const resetPhase = () => {
+    setMatched([]);
+    setPhaseScore(0);
+    setTimeLeft(INITIAL_TIME);
   };
 
-  // ✅ quand phase complétée (par matching)
+  // 🎯 Próxima fase
+  const goToNextPhase = () => {
+    setCurrentPhaseIndex((prev) => prev + 1);
+  };
+
+  // 🎉 Fim do jogo
+  const handleGameEnd = () => {
+    setShowCelebrate(true);
+    setTimeout(() => {
+      setShowCelebrate(false);
+      resetGame();
+    }, 2000);
+  };
+
+  // 🔄 Reset completo
+  const resetGame = () => {
+    setCurrentPhaseIndex(0);
+    resetPhase();
+  };
+
+  // 🚀 Controle de progressão
   useEffect(() => {
-    if (phaseCompleted) {
-      handleNextPhase();
+    if (!isPhaseCompleted) return;
+    // ✅ Save current phase score
+    setStageScores(prev => [
+      ...prev,
+      {
+        phaseIndex: currentPhaseIndex,
+        phaseName: currentPhase.phase,
+        score: phaseScore,
+        total: totalWords,
+        gameType: gameType ?? "match", //
+      }
+    ]);
+
+    if (currentPhaseIndex < gameData.length - 1) {
+      goToNextPhase();
+    } else {
+      handleGameEnd();
     }
-  }, [phaseCompleted]);
+  }, [isPhaseCompleted]);
 
-  // ⏱️ timer
+  // 🔄 Reset ao mudar fase
   useEffect(() => {
-    setTimeLeft(60);
+    resetPhase();
+  }, [currentPhaseIndex]);
 
-    setPhaseCompleted(false);
-    setScore(0); // 🔥 reset score à chaque phase
+  // ⏱️ Timer
+  useEffect(() => {
+    if (!isPlay) return;
 
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
-          handleNextPhase();
+
+          if (currentPhaseIndex < gameData.length - 1) {
+            goToNextPhase();
+          } else {
+            handleGameEnd();
+          }
+
           return 0;
         }
         return prev - 1;
       });
     }, 1000);
-    //setTotalWords(currentPhase.wordPairs.length); // 🔥 update totalWords à chaque phase
+
     return () => clearInterval(timer);
-  }, [currentPhaseIndex]);
+  }, [isPlay, currentPhaseIndex]);
 
-  // 🔄 reset complet
-  const resetGame = () => {
-    setCurrentPhaseIndex(0);
-    setTimeLeft(60);
-    setScore(0);
-  };
-
-  // ✅ fonction propre pour ajouter des points
+  // ⭐ Pontuação
   const incrementScore = () => {
-    setScore((prev) => prev + 1);
+    setPhaseScore((prev) => prev + 1);
   };
 
   return (
     <WordPairGameContext.Provider
       value={{
+        currentPhase,
         currentPhaseIndex,
         setCurrentPhaseIndex,
         timeLeft,
-        setTimeLeft,
         showCelebrate,
-        setShowCelebrate,
-        phaseCompleted,
-        setPhaseCompleted,
-
-        // 🎯 SCORE CLEAN
-        score,
+        phaseScore,
         totalWords,
-        incrementScore, // 🔥 UI ne touche pas setScore directement
+        incrementScore,
+        matched,
+        setMatched,
+        speak,
+        stageScores,
+        setStageScores,
+        gameType,
+        setGameType
       }}
     >
       {children}
     </WordPairGameContext.Provider>
   );
+};
+
+export const useMatchingGame = () => {
+  const { currentPhase, matched, setMatched, incrementScore } = useWordPairGame();
+
+  const [leftWords, setLeftWords] = useState<WordPair[]>([]);
+  const [rightWords, setRightWords] = useState<WordPair[]>([]);
+  const [selectedLeft, setSelectedLeft] = useState<WordPair | null>(null);
+  const [selectedRight, setSelectedRight] = useState<WordPair | null>(null);
+
+  useEffect(() => {
+    const shuffled = [...currentPhase.wordPairs].sort(() => Math.random() - 0.5);
+    setLeftWords(currentPhase.wordPairs);
+    setRightWords(shuffled);
+    setSelectedLeft(null);
+    setSelectedRight(null);
+  }, [currentPhase]);
+
+  useEffect(() => {
+    if (!selectedLeft || !selectedRight) return;
+
+    if (selectedLeft.id === selectedRight.id) {
+      setMatched(prev => [...prev, selectedLeft.id]);
+      incrementScore();
+    }
+
+    setSelectedLeft(null);
+    setSelectedRight(null);
+  }, [selectedLeft, selectedRight]);
+
+  return {
+    leftWords,
+    rightWords,
+    selectedLeft,
+    selectedRight,
+    setSelectedLeft,
+    setSelectedRight,
+    matched
+  };
+};
+
+export const useWriteGame = () => {
+  const { currentPhase, matched, setMatched, incrementScore } = useWordPairGame();
+
+  const [currentWord, setCurrentWord] = useState<WordPair | null>(null);
+  const [userInput, setUserInput] = useState("");
+  const [isMatch, setIsMatch] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const first = currentPhase.wordPairs[0];
+    setCurrentWord(first);
+  }, [currentPhase]);
+
+  const checkAnswer = () => {
+    if (!currentWord) return;
+
+    if (userInput.trim() === currentWord.ar) {
+      setMatched(prev => {
+        const updated = [...prev, currentWord.id];
+
+        const remaining = currentPhase.wordPairs.filter(
+          w => !updated.includes(w.id)
+        );
+
+        if (remaining.length > 0) {
+          setCurrentWord(remaining[Math.floor(Math.random() * remaining.length)]);
+        }
+
+        return updated;
+      });
+      incrementScore();
+
+      const remaining = currentPhase.wordPairs.filter(
+        w => !matched.includes(w.id)
+      );
+
+      if (remaining.length > 0) {
+        setCurrentWord(remaining[Math.floor(Math.random() * remaining.length)]);
+      }
+
+      setUserInput("");
+    } else {
+      setIsMatch(false);
+    }
+  };
+
+  return {
+    currentWord,
+    userInput,
+    setUserInput,
+    checkAnswer,
+    isMatch
+  };
 };

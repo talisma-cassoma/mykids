@@ -40,16 +40,16 @@ export default function RootLayout() {
       <SafeAreaProvider style={{ flex: 1 }}>
         <AuthProvider>
           <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-            <WordPairGameProvider>
-              <PlayerProvider>
+            <PlayerProvider>
+              <WordPairGameProvider>
                 <StatusBar style="auto" />
                 <Stack
                   screenOptions={{
                     headerShown: false,
                   }}
                 />
-              </PlayerProvider>
-            </WordPairGameProvider>
+              </WordPairGameProvider>
+            </PlayerProvider>
           </ThemeProvider>
         </AuthProvider>
       </SafeAreaProvider>

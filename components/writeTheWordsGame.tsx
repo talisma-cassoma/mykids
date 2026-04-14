@@ -1,6 +1,6 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet, TextInput } from "react-native";
-import { useWriteGame } from "@/context/wordPairGameContext";
+import { useWriteGame } from "@/hooks/useWriteGame";
 
 export const ARABIC_KEYS = [
     "ا", "ب", "ت", "ث", "ج", "ح", "خ",
@@ -45,7 +45,7 @@ export function WriteTheWordsGame() {
         userInput,
         setUserInput,
         checkAnswer,
-        isMatch
+        isCorrect
     } = useWriteGame();
 
     return (
@@ -60,7 +60,7 @@ export function WriteTheWordsGame() {
                             editable={false} // 👈 important (on force clavier custom)
                             style={{
                                 borderWidth: 1,
-                                borderColor: isMatch === false ? "crimson" : "#ccc",
+                                borderColor: isCorrect === false ? "crimson" : "#ccc",
                                 padding: 10,
                                 marginTop: 20,
                                 width: 200,

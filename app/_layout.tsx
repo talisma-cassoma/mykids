@@ -14,7 +14,7 @@ import { AuthProvider } from "@/context/auth";
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import * as ScreenOrientation from 'expo-screen-orientation';
-import { WordPairGameProvider } from "@/context/wordPairGameContext";
+import { WordPairGameProvider } from "@/context/gameContext";
 import { PlayerProvider } from "@/context/playerContext";
 
 

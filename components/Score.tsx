@@ -1,11 +1,19 @@
 import { Text, View, StyleSheet } from "react-native";
+import { useWordPairGame } from "@/context/gameContext";
 
 
 export function Score({ score, total }: { score: number; total: number }) {
+  const { gameType } = useWordPairGame();
   return (
-    <View style={styles.container}>
-      <Text style={styles.scoreText}> Points: {score} / {total}</Text>
-    </View>
+    <>
+      {gameType === "write" ? (
+        <View style={{ padding: 10, height: 40, width: 160 }}></View>
+      ) : (
+        <View style={styles.container}>
+        <Text style={styles.scoreText}> Points: {score} / {total}</Text>
+        </View>
+      )}
+    </>
   );
 }
 

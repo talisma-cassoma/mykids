@@ -38,7 +38,8 @@ export default function LoginForm() {
             <SignInWithAppleButton />
           </View>
           <View >
-            <Redirect href="/matchingWordGame" />
+            <Redirect href="/GameScreen" />
+            {/* <Redirect href="/matchingWordGame" /> */}
           </View>
 
         </View>

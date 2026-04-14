@@ -1,9 +1,12 @@
 
-import { Image, useColorScheme, View, StyleSheet } from "react-native";
+import { Image, useColorScheme, View, StyleSheet, Text } from "react-native";
 import { Redirect } from "expo-router";
+import { useWordPairGame } from "@/context/wordPairGameContext";
 
 
 export function Celebrate() {
+    const { stageScores } = useWordPairGame();
+
 
     return (
         <View style={styles.container}>
@@ -16,17 +19,24 @@ export function Celebrate() {
                     marginBottom: 28
                 }}
             />
+            <View style={{flexDirection:"column", alignItems:"center", justifyContent:"center"}}>
+            {stageScores.map((stage, i) => (
+                <Text key={i}>
+                    {stage.phaseName} ({stage.gameType}) : {stage.score} / {stage.total}
+                </Text>
+            ))}
+            </View>
         </View>)
 }
 
 const styles = StyleSheet.create({
     container: {
-          flex: 1,
-    backgroundColor: "#fff",
-    paddingTop: 150,
-    paddingHorizontal: 60,
-    alignItems: "center",
-    justifyContent: "flex-start",
+        flex: 1,
+        backgroundColor: "#fff",
+        paddingTop: 150,
+        paddingHorizontal: 60,
+        alignItems: "center",
+        justifyContent: "flex-start",
 
     }
 });

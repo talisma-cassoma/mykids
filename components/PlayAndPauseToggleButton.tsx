@@ -8,6 +8,7 @@ import {
     Text
 } from "react-native";
 import { usePlayer } from "@/context/playerContext";
+import { useWordPairGame } from "@/context/gameContext";
 
 export function PlayAndPauseToggleButton() {
     const { isPlay, togglePlay } = usePlayer();

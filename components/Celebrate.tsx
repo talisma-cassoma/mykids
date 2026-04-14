@@ -1,13 +1,11 @@
 
 import { Image, useColorScheme, View, StyleSheet, Text } from "react-native";
 import { Redirect } from "expo-router";
-import { useWordPairGame } from "@/context/wordPairGameContext";
+import { useWordPairGame } from "@/context/gameContext";
 
 
 export function Celebrate() {
     const { stageScores } = useWordPairGame();
-
-
     return (
         <View style={styles.container}>
             <Image

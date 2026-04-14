@@ -2,7 +2,7 @@ import { Text, View, TouchableOpacity } from "react-native";
 import { useEffect, useState, useRef } from "react";
 import { IconAlarm } from "@tabler/icons-react-native";
 import { usePlayer } from "@/context/playerContext";
-import { useWordPairGame } from "@/context/wordPairGameContext";
+import { useWordPairGame } from "@/context/gameContext";
 
 export function CountdownTimer() {
   const { timeLeft } = useWordPairGame();

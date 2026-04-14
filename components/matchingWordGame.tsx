@@ -1,7 +1,8 @@
 import React from "react";
-import { View, StyleSheet, FlatList } from "react-native";
-import {  WordPair } from "@/context/wordPairGameContext";
-import { useMatchingGame } from "@/context/wordPairGameContext";
+import { View, StyleSheet, FlatList, TouchableOpacity, Text} from "react-native";
+import {  WordPair, useWordPairGame } from "@/context/gameContext";
+import { useMatchingGame } from "@/hooks/useMatchingGame";
+
 
 interface MatchingWordsGameProps {
   renderLeft: ({ item }: {
@@ -11,11 +12,61 @@ interface MatchingWordsGameProps {
     item: WordPair;
   }) => React.JSX.Element
 }
-export function MactchingWordsGame({ renderLeft, renderRight }: MatchingWordsGameProps) {
+export function MactchingWordsGame() {
   const {
     leftWords,
     rightWords,
+    matched,
+    selectedLeft,
+    setSelectedLeft,
+    selectedRight,
+    setSelectedRight,
   } = useMatchingGame();
+
+  const { speak } = useWordPairGame();
+
+
+  const renderLeft = ({ item }: { item: WordPair }) => {
+    const isMatched = matched.includes(item.id);
+    return (
+      <TouchableOpacity
+        style={[
+          styles.card,
+          isMatched && styles.matched,
+          selectedLeft?.id === item.id && styles.selected,
+        ]}
+        onPress={() => {
+          if (!isMatched) {
+            setSelectedLeft(item);
+            speak(item.fr, 'fr-FR');; // 🔊 lecture FR
+          }
+        }}
+      >
+        <Text style={styles.text}>{item.fr}</Text>
+      </TouchableOpacity>
+    );
+  };
+
+  const renderRight = ({ item }: { item: WordPair }) => {
+    const isMatched = matched.includes(item.id);
+    return (
+      <TouchableOpacity
+        style={[
+          styles.card,
+          isMatched && styles.matched,
+          selectedRight?.id === item.id && styles.selected,
+        ]}
+        onPress={() => {
+          if (!isMatched) {
+            setSelectedRight(item);
+            speak(item.ar, 'ar-MA'); // 🔊 lecture AR
+          }
+        }}
+      >
+        <Text style={styles.text}>{item.ar}</Text>
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <View style={styles.row}>

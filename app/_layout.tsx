@@ -14,7 +14,7 @@ import { AuthProvider } from "@/context/auth";
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import * as ScreenOrientation from 'expo-screen-orientation';
-import { WordPairGameProvider } from "@/context/gameContext";
+import { GameProvider } from "@/context/gameContext";
 import { PlayerProvider } from "@/context/playerContext";
 
 
@@ -41,14 +41,14 @@ export default function RootLayout() {
         <AuthProvider>
           <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
             <PlayerProvider>
-              <WordPairGameProvider>
+              <GameProvider>
                 <StatusBar style="auto" />
                 <Stack
                   screenOptions={{
                     headerShown: false,
                   }}
                 />
-              </WordPairGameProvider>
+              </GameProvider>
             </PlayerProvider>
           </ThemeProvider>
         </AuthProvider>

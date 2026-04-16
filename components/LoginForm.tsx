@@ -2,9 +2,9 @@ import { ThemedView } from "./ThemedView";
 import { ThemedText } from "./ThemedText";
 import { useAuth } from "@/context/auth";
 import SignInWithGoogleButton from "./SignInWithGoogleButton";
-import { Image, useColorScheme, View, StyleSheet } from "react-native";
+import { Image, useColorScheme, View, StyleSheet, TouchableOpacity } from "react-native";
 import { SignInWithAppleButton } from "./SignInWithAppleButton";
-import { Redirect } from "expo-router";
+import { Redirect, router } from "expo-router";
 
 export default function LoginForm() {
   const { signIn, isLoading } = useAuth();
@@ -16,8 +16,8 @@ export default function LoginForm() {
         <Image
           source={
             theme === "dark"
-              ? require("@/assets/images/icon-white.png")
-              : require("@/assets/images/icon-dark.png")
+              ? require("@/assets/images/icon.png")
+              : require("@/assets/images/icon.png")
           }
           style={styles.logo}
         />
@@ -25,7 +25,7 @@ export default function LoginForm() {
         <View style={styles.contentContainer}>
           <View style={styles.titleContainer}>
             <ThemedText type="subtitle" style={styles.title}>
-              Welcome to Your App
+              Bien Venue au My KIDS App
             </ThemedText>
             <ThemedText style={styles.description}>
               Experience seamless authentication{"\n"}
@@ -37,10 +37,17 @@ export default function LoginForm() {
             <SignInWithGoogleButton onPress={signIn} disabled={isLoading} />
             <SignInWithAppleButton />
           </View>
-          <View >
-            <Redirect href="/GameScreen" />
-            {/* <Redirect href="/matchingWordGame" /> */}
-          </View>
+          <TouchableOpacity style={{ flexDirection: "column", alignItems: "center", justifyContent: "center" }}
+          onPress={()=>router.replace("/GameScreen")}
+          >
+            <Image source={require("@/assets/images/yachane_avatar.png")}
+                style={{ width: 100, height: 100, borderRadius: 10, margin: 20 }}
+              />
+            <ThemedText style={styles.description}>
+              Yachane
+            </ThemedText>
+
+          </TouchableOpacity>
 
         </View>
       </View>
@@ -69,6 +76,7 @@ const styles = StyleSheet.create({
     height: 100,
     resizeMode: "contain",
     marginBottom: 32,
+    borderRadius: 10,
   },
   contentContainer: {
     width: "100%",

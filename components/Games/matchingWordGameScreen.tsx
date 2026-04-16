@@ -1,18 +1,20 @@
 import React from "react";
-import { View, StyleSheet, FlatList, TouchableOpacity, Text} from "react-native";
-import {  WordPair, useWordPairGame } from "@/context/gameContext";
+import { View, StyleSheet, FlatList, TouchableOpacity, Text } from "react-native";
 import { useMatchingGame } from "@/hooks/useMatchingGame";
+import * as Speech from "expo-speech";
+import { Button } from "@/components/Button";
+import { PauseScreen } from "@/components/Games/PauseScreen";
+import { useGame } from "@/context/gameContext";
 
-
-interface MatchingWordsGameProps {
-  renderLeft: ({ item }: {
-    item: WordPair;
-  }) => React.JSX.Element,
-  renderRight: ({ item }: {
-    item: WordPair;
-  }) => React.JSX.Element
+export interface WordPair {
+  id: string;
+  fr: string;
+  ar: string;
 }
-export function MactchingWordsGame() {
+
+export function MactchingWordsGameScreen() {
+  const { status } = useGame();
+
   const {
     leftWords,
     rightWords,
@@ -21,13 +23,19 @@ export function MactchingWordsGame() {
     setSelectedLeft,
     selectedRight,
     setSelectedRight,
+    isPhaseCompleted,
   } = useMatchingGame();
 
-  const { speak } = useWordPairGame();
+  console.log("useMacthGameScreen");
 
+  const speak = React.useCallback((text: string, lang: string) => {
+    Speech.stop();
+    Speech.speak(text, { language: lang, pitch: 1, rate: 0.9 });
+  }, []);
 
   const renderLeft = ({ item }: { item: WordPair }) => {
     const isMatched = matched.includes(item.id);
+
     return (
       <TouchableOpacity
         style={[
@@ -38,7 +46,7 @@ export function MactchingWordsGame() {
         onPress={() => {
           if (!isMatched) {
             setSelectedLeft(item);
-            speak(item.fr, 'fr-FR');; // 🔊 lecture FR
+            speak(item.fr, "fr-FR");
           }
         }}
       >
@@ -49,6 +57,7 @@ export function MactchingWordsGame() {
 
   const renderRight = ({ item }: { item: WordPair }) => {
     const isMatched = matched.includes(item.id);
+
     return (
       <TouchableOpacity
         style={[
@@ -59,7 +68,7 @@ export function MactchingWordsGame() {
         onPress={() => {
           if (!isMatched) {
             setSelectedRight(item);
-            speak(item.ar, 'ar-MA'); // 🔊 lecture AR
+            speak(item.ar, "ar-MA");
           }
         }}
       >
@@ -68,58 +77,92 @@ export function MactchingWordsGame() {
     );
   };
 
+  // ✅ PAUSED STATE PRIMEIRO (mais limpo)
+  if (status === "paused") {
+    return <PauseScreen />;
+  }
+
   return (
-    <View style={styles.row}>
+    <View style={styles.container}>
+      <View style={{
+    flex: 1,
+    flexDirection: "row",
+    gap: 12,
+    padding: 10,
+   maxWidth:500,
+   minHeight:400,
+   justifyContent: "space-around",
+   alignSelf: "center",
+  }}>
       <FlatList
         data={leftWords}
         renderItem={renderLeft}
         keyExtractor={(item) => item.id}
-        style={{ flex: 1, width: 200, }}
+        style={styles.list}
       />
+
       <FlatList
         data={rightWords}
         renderItem={renderRight}
         keyExtractor={(item) => item.id}
-        style={{ flex: 1, width: 200 }}
+        style={styles.list}
       />
+      </View>
+
+      {isPhaseCompleted
+       && (
+        <View style={styles.buttonContainer}>
+          <Button />
+        </View>
+      )}
     </View>
-  )
+  );
 }
 
-
 const styles = StyleSheet.create({
-  title: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 20,
-    textAlign: "center",
+  container: {
+    //flex: 1,
+    height: "auto",
+    flexDirection:'column',
+    gap:10,
+    justifyContent: "space-around"
   },
-  row: {
-    flexDirection: "row",
-    //justifyContent: "space-between",
-    gap: 20,
-    maxWidth: 500,
+
+  list: {
+    //flex: 1,
+    paddingBottom: 20,
+    height: "auto",
+    width: 100
+    //justifyContent: "space-around",
   },
+
   card: {
     backgroundColor: "#fff8f8",
-    padding: 15,
-    marginVertical: 8,
+    padding: 12,
+    marginVertical: 6,
     borderRadius: 12,
-    flex: 1,
     borderWidth: 1,
-    borderColor: "gray",
-    borderBottomWidth: 5,
-    //width: 140,
+    borderColor: "#ccc",
     alignItems: "center",
+    //maxWidth: 150,
   },
+
   text: {
     fontSize: 16,
   },
+
   selected: {
     backgroundColor: "#cde1ff",
   },
+
   matched: {
     backgroundColor: "#a5d6a7",
   },
-});
 
+  buttonContainer: {
+    margin: 20,
+    alignSelf: "center",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+});

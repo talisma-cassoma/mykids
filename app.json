@@ -28,6 +28,12 @@
       "output": "server",
       "favicon": "./assets/images/icon.png"
     },
+    "updates": {
+      "url": "https://u.expo.dev/76663d96-851b-42e0-a786-d1f78f1255fa"
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
     "plugins": [
       [
         "expo-router",

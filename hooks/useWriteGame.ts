@@ -1,48 +1,90 @@
 import { useEffect, useState } from "react";
-import { useWordPairGame, WordPair } from "@/context/gameContext";
+import { useGame } from "@/context/gameContext";
+import { gameData, WordPair, GameStage } from "@/utils/lessons";
 
 export const useWriteGame = () => {
-  const { currentPhase, matched, setMatched, incrementScore, saveStageScore } = useWordPairGame();
+  const {
+    setScore,
+    nextStage,
+    setIsTimerActive,
+    status
+  } = useGame();
 
+  const [currentLesson, setCurrentLesson] = useState<GameStage | null>(null);
   const [currentWord, setCurrentWord] = useState<WordPair | null>(null);
+
   const [userInput, setUserInput] = useState("");
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
 
-  // 🎯 Escolher primeira palavra
+  // 🎯 escolhe uma lesson aleatória (uma vez ou quando reiniciar o jogo)
+  const pickRandomLesson = () => {
+    return gameData[Math.floor(Math.random() * gameData.length)];
+  };
+
+  // 🎯 escolhe uma palavra aleatória da lesson atual
+  const pickRandomWord = (lesson: GameStage) => {
+    return lesson.wordPairs[
+      Math.floor(Math.random() * lesson.wordPairs.length)
+    ];
+  };
+
+  // 🚀 inicialização do jogo
   useEffect(() => {
-    if (currentPhase.wordPairs.length > 0) {
-      setCurrentWord(currentPhase.wordPairs[0]);
-    }
-  }, [currentPhase]);
+    const lesson = pickRandomLesson();
+    setCurrentLesson(lesson);
+  }, []);
 
-  const getRemainingWords = (updatedMatched: string[]) => {
-    return currentPhase.wordPairs.filter(
-      (w) => !updatedMatched.includes(w.id)
-    );
-  };
+  // 🎯 sempre que muda a lesson, escolhe uma palavra
+  useEffect(() => {
+    if (!currentLesson) return;
 
-  const pickNextWord = (remaining: WordPair[]) => {
-    if (remaining.length === 0) return null;
-    return remaining[Math.floor(Math.random() * remaining.length)];
-  };
+    const word = pickRandomWord(currentLesson);
 
+    setCurrentWord(word);
+    setUserInput("");
+    setIsCorrect(null);
+    setIsTimerActive(false);
+  }, [currentLesson]);
+
+  // ✅ valida resposta
   const checkAnswer = () => {
     if (!currentWord) return;
 
     const isMatch = userInput.trim() === currentWord.ar;
-    console.log("isMatch: ", isMatch);
 
-    if (
-      isMatch
-    ) {
+    if (isMatch) {
       setIsCorrect(true);
-      saveStageScore(1)
-      setUserInput("");
+      setScore("ecrire le mot: ", `${currentWord.ar}`);
+
+      // opcional: próxima palavra
+      //const nextWord = pickRandomWord(currentLesson!);
+
+      //setTimeout(() => {
+        //setCurrentWord(nextWord);
+        //setUserInput("");
+        setIsCorrect(true);
+          // ✅ fim da fase
+                if (status === "playing") {
+                    setTimeout(() => {
+                        nextStage();
+                    }, 500);
+                }
+      //}, 300);
     } else {
       setIsCorrect(false);
     }
   };
 
+  // 🔁 próxima palavra manual (opcional)
+  const nextWord = () => {
+    if (!currentLesson) return;
+
+    const word = pickRandomWord(currentLesson);
+
+    setCurrentWord(word);
+    //setUserInput("");
+    //setIsCorrect(null);
+  };
 
   return {
     currentWord,
@@ -50,5 +92,6 @@ export const useWriteGame = () => {
     setUserInput,
     checkAnswer,
     isCorrect,
+    nextWord,
   };
 };

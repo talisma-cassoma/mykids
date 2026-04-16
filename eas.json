@@ -11,11 +11,18 @@
     },
     "preview": {
       "distribution": "internal",
-      "resourceClass": "large"
+      "resourceClass": "large",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "NPM_CONFIG_LEGACY_PEER_DEPS": "true"
+      },
+      "channel": "preview"  
     },
     "production": {
       "autoIncrement": true,
-      "resourceClass": "large"
+      "resourceClass": "medium"
     }
   },
   "submit": {

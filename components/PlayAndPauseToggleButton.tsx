@@ -5,30 +5,43 @@ import {
     Animated,
     StyleSheet,
     View,
-    Text
 } from "react-native";
-import { usePlayer } from "@/context/playerContext";
-import { useWordPairGame } from "@/context/gameContext";
+import { useGame } from "@/context/gameContext";
 
 export function PlayAndPauseToggleButton() {
-    const { isPlay, togglePlay } = usePlayer();
 
-    const translateX = useRef(new Animated.Value(isPlay ? 22 : 0)).current;
+    const {
+        pauseGame,
+        resumeGame,
+        status,
+    } = useGame();
+
+    const isPlaying = status === "playing";
+
+    const togglePlay = () => {
+        if (isPlaying) {
+            pauseGame();
+        } else {
+            resumeGame();
+        }
+    };
+
+    const translateX = useRef(new Animated.Value(isPlaying ?  0 : 26)).current;
 
     useEffect(() => {
         Animated.timing(translateX, {
-            toValue: isPlay ? 0 : 26,
+            toValue: isPlaying ? 0 : 26,
             duration: 200,
             useNativeDriver: true,
         }).start();
-    }, [isPlay]);
+    }, [isPlaying]);
 
     return (
         <TouchableWithoutFeedback onPress={togglePlay}>
             <View
                 style={[
                     styles.switch,
-                    { backgroundColor: isPlay ? "#ccc" : "#a5d6a7", marginBottom: 20 },
+                    { backgroundColor: isPlaying ? "#ccc" : "#a5d6a7", marginBottom: 20 },
                 ]}
             >
                 <Animated.View
@@ -39,16 +52,16 @@ export function PlayAndPauseToggleButton() {
                         },
                     ]}
                 >
-                    {isPlay ? (
-                        <IconPlayerPlayFilled color="#ccc" size={18}/>
+                    {isPlaying ? (
+                        <IconPlayerPlayFilled color="#ccc" size={18} />
                     ) : (
-                        <IconPlayerPauseFilled color="#a5d6a7" size={18}/>
+                        <IconPlayerPauseFilled color="#a5d6a7" size={18} />
                     )}
                 </Animated.View>
             </View>
         </TouchableWithoutFeedback>
     );
-};
+}
 
 const styles = StyleSheet.create({
     switch: {
@@ -61,7 +74,7 @@ const styles = StyleSheet.create({
     knob: {
         width: 26,
         height: 26,
-        borderRadius: "100%",
+        borderRadius: 13, // corrigé (pas "100%")
         justifyContent: "center",
         alignItems: "center",
         backgroundColor: "#fff",

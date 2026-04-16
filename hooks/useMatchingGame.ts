@@ -1,49 +1,107 @@
 import { useEffect, useState } from "react";
-import { useWordPairGame,  WordPair } from "@/context/gameContext";
-
+import { useGame } from "@/context/gameContext";
+import { gameData, GameStage, WordPair } from "@/utils/lessons";
 
 export const useMatchingGame = () => {
-  const { currentPhase, matched, setMatched, incrementScore, saveStageScore } = useWordPairGame();
+  const {
+    setScore,
+    nextStage,
+    status,
+    startTimer,
+    pauseTimer,
+    setTimerMode,
+    setIsTimerActive,
+    stages,
+    currentStageIndex,
+  } = useGame();
+
+  console.log("useMatchingGame")
+
+  const currentStage = stages[currentStageIndex];
+  const stageId = currentStage?.id;
+
+  // 🎲 fase aleatória fixa
+  const [currentLesson, setCurrentLesson] = useState<GameStage | null>(null);
+
+  const [matched, setMatched] = useState<string[]>([]);
+  const [phaseScore, setPhaseScore] = useState(0);
 
   const [leftWords, setLeftWords] = useState<WordPair[]>([]);
   const [rightWords, setRightWords] = useState<WordPair[]>([]);
+
   const [selectedLeft, setSelectedLeft] = useState<WordPair | null>(null);
   const [selectedRight, setSelectedRight] = useState<WordPair | null>(null);
 
-  // 🔀 Inicialização da fase
+  // 🎲 escolhe UMA fase apenas no início
   useEffect(() => {
-    const shuffled = [...currentPhase.wordPairs].sort(() => Math.random() - 0.5);
+    const randomIndex = Math.floor(Math.random() * gameData.length);
+    setCurrentLesson(gameData[randomIndex]);
+  }, []);
 
-    setLeftWords(currentPhase.wordPairs);
+  // 📦 dados seguros
+  const data = currentLesson?.wordPairs ?? [];
+  const totalWords = data.length;
+  const isPhaseCompleted = matched.length === totalWords;
+
+  // 🔀 init da fase
+  useEffect(() => {
+    if (!data.length) return;
+
+    const shuffled = [...data].sort(() => Math.random() - 0.5);
+
+    setLeftWords(data);
     setRightWords(shuffled);
 
+    setMatched([]);
+    setPhaseScore(0);
     setSelectedLeft(null);
     setSelectedRight(null);
-  }, [currentPhase]);
+  }, [currentLesson]);
 
-  // 🎯 Verificar match
+  // ⏱ timer
+  useEffect(() => {
+    if (status !== "playing") return;
+
+    setIsTimerActive(true);
+    setTimerMode("decreasing");
+    startTimer();
+
+    return () => {
+      pauseTimer();
+    };
+  }, []);
+
+  // 🎯 lógica de match
   useEffect(() => {
     if (!selectedLeft || !selectedRight) return;
 
     const isMatch = selectedLeft.id === selectedRight.id;
 
-    if (isMatch) {
+    if (isMatch && !matched.includes(selectedLeft.id)) {
+      const newScore = phaseScore + 1;
+
       setMatched((prev) => [...prev, selectedLeft.id]);
-      incrementScore();
+      setPhaseScore(newScore);
+
+      if (stageId) {
+        setScore("trouvez les mots equivalent", `${newScore/totalWords}`);
+      }
     }
 
-    // reset seleção sempre
     setTimeout(() => {
       setSelectedLeft(null);
       setSelectedRight(null);
-    }, 200); // pequeno delay melhora UX
+    }, 200);
   }, [selectedLeft, selectedRight]);
 
-  useEffect(() => {
-  if (matched.length === currentPhase.wordPairs.length) {
-    saveStageScore();
-  }
-}, [matched]);
+  // // ✅ fim da fase
+  // useEffect(() => {
+  //   if (isPhaseCompleted && status === "playing") {
+  //     setTimeout(() => {
+  //       nextStage();
+  //     }, 500);
+  //   }
+  // }, [isPhaseCompleted, status]);
 
   return {
     leftWords,
@@ -53,5 +111,8 @@ export const useMatchingGame = () => {
     setSelectedLeft,
     setSelectedRight,
     matched,
+    phaseScore,
+    isPhaseCompleted,
+    lessonTitle: currentLesson?.lessonTitle,
   };
 };

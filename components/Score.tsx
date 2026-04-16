@@ -1,9 +1,9 @@
 import { Text, View, StyleSheet } from "react-native";
-import { useWordPairGame } from "@/context/gameContext";
+import { useGame } from "@/context/gameContext";
 
 
 export function Score({ score, total }: { score: number; total: number }) {
-  const { gameType } = useWordPairGame();
+  const  gameType  = "write";
   return (
     <>
       {gameType === "write" ? (

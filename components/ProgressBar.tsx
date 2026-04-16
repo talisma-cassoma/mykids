@@ -1,12 +1,24 @@
 import { Image, useColorScheme,Text, View, StyleSheet } from "react-native";
 import { Redirect } from "expo-router";
 import { ThemedText } from "./ThemedText";
+import { useGame } from "@/context/gameContext";
 
-export function ProgressBar({ progress }: { progress: number }) {
+export function ProgressBar() {
+  const { currentStageIndex, stages } = useGame();
+
+  const totalStages = stages.length;
+
+  // evita divisão por zero
+  const progress = totalStages > 0
+    ? (currentStageIndex + 1) / totalStages
+    : 0;
+
+  const percentage = Math.round(progress * 100);
+
   return (
     <View style={styles.container}>
-      <View style={[styles.progress, { width: `${progress}%` }]} />
-      <Text style={styles.progressText}>{progress}%</Text>
+      <View style={[styles.progress, { width: `${percentage}%` }]} />
+      <Text style={styles.progressText}>{percentage}%</Text>
     </View>
   );
 }

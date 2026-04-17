@@ -23,7 +23,7 @@ jobs:
         uses: expo/expo-github-action@v8
         with:
           eas-version: latest
-          token: ${{ secrets.EAS_UPDATE_ACCESS_TOKEN }}
+          token: ${{ secrets.MYKIDS_EXPO_TOKEN }}
 
       - name: Install dependencies
         run: yarn install --frozen-lockfile

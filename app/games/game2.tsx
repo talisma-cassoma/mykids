@@ -109,7 +109,7 @@ export default function WriteTheWordsGameScreen() {
                 }}
             />
             <TouchableOpacity onPress={pickAnotherWord} style={styles.changeWordBtn}>
-               <IconSwitchHorizontal size={24} color="#fff" />
+               <IconSwitchHorizontal size={24}  />
             </TouchableOpacity>
             <ScrollView contentContainerStyle={styles.container}>
                 <Text style={styles.text}>{currentWord?.fr}</Text>
@@ -208,7 +208,7 @@ const styles = StyleSheet.create({
     },
     changeWordBtn: {
     marginTop: 10,
-    backgroundColor: "#2196f3",
+    //backgroundColor: "#2196f3",
     padding: 10,
     borderRadius: 8,
     alignItems: "center",

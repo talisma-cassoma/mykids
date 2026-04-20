@@ -6,42 +6,31 @@ import {
     StyleSheet,
     View,
 } from "react-native";
-import { useGame } from "@/context/gameContext";
 
-export function PlayAndPauseToggleButton() {
+interface PlayAndPauseToggleButtonProps {
+    resumeStatus: "playing" | "paused";
+    onToggle: () => void;
+}
 
-    const {
-        pauseGame,
-        resumeGame,
-        status,
-    } = useGame();
+export function PlayAndPauseToggleButton({ resumeStatus, onToggle }: PlayAndPauseToggleButtonProps) {
 
-    const isPlaying = status === "playing";
-
-    const togglePlay = () => {
-        if (isPlaying) {
-            pauseGame();
-        } else {
-            resumeGame();
-        }
-    };
-
-    const translateX = useRef(new Animated.Value(isPlaying ?  0 : 26)).current;
+   
+    const translateX = useRef(new Animated.Value(resumeStatus === "playing"? 0 : 26)).current;
 
     useEffect(() => {
         Animated.timing(translateX, {
-            toValue: isPlaying ? 0 : 26,
+            toValue: resumeStatus === "playing"? 26 : 0,
             duration: 200,
             useNativeDriver: true,
         }).start();
-    }, [isPlaying]);
+    }, [resumeStatus]);
 
     return (
-        <TouchableWithoutFeedback onPress={togglePlay}>
+        <TouchableWithoutFeedback onPress={onToggle}>
             <View
                 style={[
                     styles.switch,
-                    { backgroundColor: isPlaying ? "#ccc" : "#a5d6a7", marginBottom: 20 },
+                    { backgroundColor: resumeStatus=== "playing"? "#a5d6a7" : "#ccc" , marginBottom: 20 },
                 ]}
             >
                 <Animated.View
@@ -52,10 +41,10 @@ export function PlayAndPauseToggleButton() {
                         },
                     ]}
                 >
-                    {isPlaying ? (
-                        <IconPlayerPlayFilled color="#ccc" size={18} />
-                    ) : (
+                    {resumeStatus=== "playing"? (
                         <IconPlayerPauseFilled color="#a5d6a7" size={18} />
+                    ) : (
+                        <IconPlayerPlayFilled color="#ccc" size={18} />
                     )}
                 </Animated.View>
             </View>

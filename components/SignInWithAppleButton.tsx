@@ -28,7 +28,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 5,
+    borderRadius: 25,
     backgroundColor: "#000",
   },
   icon: {

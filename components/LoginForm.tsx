@@ -5,6 +5,9 @@ import SignInWithGoogleButton from "./SignInWithGoogleButton";
 import { Image, useColorScheme, View, StyleSheet, TouchableOpacity } from "react-native";
 import { SignInWithAppleButton } from "./SignInWithAppleButton";
 import { Redirect, router } from "expo-router";
+import { IconPlayerPauseFilled, IconPlayerPlayFilled } from "@tabler/icons-react-native";
+import { Avatars } from "@/assets/avatars";
+
 
 export default function LoginForm() {
   const { signIn, isLoading } = useAuth();
@@ -12,43 +15,48 @@ export default function LoginForm() {
 
   return (
     <ThemedView style={styles.container}>
+      <Image
+        source={
+          theme === "dark"
+            ? require("@/assets/images/bkg.jpg")
+            : require("@/assets/images/bkg.jpg")
+        }
+        style={{
+          flex: 1, width: "100%", height: "100%",
+          borderBottomLeftRadius: 50, borderBottomRightRadius: 50,
+        }}
+      />
+      <View style={{
+        position: "absolute",
+        top: 80,
+        flexDirection: "column", alignItems: "center", justifyContent: "center", width: 100,
+        height: 100,
+
+      }}
+      >
+     {/* Avatar flottant */}
+          <TouchableOpacity 
+            style={styles.avatarWrapper}
+            onPress={() => router.replace("/games/StartScreen")}
+          >
+            <View style={styles.imageShadow}>
+              <Image
+                source={Avatars.dino}
+                style={styles.avatarImage}
+              />
+            </View>
+            <ThemedText style={styles.description}>yachane</ThemedText>
+          </TouchableOpacity>
+      </View>
+
       <View style={styles.card}>
-        <Image
-          source={
-            theme === "dark"
-              ? require("@/assets/images/icon.png")
-              : require("@/assets/images/icon.png")
-          }
-          style={styles.logo}
-        />
 
         <View style={styles.contentContainer}>
-          <View style={styles.titleContainer}>
-            <ThemedText type="subtitle" style={styles.title}>
-              Bien Venue au My KIDS App
-            </ThemedText>
-            <ThemedText style={styles.description}>
-              Experience seamless authentication{"\n"}
-              powered by Expo.{"\n"}
-            </ThemedText>
-          </View>
-
+    
           <View style={styles.buttonContainer}>
             <SignInWithGoogleButton onPress={signIn} disabled={isLoading} />
             <SignInWithAppleButton />
           </View>
-          <TouchableOpacity style={{ flexDirection: "column", alignItems: "center", justifyContent: "center" }}
-          onPress={()=>router.replace("/GameScreen")}
-          >
-            <Image source={require("@/assets/images/yachane_avatar.png")}
-                style={{ width: 100, height: 100, borderRadius: 10, margin: 20 }}
-              />
-            <ThemedText style={styles.description}>
-              Yachane
-            </ThemedText>
-
-          </TouchableOpacity>
-
         </View>
       </View>
     </ThemedView>
@@ -58,9 +66,10 @@ export default function LoginForm() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    position: "relative",
     justifyContent: "center",
     alignItems: "center",
-    padding: 16,
+    //padding: 16,
   },
   titleContainer: {
     alignItems: "center",
@@ -78,6 +87,30 @@ const styles = StyleSheet.create({
     marginBottom: 32,
     borderRadius: 10,
   },
+    avatarWrapper: {
+    alignItems: "center",
+    marginTop: 40, // Ajuste selon l'encoche (SafeArea)
+  },
+  imageShadow: {
+    width: 100,
+    height: 100,
+    borderRadius: 20,
+    backgroundColor: "#FFF",
+    // Ombres iOS
+    shadowColor: '#000',
+    shadowOffset: { width: 1, height: 4 },
+    shadowOpacity: 0.5,
+    shadowRadius: 5,
+    // Ombre Android
+    elevation: 10,
+  },
+  avatarImage: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: '#fff',
+  },
   contentContainer: {
     width: "100%",
     gap: 32,
@@ -89,11 +122,13 @@ const styles = StyleSheet.create({
   buttonContainer: {
     width: "100%",
     gap: 12,
+    marginBottom: 80,
+    marginTop: 20,
   },
   description: {
     textAlign: "center",
-    fontSize: 16,
-    color: "#666",
+    fontSize: 20,
+    color: "#fff",
     lineHeight: 24,
   },
 });

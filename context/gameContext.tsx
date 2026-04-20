@@ -1,197 +1,76 @@
+// GameContext.tsx
 import React, {
   createContext,
   useContext,
-  useEffect,
-  useRef,
   useState,
-} from 'react';
-
-type GameStatus = 'idle' | 'playing' | 'paused' | 'finished';
-type TimerMode = 'increasing' | 'decreasing';
-
-type Stage = {
-  id: string;
-  component: React.JSX.Element;
-};
-
-type Scores = Record<string, string>;
-
-type TimerProps = {
-  isActive: boolean;
-  mode: TimerMode;
-};
+  ReactNode,
+} from "react";
+import { router, Href } from "expo-router";
 
 type GameContextType = {
-  status: GameStatus;
-  currentStageIndex: number;
-  stages: Stage[];
-  scores: Scores;
-
-  // GAME
-  startGame: (stages: Stage[]) => void;
-  restartGame: () => void;
-  pauseGame: () => void;
-  resumeGame: () => void;
+  stages: Href[];
+  currentStage: number;
+  progress: number;
+  gameScore: gameScoreProps[];
+  setGameScore: React.Dispatch<React.SetStateAction<gameScoreProps[]>>;
   nextStage: () => void;
-  setScore: (stageId: string, score: string) => void;
-
-  gameDescription: string;
-  setGameDescription: (description: string) => void;
-
-  // TIMER
-  time: number;
-  isRunning: boolean;
-  timerMode: TimerMode;
-  isTimerActive: boolean;
-  setIsTimerActive: (isActive: boolean) => void;
-
-  startTimer: () => void;
-  pauseTimer: () => void;
-  resetTimer: (newTime?: number) => void;
-  setTimerMode: (mode: TimerMode) => void;
+  resetGame: () => void;
 };
+
+const stages: Href[] = [
+  "/games/game1",
+  "/games/game2"];
 
 const GameContext = createContext<GameContextType | null>(null);
 
-export function GameProvider({ children }: { children: React.ReactNode }) {
-  // GAME STATE
-  const [status, setStatus] = useState<GameStatus>('idle');
-  const [stages, setStages] = useState<Stage[]>([]);
-  const [currentStageIndex, setCurrentStageIndex] = useState(0);
-  const [scores, setScores] = useState<Scores>({});
-  const [gameDescription, setGameDescription] = useState<string>('');
+type Props = {
+  children: ReactNode;
+};
 
-  // TIMER STATE
-  const [time, setTime] = useState(60);
-  const [isRunning, setIsRunning] = useState(false);
-  const [timerMode, setTimerMode] = useState<TimerMode>('increasing');
-  const [isTimerActive, setIsTimerActive]= useState(true);
-
-
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  // TIMER EFFECT
-  useEffect(() => {
-    if (!isRunning) return;
-
-    intervalRef.current = setInterval(() => {
-      setTime((prev) => {
-        if (timerMode === 'increasing') return prev + 1;
-
-        if (timerMode === 'decreasing') {
-          if (prev <= 0) {
-            if (intervalRef.current) clearInterval(intervalRef.current);
-            return 0;
-          }
-          return prev - 1;
-        }
-
-        return prev;
-      });
-    }, 1000);
-
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-  }, [isRunning, timerMode]);
-
-  // GAME ACTIONS
-  function startGame(newStages: Stage[]) {
-    if (!newStages.length) return;
-
-    setStages(newStages);
-    setScores({});
-    setCurrentStageIndex(0);
-    setStatus('playing');
-    setIsRunning(true);
-  }
-
-  function restartGame() {
-  setStatus('idle');
-  setStages([]);
-  setScores({});
-  setCurrentStageIndex(0);
-  setGameDescription('');
-
-  // timer
-  setIsRunning(false);
-  setTime(0);
-  //setTimerMode('increasing');
-  setIsTimerActive(false);
+interface gameScoreProps{
+  score: string;
+  name: string;
+  duration: string;
 }
+export function GameProvider({ children }: Props) {
+  const [currentStage, setCurrentStage] = useState(0);
+  const [progress, setProgress] = useState(0);
+  const [gameScore, setGameScore]= useState<gameScoreProps[]>([]);
+ 
+  const nextStage = () => {
+    const current = currentStage + 1;
 
-  function pauseGame() {
-    setStatus('paused');
-    setIsRunning(false);
-  }
+    console.log("currentStage: ",current);
+    console.log("stages length: ",stages.length);
 
-  function resumeGame() {
-    setStatus('playing');
-    setIsRunning(true);
-  }
+    setCurrentStage(current);
+    setProgress(current);
 
-  function nextStage() {
-    setCurrentStageIndex((prev) => {
-      const next = prev + 1;
+    if (current >= stages.length) {
+      //console.log("max stage", stages.length)
+      router.replace("/games/EndScreen")
+      return;
+    }
 
-      if (next >= stages.length) {
-        setStatus('finished');
-        setIsRunning(false);
-        return prev;
-      }
+    router.replace(stages[current]);
+  };
 
-      return next;
-    });
-  }
-
-  function setScore(stageId: string, score: string) {
-    setScores((prev) => ({
-      ...prev,
-      [stageId]: score,
-    }));
-  }
-
-  // TIMER ACTIONS
-  function startTimer() {
-    setIsRunning(true);
-  }
-
-  function pauseTimer() {
-    setIsRunning(false);
-  }
-
-  function resetTimer(newTime = 0) {
-    setIsRunning(false);
-    setTime(newTime);
-  }
+  const resetGame = () => {
+    setCurrentStage(0);
+    setProgress(0);
+    router.replace("/games/StartScreen");
+  };
 
   return (
     <GameContext.Provider
       value={{
-        // GAME
-        status,
-        currentStageIndex,
         stages,
-        scores,
-        startGame,
-        restartGame,
-        pauseGame,
-        resumeGame,
+        currentStage,
+        progress,
+        gameScore,
+        setGameScore,
         nextStage,
-        setScore,
-        gameDescription,
-        setGameDescription,
-
-        // TIMER
-        time,
-        isRunning,
-        timerMode,
-        startTimer,
-        pauseTimer,
-        resetTimer,
-        setTimerMode,
-        isTimerActive,
-        setIsTimerActive,
+        resetGame,
       }}
     >
       {children}
@@ -201,8 +80,10 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
 export function useGame() {
   const context = useContext(GameContext);
+
   if (!context) {
-    throw new Error('useGame must be used within GameProvider');
+    throw new Error("useGame must be used inside GameProvider");
   }
+
   return context;
 }

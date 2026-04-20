@@ -4,7 +4,7 @@ import { Header } from "@/components/Header";
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export function PauseScreen() {
-    const { scores } = useGame()
+    const scores = 40
     return (
         // <SafeAreaView style={{ flex: 1 }}>
             <View style={styles.container}>

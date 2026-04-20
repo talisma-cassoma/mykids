@@ -3,21 +3,25 @@ import { Text, View, TouchableOpacity } from "react-native";
 import { useGame } from "@/context/gameContext";
 import { useEffect } from "react";
 
-type TimerProps = {
+
+
+interface TimerProps {
+  isActive: boolean;
   mode: "decreasing" | "increasing";
-};
+  time: number | undefined;
+}
 
-export function Timer() {
+export function Timer({ mode, isActive, time }: TimerProps) {
 
-   const { time, isTimerActive } = useGame();
-   
 
+
+  if(time === undefined) return 
   const minutes = Math.floor(time / 60);
   const seconds = time % 60;
   
   return (
     <>
-    {isTimerActive && (
+    {isActive && (
     <View style={{ alignItems: "center", gap: 8 }}>
       <Text style={{ color: "red", fontSize: 18 }}>
         {minutes.toString().padStart(2, "0")}:

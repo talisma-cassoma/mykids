@@ -5,49 +5,68 @@ import { ProgressBar } from "@/components/ProgressBar";
 import { Timer } from "@/components/Timer";
 import { PlayAndPauseToggleButton } from "@/components/PlayAndPauseToggleButton";
 import { useGame } from "@/context/gameContext";
+import { resume } from "expo-speech";
 
-export function Header() {
-    const {
-        currentStageIndex,
-        stages,
-        scores,
-        gameDescription,
-        status
-    } = useGame();
+interface HeaderProps {
+    gameDescription?: string;
+    playAndPauseButton?:{
+        isActive: boolean;
+        resumeStatus?: "playing" | "paused";
+        onToggle?: () => void;
+    } 
+    timer?: {
+        isActive: boolean;
+        mode?: "increasing" | "decreasing";
+        time?: number;
+    };
+    score?: {
+        isActive: boolean;
+        current?: number;
+        total?: number;
+    };
+}
 
-    const currentStage = stages?.[currentStageIndex];
+export function Header({gameDescription, timer, score, playAndPauseButton}: HeaderProps) {
 
-    // exemplo simples: pega score do stage atual
-    const currentStageId = currentStage?.id;
-    const currentScore = currentStageId ? scores[currentStageId] : undefined;
-
-    const hasScore =
-        typeof currentScore === "number";
 
     return (
         <View style={styles.header}>
-            {(status === "playing" || status === "paused") && <PlayAndPauseToggleButton />}
+            {(playAndPauseButton?.isActive 
+            && playAndPauseButton.resumeStatus !== undefined 
+            && playAndPauseButton.onToggle !== undefined)&& (
+                <PlayAndPauseToggleButton 
+                resumeStatus={playAndPauseButton.resumeStatus}
+                onToggle={playAndPauseButton.onToggle}
+                />
+            )}
             <ProgressBar />
 
             <View style={styles.row}>
                 {/* SCORE */}
-                {hasScore && (
-                    <Score score={currentScore} total={100} />
+                {(score?.isActive && score.current !== undefined && score.total !== undefined)&& (
+                    <Score score={score.current} total={score.total} />
                 )}
 
-                {/* TIMER */}
-                <Timer />
+                {(timer?.isActive && timer?.time !== undefined, timer?.mode !== undefined) && (
+                    <Timer 
+                    isActive={timer.isActive}
+                    time={timer.time}
+                    mode={timer.mode}
+                    />)
+                }
             </View>
 
             {/* TITULO DO JOGO */}
-            <Text style={styles.title}>{gameDescription}</Text>
-
-            {/* TITULO DO STAGE */}
+            {gameDescription && (
+                <Text style={styles.title}>{gameDescription}</Text>
+            )}
+         
+            {/* TITULO DO STAGE
             {currentStage?.component?.props?.title && (
                 <Text style={[styles.title, styles.underline]}>
                     {currentStage.component.props.title}
-                </Text>
-            )}
+                </Text> }
+            )*/}
         </View>
     );
 }
@@ -56,7 +75,8 @@ const styles = StyleSheet.create({
     header: {
         flexDirection: "column",
         width: "100%",
-        paddingHorizontal: 20,     
+        height:138,
+        justifyContent: "space-between"
     },
     title: {
         fontSize: 18,

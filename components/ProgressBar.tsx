@@ -4,13 +4,13 @@ import { ThemedText } from "./ThemedText";
 import { useGame } from "@/context/gameContext";
 
 export function ProgressBar() {
-  const { currentStageIndex, stages } = useGame();
+  const { currentStage, stages } = useGame();
 
   const totalStages = stages.length;
 
   // evita divisão por zero
   const progress = totalStages > 0
-    ? (currentStageIndex + 1) / totalStages
+    ? (currentStage) / totalStages
     : 0;
 
   const percentage = Math.round(progress * 100);

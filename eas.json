@@ -7,11 +7,11 @@
     "development": {
       "developmentClient": true,
       "distribution": "internal",
-      "resourceClass": "large"
+      "resourceClass": "medium"
     },
     "preview": {
       "distribution": "internal",
-      "resourceClass": "large",
+      "resourceClass": "medium",
       "android": {
         "buildType": "apk"
       },

@@ -3,17 +3,11 @@ import { useGame } from "@/context/gameContext";
 
 
 export function Score({ score, total }: { score: number; total: number }) {
-  const  gameType  = "write";
+
   return (
-    <>
-      {gameType === "write" ? (
-        <View style={{ padding: 10, height: 40, width: 160 }}></View>
-      ) : (
-        <View style={styles.container}>
-        <Text style={styles.scoreText}> Points: {score} / {total}</Text>
-        </View>
-      )}
-    </>
+    <View style={styles.container}>
+      <Text style={styles.scoreText}> Points: {score} / {total}</Text>
+    </View>
   );
 }
 

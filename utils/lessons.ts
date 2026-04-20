@@ -1,3 +1,6 @@
+import React from "react";
+import * as Speech from "expo-speech";
+
 export interface WordPair {
   id: string;
   fr: string;
@@ -95,3 +98,17 @@ export const gameData: GameStage[] = [
   ]
 }
 ];
+
+export const speak = React.useCallback((text: string, lang: string) => {
+    Speech.stop();
+    Speech.speak(text, { language: lang, pitch: 1, rate: 0.9 });
+  }, []);
+
+
+export function TimerConverter(time: number){
+if(time === undefined) return ""
+  const minutes = Math.floor(time / 60);
+  const seconds = time % 60;
+  
+  return `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}` 
+}

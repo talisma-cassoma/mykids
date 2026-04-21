@@ -10,6 +10,7 @@ import { useGame } from "@/context/gameContext";
 import { speak, gameData, GameStage, WordPair, TimerConverter } from "@/utils/lessons";
 
 export default function WriteTheWordsGameScreen() {
+    const gameTittle = "ecris le mot en arabe"
     const [time, setTime] = useState(0);
     const [isTimerRunning, setIsTimerRunning] = useState(true);
 
@@ -80,7 +81,7 @@ export default function WriteTheWordsGameScreen() {
                 ...prev,
                 {
                     score: `a écrit ${currentWord.ar}`,
-                    name: "match les mots",
+                    name: gameTittle,
                     duration: TimerConverter(time),
                 },
             ]);
@@ -98,19 +99,33 @@ export default function WriteTheWordsGameScreen() {
         setUserInput("");
         setIsCorrect(null);
     };
+
+    //speak in each 5s
+  useEffect(() => {
+    if (!currentWord) return;
+
+    const interval = setInterval(async () => {
+        await speak(currentWord.ar, "ar-MA");
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        await speak(currentWord.fr, "fr-FR");
+    }, 6000);
+
+    return () => clearInterval(interval);
+}, [currentWord]);
+
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: "#fff", padding: 20 }}>
             <Header
-                gameDescription="ecris le mot en arabe"
+                gameDescription={gameTittle}
                 timer={{
                     isActive: true,
                     mode: "increasing",
                     time: time,
                 }}
             />
-            <TouchableOpacity onPress={pickAnotherWord} style={styles.changeWordBtn}>
+            {/* <TouchableOpacity onPress={pickAnotherWord} style={styles.changeWordBtn}>
                <IconSwitchHorizontal size={24}  />
-            </TouchableOpacity>
+            </TouchableOpacity> */}
             <ScrollView contentContainerStyle={styles.container}>
                 <Text style={styles.text}>{currentWord?.fr}</Text>
 
@@ -138,13 +153,6 @@ export default function WriteTheWordsGameScreen() {
 
                 <View style={{ flexDirection: "row", marginTop: 10 }}>
                     <TouchableOpacity
-                        onPress={() => setUserInput(prev => prev.slice(0, -1))}
-                        style={styles.deleteBtn}
-                    >
-                        <Text style={{ color: "#fff" }}>⌫</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
                         onPress={() => setUserInput("")}
                         style={styles.clearBtn}
                     >
@@ -152,26 +160,26 @@ export default function WriteTheWordsGameScreen() {
                     </TouchableOpacity>
                 </View>
 
-                {isCorrect 
-                && (
-                    <Button
-                        onPress={() => {
-                            setIsButtonLoading(true);
-                            setGameScore(prev => [
-                                ...prev,
-                                {
-                                    score: `a écrit ${currentWord?.ar}`,
-                                    name: "match les mots",
-                                    duration: TimerConverter(time),
-                                },
-                            ]);
-                            nextStage();
-                        }}
-                        isLoading={isButtonLoading}
-                    >
-                        <Button.Title>Avancer</Button.Title>
-                    </Button>
-                )}
+                {isCorrect
+                    && (
+                        <Button
+                            onPress={() => {
+                                setIsButtonLoading(true);
+                                setGameScore(prev => [
+                                    ...prev,
+                                    {
+                                        score: `a écrit ${currentWord?.ar}`,
+                                        name: "match les mots",
+                                        duration: TimerConverter(time),
+                                    },
+                                ]);
+                                nextStage();
+                            }}
+                            isLoading={isButtonLoading}
+                        >
+                            <Button.Title>Avancer</Button.Title>
+                        </Button>
+                    )}
             </ScrollView>
         </SafeAreaView>
     );
@@ -197,21 +205,17 @@ const styles = StyleSheet.create({
         width: 100,
         borderRadius: 8,
     },
-    deleteBtn: {
-        padding: 10,
-        backgroundColor: "#f55",
-        marginRight: 10,
-    },
+
     clearBtn: {
         padding: 10,
         backgroundColor: "#999",
     },
     changeWordBtn: {
-    marginTop: 10,
-    //backgroundColor: "#2196f3",
-    padding: 10,
-    borderRadius: 8,
-    alignItems: "center",
-    alignSelf:"flex-end"
-},
+        marginTop: 10,
+        //backgroundColor: "#2196f3",
+        padding: 10,
+        borderRadius: 8,
+        alignItems: "center",
+        alignSelf: "flex-end"
+    },
 });

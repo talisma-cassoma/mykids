@@ -193,7 +193,7 @@ export default function MactchingWordsGameScreen() {
 
       </View>
 
-      {isPhaseCompleted
+      {true//isPhaseCompleted
         && (
           <View style={{
             marginTop: 20,

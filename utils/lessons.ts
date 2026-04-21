@@ -70,7 +70,6 @@ export const gameData: GameStage[] = [
     { "id": "37", "fr": "espace", "ar": "فَضَاء" },
     { "id": "38", "fr": "activités", "ar": "أَنْشِطَة" },
     { "id": "39", "fr": "passer du temps", "ar": "نَقْضِي وَقْتًا" },
-    { "id": "40", "fr": "développer", "ar": "نُنَمِّي" },
     { "id": "41", "fr": "esprits", "ar": "عُقُول" },
     { "id": "42", "fr": "préserver", "ar": "نُحَافِظ" },
     { "id": "43", "fr": "santé", "ar": "صِحَّة" }
@@ -80,7 +79,7 @@ export const gameData: GameStage[] = [
   "lessonTitle": "Vocabulaire : le voisin",
   "wordPairs": [
     { "id": "44", "fr": "mon voisin", "ar": "جَارِي" },
-    { "id": "45", "fr": "sa maison (à lui)", "ar": "بَيْتُهُ" },
+    { "id": "45", "fr": "sa maison", "ar": "بَيْتُهُ" },
     { "id": "46", "fr": "proche", "ar": "قَرِيب" },
     { "id": "47", "fr": "amour", "ar": "حُبّ" },
     { "id": "48", "fr": "affection", "ar": "عَطْف" },
@@ -88,12 +87,9 @@ export const gameData: GameStage[] = [
     { "id": "50", "fr": "aide", "ar": "عَوْن" },
     { "id": "51", "fr": "miséricorde", "ar": "رَحْمَة" },
     { "id": "52", "fr": "le voisin", "ar": "الْجَار" },
-    { "id": "53", "fr": "devoir / obligation", "ar": "فَرْض" },
+    { "id": "53", "fr": "obligation", "ar": "فَرْض" },
     { "id": "54", "fr": "nous l’appelons", "ar": "نَدْعُوهُ" },
-    { "id": "55", "fr": "il répond", "ar": "يُجِيب" },
-    { "id": "56", "fr": "pureté / sincérité", "ar": "صَفَاء" },
-    { "id": "57", "fr": "il ne s’absente pas", "ar": "لَا يَغِيب" },
-    { "id": "58", "fr": "je reste / je continue", "ar": "دُمْتُ" },
+    { "id": "56", "fr": "sincérité", "ar": "صَفَاء" },
     { "id": "59", "fr": "tout le temps", "ar": "كُلَّ وَقْت" }
   ]
 }

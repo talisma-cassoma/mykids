@@ -1,61 +1,71 @@
-import { TouchableOpacity, Text, View, StyleSheet } from "react-native"
+import {
+  TouchableOpacity,
+  Text,
+  View,
+  StyleSheet,
+  Image,
+  ActivityIndicator
+} from "react-native";
+import { useState } from "react";
 import { useGame } from "@/context/gameContext";
-import { getRandomStages } from "@/utils/getRandomStages";
 import { router } from "expo-router";
-//import { MactchingWordsGameScreen } from '@/app/game1';
-//import { WriteTheWordsGameScreen } from "@/app/game2";
-
-// export type Stage = {
-//   id: string;
-//   component: React.JSX.Element;
-// };
-
-// const ALL_GAMES: Stage[] = [
-//   { id: 'game1', component: <MactchingWordsGameScreen /> },
-//   { id: 'game2', component: <WriteTheWordsGameScreen /> },
-//   { id: 'game3', component: <WriteTheWordsGameScreen /> },
-//   { id: 'game4', component: <MactchingWordsGameScreen /> },
-//   { id: 'game5', component: <MactchingWordsGameScreen /> },
-//   // { id: 'game3', component: </> },
-// ];
 
 export default function StartScreen() {
-  const {    stages,
-        currentStage,
-        progress,
-        nextStage } = useGame()
-  //const stages = getRandomStages(ALL_GAMES);
-  //console.log(stages)
+  const { stages } = useGame();
+  const [loading, setLoading] = useState(true);
 
   return (
     <View style={styles.container}>
-      <Text>
-        ola
-      </Text>
-      <TouchableOpacity
-        onPress={() => router.replace(stages[0])}
+
+      {loading && (
+        <ActivityIndicator
+          size="large"
+          color="#4caf50"
+          style={{ position: "absolute", top: 200 }}
+        />
+      )}
+
+      <Image
+        source={require("@/assets/images/startAnimation.gif")}
         style={{
-          marginTop: 20,
-          backgroundColor: "#4caf50",
-          padding: 10,
-          justifyContent: "center",
-          alignItems: "center",
-          width: 100,
-          borderRadius: 8
-        }}>
-        <Text style={{ color: "#fff" }}>commencer</Text>
-      </TouchableOpacity>
+          height: 300,
+          borderBottomLeftRadius: 50,
+          borderBottomRightRadius: 50,
+        }}
+        onLoadStart={() => setLoading(true)}
+        onLoadEnd={() => setLoading(false)}
+      />
+      {!loading && (
+        <TouchableOpacity
+          onPress={() => router.replace(stages[0])}
+          style={{
+            position: "absolute",
+            top: 320,
+            marginTop: 20,
+            backgroundColor: "#4caf50",
+            padding: 10,
+            justifyContent: "center",
+            alignItems: "center",
+            width: 100,
+            borderRadius: 8
+          }}
+        >
+          <Text style={{ color: "#fff" }}>commencer</Text>
+        </TouchableOpacity>
+      )}
+
     </View>
-  )
+  );
 }
+
 const styles = StyleSheet.create({
   container: {
+    position: "relative",
     flex: 1,
     backgroundColor: "#fff",
     paddingTop: 150,
     paddingHorizontal: 60,
     alignItems: "center",
     justifyContent: "flex-start",
-
   }
-})
+});

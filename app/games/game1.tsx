@@ -8,7 +8,7 @@ import { Header } from "@/components/Header";
 
 
 export default function MactchingWordsGameScreen() {
-
+const gameTittle = "match les mots"
   const { nextStage, setGameScore } = useGame();
   const [isButtonLoading, setIsButtonLoading] = useState<boolean>(false)
   const [isMacthActive, setIsMactchActive] = useState<boolean>(true)
@@ -159,7 +159,7 @@ export default function MactchingWordsGameScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#fff", padding: 20, paddingBottom: 50 }}>
-      <Header gameDescription="Match the words"
+      <Header gameDescription={gameTittle}
         playAndPauseButton={{
           isActive: true,
           resumeStatus,
@@ -193,7 +193,7 @@ export default function MactchingWordsGameScreen() {
 
       </View>
 
-      {true//isPhaseCompleted
+      {isPhaseCompleted
         && (
           <View style={{
             marginTop: 20,

@@ -106,9 +106,9 @@ export default function WriteTheWordsGameScreen() {
 
     const interval = setInterval(async () => {
         await speak(currentWord.ar, "ar-MA");
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise(resolve => setTimeout(resolve, 2000));
         await speak(currentWord.fr, "fr-FR");
-    }, 6000);
+    }, 7000);
 
     return () => clearInterval(interval);
 }, [currentWord]);
@@ -148,7 +148,7 @@ export default function WriteTheWordsGameScreen() {
                         <Text style={{ color: "#fff" }}>Valider</Text>
                     </TouchableOpacity>
                 </View>
-                <Text>{currentWord?.ar}</Text>
+                <Text style={{fontSize:16}}>{currentWord?.ar}</Text>
                 <ArabicKeyboard value={userInput} onChange={setUserInput} />
 
                 <View style={{ flexDirection: "row", marginTop: 10 }}>
@@ -209,6 +209,7 @@ const styles = StyleSheet.create({
     clearBtn: {
         padding: 10,
         backgroundColor: "#999",
+         borderRadius: 8,
     },
     changeWordBtn: {
         marginTop: 10,

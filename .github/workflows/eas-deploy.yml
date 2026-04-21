@@ -30,21 +30,24 @@ jobs:
 
       - name: Set profile, branch and channel variables
         run: |
-          if [ "${{ github.ref_name }}" == "preview" ]; then
-            echo "PROFILE=preview" >> $GITHUB_ENV
-            echo "BRANCH=preview" >> $GITHUB_ENV
-            echo "CHANNEL=preview" >> $GITHUB_ENV
-          else
-            echo "PROFILE=production" >> $GITHUB_ENV
-            echo "BRANCH=production" >> $GITHUB_ENV
-            echo "CHANNEL=production" >> $GITHUB_ENV
-          fi
+          echo "PROFILE=preview" >> $GITHUB_ENV
+          echo "CHANNEL=preview" >> $GITHUB_ENV
+        #   if [ "${{ github.ref_name }}" == "preview" ]; then
+        #     echo "PROFILE=preview" >> $GITHUB_ENV
+        #     echo "BRANCH=preview" >> $GITHUB_ENV
+        #     echo "CHANNEL=preview" >> $GITHUB_ENV
+        #   else
+        #     echo "PROFILE=production" >> $GITHUB_ENV
+        #     echo "BRANCH=production" >> $GITHUB_ENV
+        #     echo "CHANNEL=production" >> $GITHUB_ENV
+        #   fi
 
       - name: Publish OTA update Android
-        run: eas update --branch ${{ env.BRANCH }} --platform android --non-interactive --message "${{ github.event.head_commit.message }}"
+        run: eas update --channel preview --platform android --non-interactive --message "${{ github.event.head_commit.message }}"
+      #   run: eas update --branch ${{ env.BRANCH }} --platform android --non-interactive --message "${{ github.event.head_commit.message }}"
 
-      - name: Publish OTA update iOS
-        run: eas update --branch ${{ env.BRANCH }} --platform ios --non-interactive --message "${{ github.event.head_commit.message }}"
+      # - name: Publish OTA update iOS
+      #   run: eas update --branch ${{ env.BRANCH }} --platform ios --non-interactive --message "${{ github.event.head_commit.message }}"
 
       - name: Build Android APK
         if: contains(github.event.head_commit.message, '[build]')

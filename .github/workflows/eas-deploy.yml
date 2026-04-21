@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-      - staging
+      - preview
 
 jobs:
   ota_or_build:
@@ -30,7 +30,7 @@ jobs:
 
       - name: Set profile, branch and channel variables
         run: |
-          if [ "${{ github.ref_name }}" == "staging" ]; then
+          if [ "${{ github.ref_name }}" == "preview" ]; then
             echo "PROFILE=preview" >> $GITHUB_ENV
             echo "BRANCH=preview" >> $GITHUB_ENV
             echo "CHANNEL=preview" >> $GITHUB_ENV

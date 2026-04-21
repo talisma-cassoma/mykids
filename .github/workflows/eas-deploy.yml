@@ -17,7 +17,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'yarn'
+          cache: "yarn"
 
       - name: Setup Expo
         uses: expo/expo-github-action@v8
@@ -28,14 +28,16 @@ jobs:
       - name: Install dependencies
         run: yarn install --frozen-lockfile
 
-      - name: Set profile and branch variables
+      - name: Set profile, branch and channel variables
         run: |
           if [ "${{ github.ref_name }}" == "staging" ]; then
-            echo "PROFILE=staging" >> $GITHUB_ENV
-            echo "BRANCH=staging" >> $GITHUB_ENV
+            echo "PROFILE=preview" >> $GITHUB_ENV
+            echo "BRANCH=preview" >> $GITHUB_ENV
+            echo "CHANNEL=preview" >> $GITHUB_ENV
           else
             echo "PROFILE=production" >> $GITHUB_ENV
             echo "BRANCH=production" >> $GITHUB_ENV
+            echo "CHANNEL=production" >> $GITHUB_ENV
           fi
 
       - name: Publish OTA update Android

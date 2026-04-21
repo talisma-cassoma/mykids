@@ -19,7 +19,11 @@ type GameContextType = {
 
 const stages: Href[] = [
   "/games/game1",
-  "/games/game2"];
+  "/games/game2",
+  "/games/game1",
+  "/games/game1",
+  "/games/game2",
+  "/games/game2",];
 
 const GameContext = createContext<GameContextType | null>(null);
 
@@ -27,7 +31,7 @@ type Props = {
   children: ReactNode;
 };
 
-interface gameScoreProps{
+interface gameScoreProps {
   score: string;
   name: string;
   duration: string;
@@ -35,13 +39,13 @@ interface gameScoreProps{
 export function GameProvider({ children }: Props) {
   const [currentStage, setCurrentStage] = useState(0);
   const [progress, setProgress] = useState(0);
-  const [gameScore, setGameScore]= useState<gameScoreProps[]>([]);
- 
+  const [gameScore, setGameScore] = useState<gameScoreProps[]>([]);
+
   const nextStage = () => {
     const current = currentStage + 1;
 
-    console.log("currentStage: ",current);
-    console.log("stages length: ",stages.length);
+    console.log("currentStage: ", current);
+    console.log("stages length: ", stages.length);
 
     setCurrentStage(current);
     setProgress(current);

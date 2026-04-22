@@ -18,12 +18,13 @@ type GameContextType = {
 };
 
 const stages: Href[] = [
-  "/games/game1",
   "/games/game2",
   "/games/game1",
+  "/games/game3",
   "/games/game1",
   "/games/game2",
-  "/games/game2",];
+  "/games/game2",
+  ];
 
 const GameContext = createContext<GameContextType | null>(null);
 

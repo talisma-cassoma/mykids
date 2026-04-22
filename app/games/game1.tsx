@@ -35,7 +35,7 @@ const gameTittle = "match les mots"
         if (prev === 1) { //if time ends -> nextstage
           setGameScore(prev => [...prev, {
             score: `${phaseScore}/${totalWords}`,
-            name: "mactch les mots",
+            name: `${gameTittle}: ${currentLesson}`,
             duration: TimerConverter(time),
           }])
           nextStage()
@@ -206,7 +206,7 @@ const gameTittle = "match les mots"
               setIsButtonLoading(true)
               setGameScore(prev => [...prev, {
                 score: `${phaseScore}/${totalWords}`,
-                name: "mactch les mots",
+                name:`${gameTittle}: ${currentLesson}`,
                 duration: TimerConverter(time),
               }])
               nextStage()

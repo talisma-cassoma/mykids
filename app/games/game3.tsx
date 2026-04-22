@@ -364,6 +364,7 @@ export default function TextInterpretationGameScreen() {
                     />
 
                     <ArabicKeyboard
+                        style={{alignSelf: "center"}}
                         value={userInput}
                         onChange={setUserInput}
                     />
@@ -450,6 +451,7 @@ const styles = StyleSheet.create({
         flexGrow: 1,
         gap: 20,
         paddingBottom: 40,
+        justifyContent: "center",
     },
 
     card: {

@@ -68,7 +68,7 @@ export const gameData: GameStage[] = [
     { "id": "35", "fr": "groupes", "ar": "مَجْمُوعَات" },
     { "id": "36", "fr": "animateur", "ar": "مُنَشِّط" },
     { "id": "37", "fr": "espace", "ar": "فَضَاء" },
-    { "id": "38", "fr": "activités", "ar": "أَنْشِطَة" },
+    //{ "id": "38", "fr": "activités", "ar": "أَنْشِطَة" },
     { "id": "39", "fr": "passer du temps", "ar": "نَقْضِي وَقْتًا" },
     { "id": "41", "fr": "esprits", "ar": "عُقُول" },
     { "id": "42", "fr": "préserver", "ar": "نُحَافِظ" },

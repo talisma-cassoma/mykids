@@ -339,7 +339,7 @@ export default function TextInterpretationGameScreen() {
                 </View>
 
                 {/* Q3 */}
-                <View style={styles.card}>
+                <View style={[styles.card, {justifyContent: "center"}]}>
                     <Text style={styles.question}>
                         {data.generated_questions.q3_write_word.question}
                     </Text>
@@ -451,7 +451,6 @@ const styles = StyleSheet.create({
         flexGrow: 1,
         gap: 20,
         paddingBottom: 40,
-        justifyContent: "center",
     },
 
     card: {

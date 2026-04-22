@@ -12,6 +12,7 @@ const gameTittle = "match les mots"
   const { nextStage, setGameScore } = useGame();
   const [isButtonLoading, setIsButtonLoading] = useState<boolean>(false)
   const [isMacthActive, setIsMactchActive] = useState<boolean>(true)
+  const [hasSavedScore, setHasSavedScore] = useState(false);
 
   //pause and play
   const [resumeStatus, setResumeStatus] = useState<"playing" | "paused">("paused");
@@ -32,10 +33,11 @@ const gameTittle = "match les mots"
     
     const interval = setInterval(() => {
       setTime(prev => {
-        if (prev === 1) { //if time ends -> nextstage
+        if (prev === 1 && !hasSavedScore) { //if time ends -> nextstage
+          setHasSavedScore(true);
           setGameScore(prev => [...prev, {
             score: `${phaseScore}/${totalWords}`,
-            name: `${gameTittle}: ${currentLesson}`,
+            name: `${gameTittle}: ${currentLesson?.lessonTitle}`,
             duration: TimerConverter(time),
           }])
           nextStage()
@@ -204,6 +206,8 @@ const gameTittle = "match les mots"
           }}>
             <Button onPress={() => {
               setIsButtonLoading(true)
+              if (hasSavedScore) return;
+              setHasSavedScore(true);
               setGameScore(prev => [...prev, {
                 score: `${phaseScore}/${totalWords}`,
                 name:`${gameTittle}: ${currentLesson}`,

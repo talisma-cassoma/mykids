@@ -60,7 +60,7 @@ const data = {
 
 export default function TextInterpretationGameScreen() {
     const gameTitle = "interpretation du texte";
-    const [score, setScore] = useState(0);
+    //const [score, setScore] = useState(0);
     const scrollRef = useRef<ScrollView>(null);
 
 
@@ -211,11 +211,13 @@ export default function TextInterpretationGameScreen() {
 
     const finishGame = () => {
         setIsButtonLoading(true);
+        const gScore = [q1Correct, q2Correct, q3Correct, q4Correct]
+        const totalScore = gScore.reduce((acc, val) => acc + (val ? 1 : 0), 0);
 
         setGameScore((prev) => [
             ...prev,
             {
-                score: "Texte interprété avec succès",
+                score: `${totalScore}/${gScore.length}`,
                 name: gameTitle,
                 duration: TimerConverter(time),
             },
@@ -224,11 +226,11 @@ export default function TextInterpretationGameScreen() {
         nextStage();
     };
 
-    const allCorrect =
-        q1Correct &&
-        q2Correct &&
-        q3Correct &&
-        q4Correct;
+   const allAnswered =
+    selectedQ1 !== null &&
+    selectedQ2 !== null &&
+    userInput.trim() !== "" &&
+    selectedQ4 !== null;
 
     return (
         <SafeAreaView style={styles.safe}>
@@ -244,12 +246,12 @@ export default function TextInterpretationGameScreen() {
             <ScrollView contentContainerStyle={styles.container}>
                 {/* TEXTO */}
                 <TouchableOpacity style={styles.card}
-                   onPress={() =>
-                            speak(
-                                data.content.arabic_text,
-                                "ar-MA"
-                            )
-                        }
+                    onPress={() =>
+                        speak(
+                            data.content.arabic_text,
+                            "ar-MA"
+                        )
+                    }
                 >
                     <Text style={styles.arabicText}>
                         {data.content.arabic_text}
@@ -401,7 +403,7 @@ export default function TextInterpretationGameScreen() {
                         (item) => (
                             <TouchableOpacity
                                 key={item}
-                               disabled={q4Correct !== null}
+                                disabled={q4Correct !== null}
                                 style={getOptionStyle(
                                     item,
                                     selectedQ4,

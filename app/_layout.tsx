@@ -15,7 +15,6 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import * as ScreenOrientation from 'expo-screen-orientation';
 import { GameProvider } from "@/context/gameContext";
-import { PlayerProvider } from "@/context/playerContext";
 
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
@@ -40,16 +39,16 @@ export default function RootLayout() {
       <SafeAreaProvider style={{ flex: 1 }}>
         <AuthProvider>
           <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-            <PlayerProvider>
-              <GameProvider>
-                <StatusBar style="auto" />
-                <Stack
-                  screenOptions={{
-                    headerShown: false,
-                  }}
-                />
-              </GameProvider>
-            </PlayerProvider>
+
+            <GameProvider>
+              <StatusBar style="auto" />
+              <Stack
+                screenOptions={{
+                  headerShown: false,
+                }}
+              />
+            </GameProvider>
+
           </ThemeProvider>
         </AuthProvider>
       </SafeAreaProvider>

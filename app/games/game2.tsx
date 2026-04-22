@@ -169,7 +169,7 @@ export default function WriteTheWordsGameScreen() {
                                     ...prev,
                                     {
                                         score: `a écrit ${currentWord?.ar}`,
-                                        name: "match les mots",
+                                        name: gameTittle,
                                         duration: TimerConverter(time),
                                     },
                                 ]);

@@ -109,6 +109,7 @@ function displayVariant(v: string) {
 const styles = StyleSheet.create({
   container: {
     alignItems: "center",
+    maxWidth: 400,
   },
   keyboard: {
     flexDirection: "row",

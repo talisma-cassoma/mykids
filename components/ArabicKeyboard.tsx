@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, StyleProp, ViewStyle} from "react-native";
 
 const ARABIC_KEYS = [
   "ا", "ب", "ت", "ث", "ج", "ح", "خ",
@@ -24,9 +24,11 @@ const KEY_VARIANTS: Record<string, string[]> = {
 export function ArabicKeyboard({
   value,
   onChange,
+  style
 }: {
   value: string;
   onChange: (val: string) => void;
+  style?: StyleProp<ViewStyle>
 }) {
   const [variants, setVariants] = useState<string[] | null>(null);
   const [selectedKey, setSelectedKey] = useState<string>("");
@@ -65,7 +67,7 @@ function displayVariant(v: string) {
   return `${lastChar}${v}`;
 }
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, style]}>
 
       {/* teclado */}
       <View style={styles.keyboard}>

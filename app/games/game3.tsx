@@ -426,7 +426,7 @@ export default function TextInterpretationGameScreen() {
                     </TouchableOpacity>
                 </View>
 
-                {allCorrect && (
+                {allAnswered && (
                     <Button
                         onPress={finishGame}
                         isLoading={isButtonLoading}

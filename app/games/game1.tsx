@@ -5,10 +5,10 @@ import { Button } from "@/components/Button";
 import { gameData, GameStage, WordPair, speak, TimerConverter } from "@/utils/lessons";
 import { useGame } from "@/context/gameContext";
 import { Header } from "@/components/Header";
-
+         
 
 export default function MactchingWordsGameScreen() {
-const gameTittle = "match les mots"
+  let gameTittle="match les mots"
   const { nextStage, setGameScore } = useGame();
   const [isButtonLoading, setIsButtonLoading] = useState<boolean>(false)
   const [isMacthActive, setIsMactchActive] = useState<boolean>(true)
@@ -37,7 +37,7 @@ const gameTittle = "match les mots"
           setHasSavedScore(true);
           setGameScore(prev => [...prev, {
             score: `${phaseScore}/${totalWords}`,
-            name: `${gameTittle}: ${currentLesson?.lessonTitle}`,
+            name: `${gameTittle}`,
             duration: TimerConverter(time),
           }])
           nextStage()
@@ -76,6 +76,8 @@ const gameTittle = "match les mots"
   const data = currentLesson?.wordPairs ?? [];
   const totalWords = data.length;
   const isPhaseCompleted = matched.length === totalWords;
+  gameTittle =`match les mots: ${currentLesson?.lessonTitle}`
+
 
   // 🔀 init da fase
   useEffect(() => {
@@ -210,7 +212,7 @@ const gameTittle = "match les mots"
               setHasSavedScore(true);
               setGameScore(prev => [...prev, {
                 score: `${phaseScore}/${totalWords}`,
-                name:`${gameTittle}: ${currentLesson}`,
+                name:`${gameTittle}`,
                 duration: TimerConverter(time),
               }])
               nextStage()

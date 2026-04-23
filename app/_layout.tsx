@@ -1,3 +1,4 @@
+import React, { useEffect } from "react";
 import {
   DarkTheme,
   DefaultTheme,
@@ -7,9 +8,7 @@ import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import "react-native-reanimated";
-
 import { useColorScheme } from "@/hooks/useColorScheme";
-import { useEffect } from "react";
 import { AuthProvider } from "@/context/auth";
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from "react-native-gesture-handler";

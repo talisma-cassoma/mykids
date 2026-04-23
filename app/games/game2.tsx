@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, TextInput, ScrollView } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, TextInput, ScrollView, Modal, Image } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { IconSwitchHorizontal } from "@tabler/icons-react-native"
 import { Header } from "@/components/Header";
@@ -11,8 +11,12 @@ import { speak, gameData, GameStage, WordPair, TimerConverter } from "@/utils/le
 
 export default function WriteTheWordsGameScreen() {
     const gameTittle = "ecris le mot en arabe"
+
     const [time, setTime] = useState(0);
     const [isTimerRunning, setIsTimerRunning] = useState(true);
+    // verification
+    const [isDoubleCheck, setIsDoubleCheck] = useState(false);
+    const [showModal, setShowModal] = useState(false);
 
     const { nextStage, setGameScore } = useGame();
 
@@ -39,6 +43,7 @@ export default function WriteTheWordsGameScreen() {
     // 🎯 escolher lesson
     const pickRandomLesson = () => {
         return gameData[Math.floor(Math.random() * gameData.length)];
+
     };
 
     // 🎯 escolher palavra
@@ -55,14 +60,15 @@ export default function WriteTheWordsGameScreen() {
     }, []);
 
     // 🎯 nova palavra
-    useEffect(() => {
-        if (!currentLesson) return;
+   useEffect(() => {
+    if (!currentLesson) return;
 
-        const word = pickRandomWord(currentLesson);
-        setCurrentWord(word);
-        setUserInput("");
-        setIsCorrect(null);
-    }, [currentLesson]);
+    const word = pickRandomWord(currentLesson);
+    setCurrentWord(word);
+    setUserInput("");
+    setIsCorrect(null);
+    setIsDoubleCheck(false); // 🔥 important
+}, [currentLesson]);
 
     // 🔊 falar palavra
     useEffect(() => {
@@ -75,17 +81,15 @@ export default function WriteTheWordsGameScreen() {
         if (!currentWord) return;
 
         if (isMatch) {
-            setIsCorrect(true);
-
-            setGameScore(prev => [
-                ...prev,
-                {
-                    score: `a écrit ${currentWord.ar}`,
-                    name: gameTittle,
-                    duration: TimerConverter(time),
-                },
-            ]);
-
+            if (!isDoubleCheck) {
+                // ✅ 1ère réussite → activer double check
+                setIsDoubleCheck(true);
+                setShowModal(true);
+                setUserInput(""); // vider pour réécriture
+            } else {
+                // ✅ 2ème réussite → validation finale
+                setIsCorrect(true);
+            }
         } else {
             setIsCorrect(false);
         }
@@ -101,17 +105,17 @@ export default function WriteTheWordsGameScreen() {
     };
 
     //speak in each 5s
-  useEffect(() => {
-    if (!currentWord) return;
+    useEffect(() => {
+        if (!currentWord) return;
 
-    const interval = setInterval(async () => {
-        await speak(currentWord.ar, "ar-MA");
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        await speak(currentWord.fr, "fr-FR");
-    }, 7000);
+        const interval = setInterval(async () => {
+            await speak(currentWord.ar, "ar-MA");
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            await speak(currentWord.fr, "fr-FR");
+        }, 7000);
 
-    return () => clearInterval(interval);
-}, [currentWord]);
+        return () => clearInterval(interval);
+    }, [currentWord]);
 
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: "#fff", padding: 20 }}>
@@ -126,6 +130,48 @@ export default function WriteTheWordsGameScreen() {
             {/* <TouchableOpacity onPress={pickAnotherWord} style={styles.changeWordBtn}>
                <IconSwitchHorizontal size={24}  />
             </TouchableOpacity> */}
+            <Modal visible={showModal} 
+                transparent animationType="fade">
+                <View style={{
+                    flex: 1,
+                    justifyContent: "center",
+                    alignItems: "center",
+                    backgroundColor: "rgba(0,0,0,0.5)",
+                    
+                }}>
+                    <View style={{
+                        backgroundColor: "#fff",
+                        padding: 20,
+                        borderRadius: 10,
+                        width: "80%",
+                        height:"80%",
+                        maxHeight: 300,
+                        maxWidth:400,
+                        alignItems: "center",
+                        justifyContent: "center",
+                        flexDirection: "column",
+                        gap: 10
+                    }}>
+                          <Image
+                                source={require("@/assets/images/celebration.gif")}
+                                style={{
+                                flex:1,
+                                resizeMode: "contain"
+                                }}
+                              />
+                        <Text style={{ fontSize: 18, marginBottom: 10 }}>
+                            Maintenant, réécris le mot sans aide
+                        </Text>
+
+                        <TouchableOpacity
+                            onPress={() => setShowModal(false)}
+                            style={styles.validateBtn}
+                        >
+                            <Text style={{ color: "#fff" }}>OK</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
             <ScrollView contentContainerStyle={styles.container}>
                 <Text style={styles.text}>{currentWord?.fr}</Text>
 
@@ -148,7 +194,11 @@ export default function WriteTheWordsGameScreen() {
                         <Text style={{ color: "#fff" }}>Valider</Text>
                     </TouchableOpacity>
                 </View>
-                <Text style={{fontSize:16}}>{currentWord?.ar}</Text>
+                {!isDoubleCheck && (
+                    <Text style={{ fontSize: 16 }}>
+                        {currentWord?.ar}
+                    </Text>
+                )}
                 <ArabicKeyboard value={userInput} onChange={setUserInput} />
 
                 <View style={{ flexDirection: "row", marginTop: 10 }}>
@@ -209,7 +259,7 @@ const styles = StyleSheet.create({
     clearBtn: {
         padding: 10,
         backgroundColor: "#999",
-         borderRadius: 8,
+        borderRadius: 8,
     },
     changeWordBtn: {
         marginTop: 10,

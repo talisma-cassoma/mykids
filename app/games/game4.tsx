@@ -1,7 +1,15 @@
-import React, { useEffect, useState } from "react";
-import { View, StyleSheet, Text, ScrollView, Dimensions } from "react-native";
+import React, { useEffect, useRef, useState } from "react";
+import {
+  View,
+  StyleSheet,
+  Text,
+  ScrollView,
+  Dimensions,
+  Pressable,
+  TouchableOpacity,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { IconSquareRoundedCheckFilled } from "@tabler/icons-react-native";
+import { IconSquareRoundedCheck, IconRefresh } from "@tabler/icons-react-native";
 import {
   DropProvider,
   Draggable,
@@ -14,6 +22,7 @@ import {
   GameStage,
   WordPair,
   TimerConverter,
+  useSpeech,
 } from "@/utils/lessons";
 import { useGame } from "@/context/gameContext";
 import { Header } from "@/components/Header";
@@ -21,17 +30,28 @@ import { Header } from "@/components/Header";
 const screenWidth = Dimensions.get("window").width;
 
 export default function MatchingWordsGameScreen() {
-  const gameTitle = "drag & match";
-  const { setGameScore } = useGame();
+  const gameTitle = "glisser et déposer les mots";
+  const { setGameScore, nextStage } = useGame();
+
+  const { speak } = useSpeech();
 
   const [time, setTime] = useState(0);
   const [isTimerRunning] = useState(true);
 
   const [currentLesson, setCurrentLesson] = useState<GameStage | null>(null);
-  const [placements, setPlacements] = useState<Record<string, WordPair | null>>({});
+
+  /**
+   * placements:
+   * key = id da palavra FR
+   * value = palavra AR colocada no dropZone
+   */
+  const [placements, setPlacements] = useState<
+    Record<string, WordPair | null>
+  >({});
+
   const [rightWords, setRightWords] = useState<WordPair[]>([]);
   const [phaseScore, setPhaseScore] = useState(0);
-  const [hasSavedScore, setHasSavedScore] = useState(false);
+  const hasSavedScoreRef = useRef(false);
 
   useEffect(() => {
     const randomIndex = Math.floor(Math.random() * gameData.length);
@@ -41,6 +61,9 @@ export default function MatchingWordsGameScreen() {
   const data = currentLesson?.wordPairs ?? [];
   const totalWords = data.length;
 
+  /**
+   * TIMER
+   */
   useEffect(() => {
     if (!isTimerRunning) return;
 
@@ -51,12 +74,16 @@ export default function MatchingWordsGameScreen() {
     return () => clearInterval(interval);
   }, [isTimerRunning]);
 
+  /**
+   * INIT GAME
+   */
   useEffect(() => {
     if (!data.length) return;
 
     const shuffled = [...data].sort(() => Math.random() - 0.5);
 
     const initial: Record<string, WordPair | null> = {};
+
     data.forEach((item) => {
       initial[item.id] = null;
     });
@@ -64,11 +91,60 @@ export default function MatchingWordsGameScreen() {
     setPlacements(initial);
     setRightWords(shuffled);
     setPhaseScore(0);
-    setHasSavedScore(false);
+    hasSavedScoreRef.current = false;
   }, [currentLesson]);
 
+  /**
+   * Remove item do dropZone e devolve para options drag
+   */
+  function removeFromDropZone(targetId: string) {
+    setPlacements((prev) => ({
+      ...prev,
+      [targetId]: null,
+    }));
+  }
+
+  /**
+   * Drop logic
+   *
+   * Regras:
+   * 1. Uma opção só pode existir em UM lugar
+   * 2. Se soltar em dropZone ocupada -> volta para options drag
+   * 3. Para trocar, precisa clicar primeiro na opção ocupada
+   */
+  function handleDrop(targetId: string, dragged: WordPair) {
+    setPlacements((prev) => {
+      const targetOccupied = prev[targetId];
+
+      // regra 2:
+      // se dropZone já estiver ocupada, não substitui
+      // item permanece na área de options drag
+      if (targetOccupied) {
+        return prev;
+      }
+
+      // remove essa opção de qualquer outro lugar
+      const updated = { ...prev };
+
+      Object.keys(updated).forEach((key) => {
+        if (updated[key]?.id === dragged.id) {
+          updated[key] = null;
+        }
+      });
+
+      // coloca no novo destino
+      updated[targetId] = dragged;
+
+      return updated;
+    });
+  }
+
+  /**
+   * CHECK ANSWERS
+   */
   function checkAnswer() {
     const allPlaced = Object.values(placements).every((v) => v !== null);
+
     if (!allPlaced) return;
 
     const correct = Object.entries(placements).filter(
@@ -77,8 +153,8 @@ export default function MatchingWordsGameScreen() {
 
     setPhaseScore(correct.length);
 
-    if (correct.length === totalWords && !hasSavedScore) {
-      setHasSavedScore(true);
+    if (correct.length === totalWords && !hasSavedScoreRef.current) {
+      hasSavedScoreRef.current = true;
 
       setGameScore((prev) => [
         ...prev,
@@ -88,7 +164,37 @@ export default function MatchingWordsGameScreen() {
           duration: TimerConverter(time),
         },
       ]);
+
+      nextStage();
     }
+  }
+
+  /**
+   * opções disponíveis:
+   * mostra apenas as que NÃO estão em nenhum dropZone
+   */
+  const availableOptions = rightWords.filter(
+    (item) =>
+      !Object.values(placements).some((value) => value?.id === item.id)
+  );
+
+  function restartGame() {
+    if (!data.length) return;
+
+    // re-embaralha mantendo a mesma lesson
+    const reshuffled = [...data].sort(() => Math.random() - 0.5);
+
+    const resetPlacements: Record<string, WordPair | null> = {};
+
+    data.forEach((item) => {
+      resetPlacements[item.id] = null;
+    });
+
+    setPlacements(resetPlacements);
+    setRightWords(reshuffled);
+    setPhaseScore(0);
+    setTime(0);
+    hasSavedScoreRef.current = false;
   }
 
   return (
@@ -108,77 +214,74 @@ export default function MatchingWordsGameScreen() {
       />
 
       <View style={styles.buttonWrapper}>
-        <Button onPress={checkAnswer}>
-          <Button.Icon icon={IconSquareRoundedCheckFilled} />
+        <Button onPress={restartGame}>
+          <Button.Icon icon={IconRefresh} />
+        </Button>
+
+        <Button onPress={checkAnswer} style={{ flexDirection: "row", gap: 6 }}>
+          <Button.Title>Vérifier</Button.Title>
+          <Button.Icon icon={IconSquareRoundedCheck} />
         </Button>
       </View>
 
       <DropProvider>
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-          contentContainerStyle={styles.container}
-        >
-          {/* options drag */}
-          <View style={styles.optionsArea}>
-            {rightWords.map((item) => {
-              const alreadyPlaced = Object.values(placements).some(
-                (value) => value?.id === item.id
-              );
+        <View style={styles.wrapper}>
+          {/* SCROLL 1 -> OPTIONS DRAG */}
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.optionsArea}
+          >
+            {availableOptions.map((item) => (
+              <Draggable key={item.id} data={item}>
+                <TouchableOpacity
+                  onPress={speak.bind(null, item.ar, "ar-MA")}
+                  style={styles.optionCard}>
+                  <Text style={styles.dragText}>{item.ar}</Text>
+                </TouchableOpacity>
+              </Draggable>
+            ))}
+          </ScrollView>
 
-              if (alreadyPlaced) return null;
-
-              return (
-                <Draggable key={item.id} data={item}>
-                  <View style={styles.optionCard}>
-                    <Text style={styles.dragText}>{item.ar}</Text>
-                  </View>
-                </Draggable>
-              );
-            })}
-          </View>
-
-          {/* matching rows */}
-          <View style={styles.mainColumn}>
+          {/* SCROLL 2 -> MATCHING ROWS */}
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.mainColumn}
+          >
             {data.map((item) => (
               <View key={item.id} style={styles.rowCard}>
                 <Text style={styles.leftText}>{item.fr}</Text>
 
                 <Droppable
-                  onDrop={(dragged: WordPair) => {
-                    const alreadyUsed = Object.entries(placements).find(
-                      ([key, value]) => value?.id === dragged.id && key !== item.id
-                    );
-
-                    // impede que a mesma opção fique em dois campos
-                    if (alreadyUsed) {
-                      return;
-                    }
-
-                    setPlacements((prev) => ({
-                      ...prev,
-                      [item.id]: dragged,
-                    }));
-                  }}
+                  onDrop={(dragged: WordPair) =>
+                    handleDrop(item.id, dragged)
+                  }
                 >
                   <View style={styles.dropZone}>
                     {placements[item.id] ? (
-                      <Draggable data={placements[item.id]}>
-                        <View style={styles.dragFilled}>
-                          <Text style={styles.dragText}>
-                            {placements[item.id]?.ar}
-                          </Text>
-                        </View>
-                      </Draggable>
+                      /**
+                       * regra 3:
+                       * clicar no item ocupado remove e devolve
+                       * para options drag
+                       */
+                      <Pressable
+                        onPress={() => removeFromDropZone(item.id)}
+                        style={styles.dragFilled}
+                      >
+                        <Text style={styles.dragText}>
+                          {placements[item.id]?.ar}
+                        </Text>
+                      </Pressable>
                     ) : (
-                      <Text style={styles.placeholder}>laisse ici</Text>
+                      <Text style={styles.placeholder}>
+                        laisse ici
+                      </Text>
                     )}
                   </View>
                 </Droppable>
               </View>
             ))}
-          </View>
-        </ScrollView>
+          </ScrollView>
+        </View>
       </DropProvider>
     </SafeAreaView>
   );
@@ -192,28 +295,34 @@ const styles = StyleSheet.create({
     paddingTop: 10,
   },
 
-  container: {
-    paddingBottom: 40,
+  wrapper: {
+    flex: 1,
     flexDirection: "row",
-    alignItems: "flex-start",
-    justifyContent: "center",
-    gap: 24,
-    flexGrow: 1,
+    gap: 10,
+    maxWidth: 600,
+    alignSelf: "center",
   },
 
   buttonWrapper: {
+    flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "flex-end",
     marginTop: 10,
     marginBottom: 14,
+    maxWidth: 600,
+    width: "100%",
+    alignSelf: "center",
   },
 
+  /**
+   * LEFT SCROLL
+   */
   optionsArea: {
     width: 190,
-    flexDirection: "column",
-    justifyContent: "flex-start",
     gap: 10,
-    zIndex: 1,
-    marginTop: 0,
+    paddingBottom: 40,
+    zIndex: 999,
+    elevation: 999,
   },
 
   optionCard: {
@@ -226,15 +335,18 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#DCE3EA",
     alignItems: "center",
-    elevation: 4,
-    zIndex: 999,
+    elevation: 20,
+    zIndex: 9999,
   },
 
+  /**
+   * RIGHT SCROLL
+   */
   mainColumn: {
-    flex: 1,
-    maxWidth: 650,
+    flexGrow: 1,
     gap: 12,
-    zIndex: 0,
+    paddingBottom: 40,
+    zIndex: 1,
   },
 
   rowCard: {
@@ -248,6 +360,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#E2E8F0",
     gap: 12,
+    overflow: "visible",
   },
 
   leftText: {
@@ -260,7 +373,7 @@ const styles = StyleSheet.create({
   dropZone: {
     width: screenWidth < 400 ? 140 : 170,
     minHeight: 56,
-    borderWidth: 2,
+    borderWidth: 1,
     borderStyle: "dashed",
     borderColor: "#94A3B8",
     borderRadius: 14,
@@ -268,18 +381,19 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     padding: 6,
-    overflow: "visible",
   },
 
   dragFilled: {
     width: "100%",
     minHeight: 42,
-    backgroundColor: "#EEF6FF",
+    backgroundColor: "#fff",
     borderRadius: 10,
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 10,
     paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: "#DCE3EA",
   },
 
   placeholder: {

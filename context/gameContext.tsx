@@ -19,12 +19,11 @@ type GameContextType = {
 
 const stages: Href[] = [
   "/games/game1",
+  "/games/game2",
+   "/games/game4",
   "/games/game3",
-  "/games/game1",
-  "/games/game2",
-  "/games/game2",
-  //"/games/game4",
-  ];
+   "/games/game5",
+];
 
 const GameContext = createContext<GameContextType | null>(null);
 
@@ -35,7 +34,7 @@ type Props = {
 interface gameScoreProps {
   score: string;
   name: string;
-  duration: string;
+  duration?: string;
 }
 export function GameProvider({ children }: Props) {
   const [currentStage, setCurrentStage] = useState(0);

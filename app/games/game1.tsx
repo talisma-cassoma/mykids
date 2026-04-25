@@ -2,13 +2,14 @@ import React, { use, useEffect, useState } from "react";
 import { View, StyleSheet, FlatList, TouchableOpacity, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "@/components/Button";
-import { gameData, GameStage, WordPair, speak, TimerConverter } from "@/utils/lessons";
+import { gameData, GameStage, WordPair, useSpeech, TimerConverter } from "@/utils/lessons";
 import { useGame } from "@/context/gameContext";
 import { Header } from "@/components/Header";
          
 
 export default function MactchingWordsGameScreen() {
   let gameTittle="match les mots"
+  const { speak } = useSpeech();
   const { nextStage, setGameScore } = useGame();
   const [isButtonLoading, setIsButtonLoading] = useState<boolean>(false)
   const [isMacthActive, setIsMactchActive] = useState<boolean>(true)

@@ -95,10 +95,29 @@ export const gameData: GameStage[] = [
 }
 ];
 
-export const speak = React.useCallback((text: string, lang: string) => {
-    Speech.stop();
-    Speech.speak(text, { language: lang, pitch: 1, rate: 0.9 });
-  }, []);
+export const useSpeech = () => {
+    const speak = React.useCallback((text: string, lang: string) => {
+        return new Promise<void>((resolve, reject) => {
+            Speech.stop();
+
+            Speech.speak(text, {
+                language: lang,
+                pitch: 1,
+                rate: 0.9,
+
+                onDone: () => resolve(),
+                onStopped: () => resolve(),
+                onError: (error) => reject(error),
+            });
+        });
+    }, []);
+
+    const stop = React.useCallback(() => {
+        Speech.stop();
+    }, []);
+
+    return { speak, stop };
+};
 
 
 export function TimerConverter(time: number){

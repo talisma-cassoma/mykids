@@ -1,5 +1,4 @@
-
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import {
     View,
     Text,
@@ -14,7 +13,8 @@ import { Header } from "@/components/Header";
 import { Button } from "@/components/Button";
 import { ArabicKeyboard } from "@/components/ArabicKeyboard";
 import { useGame } from "@/context/gameContext";
-import { speak, TimerConverter } from "@/utils/lessons";
+import { useSpeech, TimerConverter } from "@/utils/lessons";
+import { IconVolume } from "@tabler/icons-react-native";
 
 const data = {
     id: "txt_002",
@@ -23,18 +23,14 @@ const data = {
         arabic_text:
             "لسارة قطة لطيفة، تحبها كثيرًا، وتقدم لها الطعام بانتظام، وتعتني بصحتها. وبعد مدة لاحظت سارة أن قطتها أصبحت تأخذ الطعام وتختفي بسرعة، دون أن تتناول منه شيئًا. قررت سارة أن تكتشف السرّ. وعندما حان وقت الطعام، قدمت لقطتها سمكة؛ فأخذتها، وانطلقت كالسهم تعدو. تبعتها سارة، وهي تتجه نحو مكان مهجور، فرأتها تضع السمكة أمام قطة أخرى، ولدت حديثًا قطيطات. تعجبت سارة، وأصبحت منذ ذلك اليوم، تقدم لقطتها مزيدًا من الطعام.",
         french_translation:
-            "Sara a une gentille chatte qu’elle aime beaucoup. Elle lui donne régulièrement de la nourriture et prend soin de sa santé. Après quelque temps, Sara remarqua que sa chatte prenait la nourriture et disparaissait rapidement sans rien manger. Sara décida de découvrir le secret. Quand l’heure du repas arriva, elle donna un poisson à sa chatte ; celle-ci le prit et partit en courant comme une flèche. Sara la suivit vers un endroit abandonné et la vit poser le poisson devant une autre chatte qui venait de mettre bas à de petits chatons. Sara fut étonnée, et depuis ce jour-là, elle donna davantage de nourriture à sa chatte.",
+            "Sara a une gentille chatte qu’elle aime beaucoup. Elle lui donne régulièrement de la nourriture et prend soin de sa santé. Après quelque temps, Sara remarqua que sa chatte prenait la nourriture et disparaissait rapidement sans rien manger. Sara décida de découvrir le secret.",
     },
 
     generated_questions: {
         q1_main_idea: {
             question: "De quoi parle le texte ?",
             correct_answer: "Une chatte solidaire",
-            options: [
-                "Une chatte solidaire",
-                "Un oiseau blessé",
-                "Une école abandonnée",
-            ],
+            options: ["Une chatte solidaire", "Un oiseau blessé", "Une école abandonnée"],
         },
 
         q2_listening_word: {
@@ -60,36 +56,26 @@ const data = {
 
 export default function TextInterpretationGameScreen() {
     const gameTitle = "interpretation du texte";
-    //const [score, setScore] = useState(0);
-    const scrollRef = useRef<ScrollView>(null);
-
-
-    const [time, setTime] = useState(0);
-    const [isTimerRunning, setIsTimerRunning] = useState(true);
 
     const { nextStage, setGameScore } = useGame();
+    const { speak } = useSpeech();
+    const [step, setStep] = useState(0);
+    const [time, setTime] = useState(0);
+
+    const [isSpeaking, setIsSpeaking] = useState(false);
 
     /**
-     * Q1
+     * Q states
      */
     const [selectedQ1, setSelectedQ1] = useState<string | null>(null);
     const [q1Correct, setQ1Correct] = useState<boolean | null>(null);
 
-    /**
-     * Q2
-     */
     const [selectedQ2, setSelectedQ2] = useState<string | null>(null);
     const [q2Correct, setQ2Correct] = useState<boolean | null>(null);
 
-    /**
-     * Q3
-     */
     const [userInput, setUserInput] = useState("");
     const [q3Correct, setQ3Correct] = useState<boolean | null>(null);
 
-    /**
-     * Q4
-     */
     const [selectedQ4, setSelectedQ4] = useState<string | null>(null);
     const [q4Correct, setQ4Correct] = useState<boolean | null>(null);
 
@@ -99,29 +85,29 @@ export default function TextInterpretationGameScreen() {
      * TIMER
      */
     useEffect(() => {
-        if (!isTimerRunning) return;
-
         const interval = setInterval(() => {
             setTime((prev) => prev + 1);
         }, 1000);
 
         return () => clearInterval(interval);
-    }, [isTimerRunning]);
+    }, []);
 
     /**
-     * AUTO SPEAK Q2
+     * STEP 0 → TEXT SPEAK
      */
-    // useEffect(() => {
-    //     const interval = setInterval(() => {
-    //         speak(
-    //             data.generated_questions.q2_listening_word.audio_word,
-    //             "ar-MA"
-    //         );
-    //     }, 7000);
+    useEffect(() => {
+        const run = async () => {
+            if (step !== 0) return;
 
-    //     return () => clearInterval(interval);
-    // }, []);
+            setIsSpeaking(true);
 
+            await speak(data.content.arabic_text, "ar-MA");
+
+            setIsSpeaking(false);
+        };
+
+        run();
+    }, [step]);
 
     const getOptionStyle = (
         option: string,
@@ -129,10 +115,8 @@ export default function TextInterpretationGameScreen() {
         isCorrect: boolean | null,
         correctAnswer: string
     ) => ({
-        borderWidth: 1,
-        borderRadius: 8,
-        padding: 12,
-        borderColor:
+       
+        "borderColor":
             isCorrect === false && option === selected
                 ? 'crimson'
                 : isCorrect === true && option === correctAnswer
@@ -144,74 +128,40 @@ export default function TextInterpretationGameScreen() {
             selected === option ? '#EFF6FF' : '#FFF',
     });
 
-    // Scroll para próxima seção
-    const goNextQuestion = (y: number) => {
-        setTimeout(() => {
-            scrollRef.current?.scrollTo({
-                y,
-                animated: true,
-            });
-        }, 500);
-    };
-
-
     /**
-     * Q1 VALIDATION
+     * VALIDATIONS
      */
     const validateQ1 = () => {
         const correct =
-            selectedQ1 ===
-            data.generated_questions.q1_main_idea.correct_answer;
-
+            selectedQ1 === data.generated_questions.q1_main_idea.correct_answer;
         setQ1Correct(correct);
-        console.log(` la reponse choisit ${selectedQ1} est ${correct}`);
-
-        // if (correct) {
-        //     setScore((prev) => prev + 25);
-        //     goNextQuestion(500);
-        // }
     };
 
-    /**
-     * Q2 VALIDATION
-     */
     const validateQ2 = () => {
         const correct =
-            selectedQ2 ===
-            data.generated_questions.q2_listening_word.correct_answer;
-
+            selectedQ2 === data.generated_questions.q2_listening_word.correct_answer;
         setQ2Correct(correct);
-        console.log(` la reponse choisit ${selectedQ2} est ${correct}`);
     };
 
-    /**
-     * Q3 VALIDATION
-     * reaproveitando sua lógica original
-     */
     const validateQ3 = () => {
         const correct =
-            userInput.trim() ===
-            data.generated_questions.q3_write_word.target_word;
-
+            userInput.trim() === data.generated_questions.q3_write_word.target_word;
         setQ3Correct(correct);
-        console.log(` la reponse choisit ${userInput} est ${correct}`);
+    };
+
+    const validateQ4 = () => {
+        const correct =
+            selectedQ4 === data.generated_questions.q4_complete_sentence.correct_answer;
+        setQ4Correct(correct);
     };
 
     /**
-     * Q4 VALIDATION
+     * FINISH GAME
      */
-    const validateQ4 = () => {
-        const correct =
-            selectedQ4 ===
-            data.generated_questions.q4_complete_sentence.correct_answer;
-
-        setQ4Correct(correct);
-        console.log(` la reponse choisit ${selectedQ4} est ${correct}`);
-    };
-
     const finishGame = () => {
         setIsButtonLoading(true);
-        const gScore = [q1Correct, q2Correct, q3Correct, q4Correct]
+
+        const gScore = [q1Correct, q2Correct, q3Correct, q4Correct];
         const totalScore = gScore.reduce((acc, val) => acc + (val ? 1 : 0), 0);
 
         setGameScore((prev) => [
@@ -226,213 +176,201 @@ export default function TextInterpretationGameScreen() {
         nextStage();
     };
 
-   const allAnswered =
-    selectedQ1 !== null &&
-    selectedQ2 !== null &&
-    userInput.trim() !== "" &&
-    selectedQ4 !== null;
-
     return (
         <SafeAreaView style={styles.safe}>
             <Header
                 gameDescription={gameTitle}
-                timer={{
-                    isActive: true,
-                    mode: "increasing",
-                    time,
-                }}
+                timer={{ isActive: true, mode: "increasing", time }}
             />
 
             <ScrollView contentContainerStyle={styles.container}>
-                {/* TEXTO */}
-                <TouchableOpacity style={styles.card}
-                    onPress={() =>
-                        speak(
-                            data.content.arabic_text,
-                            "ar-MA"
-                        )
-                    }
-                >
-                    <Text style={styles.arabicText}>
-                        {data.content.arabic_text}
-                    </Text>
-
-                    <Text style={styles.frenchText}>
-                        {data.content.french_translation}
-                    </Text>
-                </TouchableOpacity>
-
-                {/* Q1 */}
-                <View style={styles.card}>
-                    <Text style={styles.question}>
-                        {data.generated_questions.q1_main_idea.question}
-                    </Text>
-
-                    {data.generated_questions.q1_main_idea.options.map((item) => (
+                {/* ================= TEXT ================= */}
+                {step === 0 && (
+                    <View style={styles.card}>
                         <TouchableOpacity
-                            key={item}
-                            disabled={q1Correct !== null}
-                            style={getOptionStyle(
-                                item,
-                                selectedQ1,
-                                q1Correct,
-                                data.generated_questions.q1_main_idea.correct_answer
-                            )}
-                            onPress={() => setSelectedQ1(item)}
+                            disabled={isSpeaking}
+                            onPress={() =>
+                                speak(data.content.arabic_text, "ar-MA")
+                            }
                         >
-                            <Text>{item}</Text>
+                            <Text style={styles.arabicText}>
+                                {data.content.arabic_text}
+                            </Text>
+
+                            <Text style={styles.frenchText}>
+                                {data.content.french_translation}
+                            </Text>
                         </TouchableOpacity>
-                    ))}
 
-                    <TouchableOpacity
-                        onPress={validateQ1}
-                        disabled={q1Correct !== null}
-                        style={styles.validateBtn}
-                    >
-                        <Text style={styles.btnText}>Valider</Text>
-                    </TouchableOpacity>
-                </View>
+                        {!isSpeaking && (
+                            <Button onPress={() => setStep(1)}>
+                                <Button.Title>Avançar</Button.Title>
+                            </Button>
+                        )}
+                    </View>
+                )}
 
-                {/* Q2 */}
-                <View style={styles.card}>
-                    <Text style={styles.question}>
-                        {data.generated_questions.q2_listening_word.question}
-                    </Text>
+                {/* ================= Q1 ================= */}
+                {step === 1 && (
+                    <View style={styles.card}>
+                        <Text>{data.generated_questions.q1_main_idea.question}</Text>
+                        {data.generated_questions.q1_main_idea.options.map((item) => (
+                            <TouchableOpacity key={item}
+                                disabled={q1Correct !== null}
+                                style={[getOptionStyle(
+                                    item,
+                                    selectedQ1,
+                                    q1Correct,
+                                    data.generated_questions.q1_main_idea.correct_answer
+                                ), styles.option]}
+                                onPress={() => setSelectedQ1(item)}>
+                                <Text>{item}</Text>
+                            </TouchableOpacity>
+                        ))}
 
-                    <TouchableOpacity
-                        style={styles.listenBtn}
-                        onPress={() =>
-                            speak(
-                                data.generated_questions.q2_listening_word.audio_word,
-                                "ar-MA"
+
+                        {q1Correct !== null 
+                        ?(
+
+                                <Button onPress={() => setStep(2)}>
+                                    <Button.Title>Avançar</Button.Title>
+                                </Button>
                             )
-                        }
-                    >
-                        <Text style={styles.btnText}>🔊 Écouter</Text>
-                    </TouchableOpacity>
+                            :
+                            (
+                                <TouchableOpacity onPress={validateQ1}
+                                    disabled={q1Correct !== null}
+                                    style={styles.validateBtn}
+                                >
+                                    <Text style={styles.btnText}>Valider</Text>
+                                </TouchableOpacity>
+                            )}
+                    </View>
+                )}
 
-                    {data.generated_questions.q2_listening_word.options.map(
-                        (item) => (
-                            <TouchableOpacity
-                                key={item}
+                {/* ================= Q2 ================= */}
+                {step === 2 && (
+                    <View style={styles.card}>
+                        <Text>{data.generated_questions.q2_listening_word.question}</Text>
+
+                        <TouchableOpacity
+                                style={{flexDirection:"row", gap:6, }}
+                            onPress={() =>
+                                speak(
+                                    data.generated_questions.q2_listening_word.audio_word,
+                                    "ar-MA"
+                                )
+                            }
+                        >
+                          
+                            <Text>Écouter</Text>
+                            <IconVolume size={18} color="grey"/>
+                         
+                        </TouchableOpacity>
+
+                        {data.generated_questions.q2_listening_word.options.map((item) => (
+                            <TouchableOpacity key={item}
                                 disabled={q2Correct !== null}
-                                style={getOptionStyle(
+                                style={[getOptionStyle(
                                     item,
                                     selectedQ2,
                                     q2Correct,
                                     data.generated_questions.q2_listening_word.correct_answer
-                                )}
-                                onPress={() => setSelectedQ2(item)}
-                            >
+                                ), styles.option]}
+                                onPress={() => setSelectedQ2(item)}>
                                 <Text>{item}</Text>
                             </TouchableOpacity>
-                        )
-                    )}
+                        ))}
 
-                    <TouchableOpacity
-                        onPress={validateQ2}
-                        disabled={q2Correct !== null}
-                        style={styles.validateBtn}
-                    >
-                        <Text style={styles.btnText}>Valider</Text>
-                    </TouchableOpacity>
-                </View>
+                        {q2Correct !== null ?
+                            (
 
-                {/* Q3 */}
-                <View style={[styles.card, {justifyContent: "center"}]}>
-                    <Text style={styles.question}>
-                        {data.generated_questions.q3_write_word.question}
-                    </Text>
-
-                    <Text style={{ marginBottom: 10 }}>
-                        Mot à écrire:
-                    </Text>
-
-                    <Text style={styles.targetWord}>
-                        {data.generated_questions.q3_write_word.target_word}
-                    </Text>
-
-                    <TextInput
-                        value={userInput}
-                        editable={false}
-                        style={[
-                            styles.input,
-                            q3Correct === false && {
-                                borderColor: "crimson",
-                            },
-                        ]}
-                    />
-
-                    <ArabicKeyboard
-                        style={{alignSelf: "center"}}
-                        value={userInput}
-                        onChange={setUserInput}
-                    />
-
-                    <View style={styles.row}>
-                        <TouchableOpacity
-                            onPress={() => setUserInput("")}
-                            style={styles.clearBtn}
-                        >
-                            <Text style={styles.btnText}>Nettoyer</Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity
-                            onPress={validateQ3}
-                            style={styles.validateBtn}
-                        >
-                            <Text style={styles.btnText}>Valider</Text>
-                        </TouchableOpacity>
+                                <Button onPress={() => setStep(3)}>
+                                    <Button.Title>Avancer</Button.Title>
+                                </Button>
+                            )
+                            :
+                            (
+                                <TouchableOpacity onPress={validateQ2}
+                                    disabled={q2Correct !== null}
+                                    style={styles.validateBtn}
+                                >
+                                    <Text style={styles.btnText}>Valider</Text>
+                                </TouchableOpacity>
+                            )}
                     </View>
-                </View>
+                )}
 
-                {/* Q4 */}
-                <View style={styles.card}>
-                    <Text style={styles.question}>
-                        {data.generated_questions.q4_complete_sentence.question}
-                    </Text>
+                {/* ================= Q3 ================= */}
+                {step === 3 && (
+                    <View style={styles.card}>
+                        <Text>{data.generated_questions.q3_write_word.question}</Text>
 
-                    <Text style={styles.sentence}>
-                        {
-                            data.generated_questions.q4_complete_sentence
-                                .sentence
-                        }
-                    </Text>
+                        <Text>{data.generated_questions.q3_write_word.target_word}</Text>
 
-                    {/* aqui pode depois trocar por drag and drop real */}
-                    {data.generated_questions.q4_complete_sentence.options.map(
-                        (item) => (
+                        <TextInput
+                            value={userInput}
+                            onChangeText={setUserInput}
+                            style={styles.input}
+                        />
+
+                        <ArabicKeyboard value={userInput} onChange={setUserInput} />
+
+                        {q3Correct !== null ? (
+                            <Button onPress={() => setStep(4)}>
+                                <Button.Title>Avançar</Button.Title>
+                            </Button>
+                        ) : (
                             <TouchableOpacity
-                                key={item}
-                                disabled={q4Correct !== null}
-                                style={getOptionStyle(
+                                style={styles.validateBtn}
+                                onPress={validateQ3}>
+                                <Text style={styles.btnText}>Valider</Text>
+                            </TouchableOpacity>
+                        )}
+                    </View>
+                )}
+
+                {/* ================= Q4 ================= */}
+                {step === 4 && (
+                    <View style={styles.card}>
+                        <Text>{data.generated_questions.q4_complete_sentence.question}</Text>
+
+                        <Text>{data.generated_questions.q4_complete_sentence.sentence}</Text>
+
+                        {data.generated_questions.q4_complete_sentence.options.map((item) => (
+                            <TouchableOpacity key={item} 
+                             disabled={q4Correct !== null}
+                        style={[getOptionStyle(
                                     item,
                                     selectedQ4,
                                     q4Correct,
                                     data.generated_questions.q4_complete_sentence.correct_answer
-                                )}
-                                onPress={() => setSelectedQ4(item)}
-                            >
+                                ), styles.option]}
+                            onPress={() => setSelectedQ4(item)}>
                                 <Text>{item}</Text>
                             </TouchableOpacity>
-                        )
-                    )}
+                        ))}
 
-                    <TouchableOpacity
-                        onPress={validateQ4}
-                        disabled={q4Correct !== null}
-                        style={styles.validateBtn}
-                    >
-                        <Text style={styles.btnText}>Valider</Text>
-                    </TouchableOpacity>
-                </View>
+                       
 
-                {allAnswered && (
-                    <Button
-                        onPress={finishGame}
-                        isLoading={isButtonLoading}
-                    >
-                        <Button.Title>Avancer</Button.Title>
+                        {q4Correct !== null ? (
+                            <Button onPress={() => setStep(5)}>
+                                <Button.Title>Terminer</Button.Title>
+                            </Button>
+                        ):(
+                             <TouchableOpacity
+                            style={styles.validateBtn}
+                            onPress={validateQ4}>
+                            <Text style={styles.btnText}>Valider</Text>
+                        </TouchableOpacity>
+                        )}
+                    </View>
+                )}
+
+                {/* ================= FINISH ================= */}
+                {step === 5 && (
+                    <Button onPress={finishGame} isLoading={isButtonLoading} style={{ alignSelf: "center" }}>
+                        <Button.Title>Finaliser</Button.Title>
                     </Button>
                 )}
             </ScrollView>
@@ -440,25 +378,28 @@ export default function TextInterpretationGameScreen() {
     );
 }
 
+/**
+ * STYLES
+ */
 const styles = StyleSheet.create({
-    safe: {
-        flex: 1,
-        backgroundColor: "#fff",
-        padding: 20,
-    },
-
+    safe: { flex: 1, backgroundColor: "#fff", padding: 20 },
     container: {
         flexGrow: 1,
         gap: 20,
         paddingBottom: 40,
-    },
+        alignItems: "center",
 
+    },
     card: {
+        flex: 1,
         borderWidth: 1,
         borderColor: "#E5E7EB",
         borderRadius: 12,
         padding: 16,
         gap: 12,
+        justifyContent: "center",
+        alignItems: "center",
+        width: "100%",
     },
 
     arabicText: {
@@ -482,12 +423,14 @@ const styles = StyleSheet.create({
         borderColor: "#DDD",
         padding: 12,
         borderRadius: 8,
+        width:400,
     },
 
     validateBtn: {
         backgroundColor: "#4CAF50",
         padding: 12,
         borderRadius: 8,
+        maxWidth: 140,
         alignItems: "center",
     },
 
@@ -517,6 +460,7 @@ const styles = StyleSheet.create({
         padding: 12,
         fontSize: 22,
         textAlign: "right",
+        width: 350,
     },
 
     row: {
@@ -533,5 +477,5 @@ const styles = StyleSheet.create({
         fontSize: 20,
         textAlign: "right",
     },
-});
 
+});

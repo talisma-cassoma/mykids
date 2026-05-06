@@ -18,7 +18,6 @@ import {
 
 import { Button } from "@/components/Button";
 import {
-  gameData,
   GameStage,
   WordPair,
   TimerConverter,
@@ -26,12 +25,13 @@ import {
 } from "@/utils/lessons";
 import { useGame } from "@/context/gameContext";
 import { Header } from "@/components/Header";
-
+import { useData } from "@/context/DataContext";
 const screenWidth = Dimensions.get("window").width;
 
 export default function MatchingWordsGameScreen() {
   const gameTitle = "glisser et déposer les mots";
   const { setGameScore, nextStage } = useGame();
+  const { gameData } = useData();
 
   const { speak } = useSpeech();
 

@@ -6,12 +6,13 @@ import { Header } from "@/components/Header";
 import { Button } from "@/components/Button";
 import { ArabicKeyboard } from "@/components/ArabicKeyboard";
 import { useGame } from "@/context/gameContext";
+import { useData } from "@/context/DataContext";
 
-import { useSpeech, gameData, GameStage, WordPair, TimerConverter } from "@/utils/lessons";
+import { useSpeech, GameStage, WordPair, TimerConverter } from "@/utils/lessons";
 
 export default function WriteTheWordsGameScreen() {
     const gameTittle = "ecris le mot en arabe"
-    
+    const { gameData } = useData();
     const { speak } = useSpeech();
     
     const [time, setTime] = useState(0);

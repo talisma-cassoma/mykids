@@ -5,4 +5,5 @@ export const Avatars = {
   blond_woman: require("./blond_white_woman.png"),
   old_man: require("./old_man.png"),
   dino: require("./dino_avatar.png"),
+  ayla: require("./ayla_avatar.jpg"),
 };

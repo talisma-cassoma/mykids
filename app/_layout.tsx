@@ -12,8 +12,10 @@ import { useColorScheme } from "@/hooks/useColorScheme";
 import { AuthProvider } from "@/context/auth";
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import * as ScreenOrientation from 'expo-screen-orientation';
 import { GameProvider } from "@/context/gameContext";
+import { DataProvider } from "@/context/DataContext";
 
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
@@ -32,26 +34,29 @@ export default function RootLayout() {
     }
     unlockScreenOerientation()
   }, [])
+  
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <SafeAreaProvider style={{ flex: 1 }}>
-        <AuthProvider>
-          <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-
-            <GameProvider>
-              <StatusBar style="auto" />
-              <Stack
-                screenOptions={{
-                  headerShown: false,
-                }}
-              />
-            </GameProvider>
-
-          </ThemeProvider>
-        </AuthProvider>
-      </SafeAreaProvider>
-    </GestureHandlerRootView>
+    <GameProvider>
+      <DataProvider>
+        <GestureHandlerRootView style={{ flex: 1 }}>
+          <BottomSheetModalProvider>
+            <SafeAreaProvider style={{ flex: 1 }}>
+              <AuthProvider>
+                <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+                  <StatusBar style="auto" />
+                  <Stack
+                    screenOptions={{
+                      headerShown: false,
+                    }}
+                  />
+                </ThemeProvider>
+              </AuthProvider>
+            </SafeAreaProvider>
+          </BottomSheetModalProvider>
+        </GestureHandlerRootView>
+      </DataProvider>
+    </GameProvider>
   );
 }
 

@@ -15,13 +15,13 @@ type ButtonProps = TouchableOpacityProps & {
 export function Button({ children, style, isLoading = false, ...rest }: ButtonProps) {
   return (
     <TouchableOpacity
-      style={{ marginTop: 20,
+      style={[{ marginTop: 20,
                 backgroundColor: "#a5d6a7",
                 padding: 10,
                 justifyContent: "center",
                 alignItems: "center",
-                width: 100,
-                borderRadius: 8}}
+                minWidth: 100,
+                borderRadius: 8}, style]}
       activeOpacity={0.8}
       disabled={isLoading}
       {...rest}
@@ -41,13 +41,15 @@ function Title({ children }: TextProps) {
 
 type IconProps = {
   icon: React.ComponentType<TablerIconProps>
+  color?: string
 }
 
-function Icon({ icon: Icon }: IconProps) {
-  return <Icon size={24} color="#fff" />
+function Icon({ icon: Icon, color = "#fff" }: IconProps) {
+  return <Icon size={18} color={color} />
 }
 
 Button.Title = Title
 Button.Icon = Icon
+
 
 

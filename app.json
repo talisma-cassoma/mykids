@@ -60,7 +60,8 @@
       "expo-secure-store",
       "expo-apple-authentication",
       "expo-font",
-      "expo-web-browser"
+      "expo-web-browser",
+      "expo-sqlite"
     ],
     "experiments": {
       "typedRoutes": true

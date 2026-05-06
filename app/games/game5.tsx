@@ -27,8 +27,8 @@ const gameData: GameStage[] = [
         wordPairs: [
             { id: "1", fr: "Bonjour", ar: "مرحبا" },
             { id: "2", fr: "Merci", ar: "شكرا" },
-            // { id: "3", fr: "Chat", ar: "قط" },
-            // { id: "4", fr: "Maison", ar: "منزل" },
+            { id: "3", fr: "Chat", ar: "قط" },
+            { id: "4", fr: "Maison", ar: "منزل" },
         ],
     },
 ];

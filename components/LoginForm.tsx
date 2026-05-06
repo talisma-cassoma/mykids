@@ -5,7 +5,7 @@ import SignInWithGoogleButton from "./SignInWithGoogleButton";
 import { Image, useColorScheme, View, StyleSheet, TouchableOpacity } from "react-native";
 import { SignInWithAppleButton } from "./SignInWithAppleButton";
 import { Redirect, router } from "expo-router";
-import { IconPlayerPauseFilled, IconPlayerPlayFilled } from "@tabler/icons-react-native";
+import { IconSettings } from "@tabler/icons-react-native";
 import { Avatars } from "@/assets/avatars";
 
 
@@ -15,50 +15,91 @@ export default function LoginForm() {
 
   return (
     <ThemedView style={styles.container}>
-      <Image
-        source={
-          theme === "dark"
-            ? require("@/assets/images/bkg.jpg")
-            : require("@/assets/images/bkg.jpg")
-        }
-        style={{
-          flex: 1, width: "100%", height: "100%",
-          borderBottomLeftRadius: 50, borderBottomRightRadius: 50,
-        }}
-      />
       <View style={{
-        position: "absolute",
-        top: 80,
-        flexDirection: "column", alignItems: "center", justifyContent: "center", width: 100,
-        height: 100,
-
-      }}
-      >
-     {/* Avatar flottant */}
-          <TouchableOpacity 
-            style={styles.avatarWrapper}
-            onPress={() => router.replace("/games/StartScreen")}
-          >
-            <View style={styles.imageShadow}>
-              <Image
-                source={Avatars.dino}
-                style={styles.avatarImage}
-              />
-            </View>
-            <ThemedText style={styles.description}>yachane</ThemedText>
-          </TouchableOpacity>
-      </View>
-
-      <View style={styles.card}>
-
-        <View style={styles.contentContainer}>
-    
-          <View style={styles.buttonContainer}>
-            <SignInWithGoogleButton onPress={signIn} disabled={isLoading} />
-            <SignInWithAppleButton />
+        backgroundColor: "#fece00",
+        width: "100%",
+        height: 250,
+        borderBottomLeftRadius: 50, borderBottomRightRadius: 50,
+        flex: 1,
+        alignItems: "center",
+        //boxSizing: "border-box",
+        overflow: "hidden",
+        flexDirection: "column",
+        justifyContent: "space-around",
+      }
+      }>
+        <View style={{
+          flexDirection: "column",
+          alignItems: "center",
+          width: "100%",
+          height: 250,
+          //position: "absolute",
+          
+          //boxSizing: "content-box",
+          //overflow: "hidden",
+        }}
+        >
+          <View style={{ height: 100, flexDirection: "row", justifyContent: "flex-end", width: "100%", paddingHorizontal: 20 }}>
+            <TouchableOpacity
+              style={styles.avatarWrapper}
+            onPress={() => router.replace("/games/Settings")}
+            >
+              <View style={{ justifyContent: "center", alignItems: "center", width: 40, height: 40, borderRadius: 20, backgroundColor: "#FFF", }}>
+                <IconSettings size={30} color="#333" />
+              </View>
+              <ThemedText style={{ fontSize: 14, color: "#fff" }}>settings</ThemedText>
+            </TouchableOpacity>
+          </View>
+          <View style={{ height: 150, flexDirection: "row", justifyContent: "space-around", alignItems: "center",width: 200 }}>
+            {/* Avatar flottant */}
+            <TouchableOpacity
+              style={styles.avatarWrapper}
+              onPress={() => router.replace("/games/StartScreen")}
+            >
+              <View style={styles.imageShadow}>
+                <Image
+                  source={Avatars.dino}
+                  style={styles.avatarImage}
+                />
+              </View>
+              <ThemedText style={styles.description}>Yachane</ThemedText>
+            </TouchableOpacity>
+            {/* Avatar flottant */}
+            <TouchableOpacity
+              style={styles.avatarWrapper}
+              //onPress={() => router.replace("/games/StartScreen")}
+            >
+              <View style={styles.imageShadow}>
+                <Image
+                  source={Avatars.ayla}
+                  style={styles.avatarImage}
+                />
+              </View>
+              <ThemedText style={styles.description}>Ayla</ThemedText>
+            </TouchableOpacity>
           </View>
         </View>
+        <Image
+          source={
+            theme === "dark"
+              ? require("@/assets/images/bkg.jpg")
+              : require("@/assets/images/bkg.jpg")
+          }
+          style={{
+            flex: 1,
+            resizeMode: "contain",
+          }}
+        />
+
       </View>
+
+      <View style={styles.contentContainer}>
+        <View style={styles.buttonContainer}>
+          <SignInWithGoogleButton onPress={signIn} disabled={isLoading} />
+          <SignInWithAppleButton />
+        </View>
+      </View>
+
     </ThemedView>
   );
 }
@@ -87,13 +128,14 @@ const styles = StyleSheet.create({
     marginBottom: 32,
     borderRadius: 10,
   },
-    avatarWrapper: {
+  avatarWrapper: {
     alignItems: "center",
     marginTop: 40, // Ajuste selon l'encoche (SafeArea)
+    height: "100%",
   },
   imageShadow: {
-    width: 100,
-    height: 100,
+    width: 80,
+    height: 80,
     borderRadius: 20,
     backgroundColor: "#FFF",
     // Ombres iOS
@@ -113,6 +155,7 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     width: "100%",
+    maxWidth: 360,
     gap: 32,
   },
   title: {

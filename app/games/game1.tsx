@@ -2,13 +2,15 @@ import React, { use, useEffect, useState } from "react";
 import { View, StyleSheet, FlatList, TouchableOpacity, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "@/components/Button";
-import { gameData, GameStage, WordPair, useSpeech, TimerConverter } from "@/utils/lessons";
+import { GameStage, WordPair, useSpeech, TimerConverter } from "@/utils/lessons";
 import { useGame } from "@/context/gameContext";
+import { useData } from "@/context/DataContext";
 import { Header } from "@/components/Header";
-         
+
 
 export default function MactchingWordsGameScreen() {
-  let gameTittle="match les mots"
+  let gameTittle = "match les mots"
+  const { gameData } = useData();
   const { speak } = useSpeech();
   const { nextStage, setGameScore } = useGame();
   const [isButtonLoading, setIsButtonLoading] = useState<boolean>(false)
@@ -31,7 +33,7 @@ export default function MactchingWordsGameScreen() {
 
   useEffect(() => {
     if (!isTimerRunning) return; //pause time
-    
+
     const interval = setInterval(() => {
       setTime(prev => {
         if (prev === 1 && !hasSavedScore) { //if time ends -> nextstage
@@ -65,7 +67,7 @@ export default function MactchingWordsGameScreen() {
 
   const [selectedLeft, setSelectedLeft] = useState<WordPair | null>(null);
   const [selectedRight, setSelectedRight] = useState<WordPair | null>(null);
-  
+
 
   // 🎲 escolhe UMA fase apenas no início
   useEffect(() => {
@@ -77,7 +79,7 @@ export default function MactchingWordsGameScreen() {
   const data = currentLesson?.wordPairs ?? [];
   const totalWords = data.length;
   const isPhaseCompleted = matched.length === totalWords;
-  gameTittle =`match les mots: ${currentLesson?.lessonTitle}`
+  gameTittle = `match les mots: ${currentLesson?.lessonTitle}`
 
 
   // 🔀 init da fase
@@ -180,7 +182,7 @@ export default function MactchingWordsGameScreen() {
           current: phaseScore,
           total: totalWords,
         }} />
-      <View style={{ flex: 1, flexDirection: 'row', gap: 10, maxWidth: 500, alignSelf: "center", marginTop:20 }}>
+      <View style={{ flex: 1, flexDirection: 'row', gap: 10, maxWidth: 500, alignSelf: "center", marginTop: 20 }}>
 
         <FlatList
           data={leftWords}
@@ -213,7 +215,7 @@ export default function MactchingWordsGameScreen() {
               setHasSavedScore(true);
               setGameScore(prev => [...prev, {
                 score: `${phaseScore}/${totalWords}`,
-                name:`${gameTittle}`,
+                name: `${gameTittle}`,
                 duration: TimerConverter(time),
               }])
               nextStage()

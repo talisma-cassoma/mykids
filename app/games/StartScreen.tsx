@@ -9,6 +9,8 @@ import {
 import { useState } from "react";
 import { useGame } from "@/context/gameContext";
 import { router } from "expo-router";
+import { IconArrowLeft } from "@tabler/icons-react-native";
+import { Button } from "@/components/Button";
 
 export default function StartScreen() {
   const { stages } = useGame();
@@ -16,7 +18,12 @@ export default function StartScreen() {
 
   return (
     <View style={styles.container}>
-
+      <View style={{ height: "auto", width: "100%" }} >
+        <Button style={{ width: 40, height: 40, padding: 40, backgroundColor: "transparent", justifyContent: "flex-start" }}
+          onPress={() => router.replace("/")}>
+          <Button.Icon icon={IconArrowLeft} color="#333" />
+        </Button>
+      </View>
       {loading && (
         <ActivityIndicator
           size="large"
@@ -40,7 +47,7 @@ export default function StartScreen() {
           onPress={() => router.replace(stages[0])}
           style={{
             position: "absolute",
-            top: 320,
+            top: 290,
             marginTop: 20,
             backgroundColor: "#4caf50",
             padding: 10,
@@ -63,7 +70,7 @@ const styles = StyleSheet.create({
     position: "relative",
     flex: 1,
     backgroundColor: "#fff",
-    paddingTop: 150,
+    paddingTop: 20,
     paddingHorizontal: 60,
     alignItems: "center",
     justifyContent: "flex-start",

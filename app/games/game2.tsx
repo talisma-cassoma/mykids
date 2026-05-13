@@ -12,7 +12,7 @@ import { useSpeech, GameStage, WordPair, TimerConverter } from "@/utils/lessons"
 
 export default function WriteTheWordsGameScreen() {
     const gameTittle = "ecris le mot en arabe"
-    const { gameData } = useData();
+    const { selectedLessons } = useData();
     const { speak } = useSpeech();
     
     const [time, setTime] = useState(0);
@@ -45,7 +45,7 @@ export default function WriteTheWordsGameScreen() {
 
     // 🎯 escolher lesson
     const pickRandomLesson = () => {
-        return gameData[Math.floor(Math.random() * gameData.length)];
+        return selectedLessons[Math.floor(Math.random() * selectedLessons.length)];
 
     };
 

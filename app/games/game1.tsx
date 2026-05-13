@@ -1,4 +1,4 @@
-import React, { use, useEffect, useState } from "react";
+import React, { use, useEffect, useState, useRef } from "react";
 import { View, StyleSheet, FlatList, TouchableOpacity, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "@/components/Button";
@@ -8,9 +8,12 @@ import { useData } from "@/context/DataContext";
 import { Header } from "@/components/Header";
 
 
+
 export default function MactchingWordsGameScreen() {
-  let gameTittle = "match les mots"
-  const { gameData } = useData();
+  const { selectedLessons } = useData();
+  const randomIndex = Math.floor(Math.random() * selectedLessons.length);
+  const gameTittle = useRef(`match les mots: ${selectedLessons[randomIndex]?.lessonTitle}` as string).current;
+  
   const { speak } = useSpeech();
   const { nextStage, setGameScore } = useGame();
   const [isButtonLoading, setIsButtonLoading] = useState<boolean>(false)
@@ -57,7 +60,7 @@ export default function MactchingWordsGameScreen() {
 
 
 
-  const [currentLesson, setCurrentLesson] = useState<GameStage | null>(null);
+  const [currentLesson, setCurrentLesson] = useState<GameStage | null>(selectedLessons[randomIndex]);
 
   const [matched, setMatched] = useState<string[]>([]);
   const [phaseScore, setPhaseScore] = useState(0);
@@ -70,16 +73,18 @@ export default function MactchingWordsGameScreen() {
 
 
   // 🎲 escolhe UMA fase apenas no início
-  useEffect(() => {
-    const randomIndex = Math.floor(Math.random() * gameData.length);
-    setCurrentLesson(gameData[randomIndex]);
-  }, []);
+  // useEffect(() => {
+  //   const randomIndex = Math.floor(Math.random() * selectedLessons.length);
+  //   setCurrentLesson(selectedLessons[randomIndex]);
+  //   setGameTittle(`match les mots: ${selectedLessons[randomIndex]?.lessonTitle}`)
+
+  // }, [ nextStage, selectedLessons]);
 
   // 📦 dados seguros
   const data = currentLesson?.wordPairs ?? [];
   const totalWords = data.length;
   const isPhaseCompleted = matched.length === totalWords;
-  gameTittle = `match les mots: ${currentLesson?.lessonTitle}`
+
 
 
   // 🔀 init da fase

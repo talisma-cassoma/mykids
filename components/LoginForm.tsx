@@ -42,7 +42,7 @@ export default function LoginForm() {
           <View style={{ height: 100, flexDirection: "row", justifyContent: "flex-end", width: "100%", paddingHorizontal: 20 }}>
             <TouchableOpacity
               style={styles.avatarWrapper}
-            onPress={() => router.replace("/games/Settings")}
+            onPress={() => router.replace("/games/settings/SettingsScreen")}
             >
               <View style={{ justifyContent: "center", alignItems: "center", width: 40, height: 40, borderRadius: 20, backgroundColor: "#FFF", }}>
                 <IconSettings size={30} color="#333" />

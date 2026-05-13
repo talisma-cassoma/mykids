@@ -31,7 +31,7 @@ const screenWidth = Dimensions.get("window").width;
 export default function MatchingWordsGameScreen() {
   const gameTitle = "glisser et déposer les mots";
   const { setGameScore, nextStage } = useGame();
-  const { gameData } = useData();
+  const { selectedLessons } = useData();
 
   const { speak } = useSpeech();
 
@@ -54,8 +54,8 @@ export default function MatchingWordsGameScreen() {
   const hasSavedScoreRef = useRef(false);
 
   useEffect(() => {
-    const randomIndex = Math.floor(Math.random() * gameData.length);
-    setCurrentLesson(gameData[randomIndex]);
+    const randomIndex = Math.floor(Math.random() * selectedLessons.length);
+    setCurrentLesson(selectedLessons[randomIndex]);
   }, []);
 
   const data = currentLesson?.wordPairs ?? [];
@@ -145,7 +145,7 @@ export default function MatchingWordsGameScreen() {
   function checkAnswer() {
     const allPlaced = Object.values(placements).every((v) => v !== null);
 
-    if (!allPlaced) return;
+    //if (!allPlaced) return;
 
     const correct = Object.entries(placements).filter(
       ([key, value]) => value?.id === key
@@ -232,7 +232,7 @@ export default function MatchingWordsGameScreen() {
             contentContainerStyle={styles.optionsArea}
           >
             {availableOptions.map((item) => (
-              <Draggable key={item.id} data={item}>
+              <Draggable key={item.id} data={item} onDragStart={() => speak(item.ar, "ar-MA")}>
                 <TouchableOpacity
                   onPress={speak.bind(null, item.ar, "ar-MA")}
                   style={styles.optionCard}>

@@ -1,11 +1,15 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, use, } from 'react';
+import { Alert } from 'react-native';
 import { GameStage, WordPair } from '@/types';
 import { lessonRepository, initStorage } from '@/database/lessonRepository';
 import { store } from '@/database/tinybase';
+import { router } from 'expo-router';
 
 
 interface DataContextType {
   gameData: GameStage[];
+  selectedLessons: GameStage[];
+  setSelectedLessons: (lessons: GameStage[]) => void;
   refreshData: () => void;
   addWordPair: (lessonId: string, fr: string, ar: string) => void;
   getAllLessons: () => Record<string, any>;
@@ -17,6 +21,18 @@ const DataContext = createContext<DataContextType | undefined>(undefined);
 
 export const DataProvider = ({ children }: { children: React.ReactNode }) => {
   const [gameData, setGameData] = useState<GameStage[]>([]);
+  const [selectedLessons, setSelectedLessons] = useState<GameStage[]>([
+    // {
+    //   lessonTitle: "salutations",
+    //   wordPairs: [
+    //     { id: "1", fr: "Bonjour", ar: "مرحبا" },
+    //     { id: "2", fr: "Merci", ar: "شكرا" },
+    //     { id: "3", fr: "Chat", ar: "قط" },
+    //     { id: "4", fr: "Maison", ar: "منزل" },
+    //   ],
+    // }
+  ] as GameStage[]
+  ); //selecionar quais lições aparecem no jogo
 
   function refreshData() {
     const lessons = lessonRepository.getAllLessons();
@@ -52,18 +68,18 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
   function getAllLessons() {
     return lessonRepository.getAllLessons();
   }
-  
+
   function addLesson(lessonTitle: string) {
     const id = lessonRepository.addLesson(lessonTitle);
     refreshData();
     return id;
   }
-  
+
   function deleteWordPair(id: string) {
-  lessonRepository.deleteWordPair(id);
-  refreshData();
-}
-  
+    lessonRepository.deleteWordPair(id);
+    refreshData();
+  }
+
   useEffect(() => {
     async function init() {
       await initStorage(); // 👈 espera carregar
@@ -84,10 +100,26 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
     init();
   }, []);
 
+useEffect(() => {
+  console.log("Selected lessons updated:", selectedLessons);
+
+  if (selectedLessons.length === 0) {
+    Alert.alert(
+      "Atention",
+      "aucune leçon sélectionnée. Veuillez sélectionner au moins une leçon pour jouer.",
+      [{ text: "OK" }]
+    );
+    router.replace("/games/settings/SettingsScreen"); // redireciona para a tela de configurações
+  } 
+},[selectedLessons])
+
+
   return (
     <DataContext.Provider
       value={{
         gameData,
+        selectedLessons,
+        setSelectedLessons,
         refreshData,
         addWordPair,
         getAllLessons,

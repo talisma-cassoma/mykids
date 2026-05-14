@@ -93,6 +93,7 @@ export const gameData: GameStage[] = [
     { "id": "59", "fr": "tout le temps", "ar": "كُلَّ وَقْت" }
   ]
 }
+
 ];
 
 export const useSpeech = () => {
@@ -126,4 +127,29 @@ if(time === undefined) return ""
   const seconds = time % 60;
   
   return `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}` 
+}
+
+export type SentenceItem =
+    | {
+        type: "word";
+        value: string;
+    }
+    | {
+        type: "drop";
+        id: string;
+        answer: string;
+    };
+
+export function sentenceToText(
+  sentence: SentenceItem[]
+) {
+  return sentence
+    .map((item) => {
+      if (item.type === "word") {
+        return item.value;
+      }
+
+      return item.answer;
+    })
+    .join(" ");
 }

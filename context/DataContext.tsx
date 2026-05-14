@@ -1,6 +1,6 @@
 import React, { createContext, useState, useContext, useEffect, use, } from 'react';
 import { Alert } from 'react-native';
-import { GameStage, WordPair } from '@/types';
+import { GameStage, GameText, WordPair } from '@/types';
 import { lessonRepository, initStorage } from '@/database/lessonRepository';
 import { store } from '@/database/tinybase';
 import { router } from 'expo-router';
@@ -8,6 +8,7 @@ import { router } from 'expo-router';
 
 interface DataContextType {
   gameData: GameStage[];
+  gameText: GameText[];
   selectedLessons: GameStage[];
   setSelectedLessons: (lessons: GameStage[]) => void;
   refreshData: () => void;
@@ -17,9 +18,21 @@ interface DataContextType {
   addLesson: (lessonTitle: string) => string;
 }
 
+
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
 export const DataProvider = ({ children }: { children: React.ReactNode }) => {
+
+ const [gameText, setGameText] = useState<GameText[]>([{
+    id: "txt_002",
+    title: "قطة متضامنة",
+    content: {
+        arabic_text:
+            "لسارة قطة لطيفة، تحبها كثيرًا، وتقدم لها الطعام بانتظام، وتعتني بصحتها. وبعد مدة لاحظت سارة أن قطتها أصبحت تأخذ الطعام وتختفي بسرعة، دون أن تتناول منه شيئًا. قررت سارة أن تكتشف السرّ. وعندما حان وقت الطعام، قدمت لقطتها سمكة؛ فأخذتها، وانطلقت كالسهم تعدو. تبعتها سارة، وهي تتجه نحو مكان مهجور، فرأتها تضع السمكة أمام قطة أخرى، ولدت حديثًا قطيطات. تعجبت سارة، وأصبحت منذ ذلك اليوم، تقدم لقطتها مزيدًا من الطعام.",
+        french_translation:
+            "Sara a une gentille chatte qu’elle aime beaucoup. Elle lui donne régulièrement de la nourriture et prend soin de sa santé. Après quelque temps, Sara remarqua que sa chatte prenait la nourriture et disparaissait rapidement sans rien manger. Sara décida de découvrir le secret.",
+    }}] as GameText[]);
+
   const [gameData, setGameData] = useState<GameStage[]>([]);
   const [selectedLessons, setSelectedLessons] = useState<GameStage[]>([
     // {
@@ -118,6 +131,7 @@ useEffect(() => {
     <DataContext.Provider
       value={{
         gameData,
+        gameText,
         selectedLessons,
         setSelectedLessons,
         refreshData,

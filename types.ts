@@ -4,6 +4,15 @@ export interface WordPair {
   ar: string;
 }
 
+export interface GameText{
+    id: string;
+    title: string;
+    content: {
+        arabic_text: string;
+        french_translation: string;
+    };
+}
+
 export interface GameStage {
    id: string; // 👈 adicionar isso
   lessonTitle: string;

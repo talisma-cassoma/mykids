@@ -7,34 +7,29 @@ import {
     Pressable,
     StyleSheet,
 } from "react-native";
-import { BottomSheetModal, BottomSheetView, BottomSheetFlatList, BottomSheetScrollView } from "@gorhom/bottom-sheet";
+import {
+    BottomSheetModal,
+    BottomSheetView,
+} from "@gorhom/bottom-sheet";
+
 import { IconPlus, IconXboxX } from "@tabler/icons-react-native";
+
 import { AddNewWorldForm } from "@/components/AddNewWordForm";
 import { AddNewLessonForm } from "@/components/AddNewLessonForm";
 import { useData } from "@/context/DataContext";
 
-
-
-interface WordPair {
-    id: string;
-    fr: string;
-    ar: string;
-}
-
-interface GameStage {
-    id: string;
-    lessonTitle: string;
-    wordPairs: WordPair[];
-}
+import { GameStage, GameText, WordPair } from "@/types";
 
 export function LessonsSettings() {
     const {
-        gameData,
+        gameVocabulary,
+        gameText,
         deleteWordPair,
     } = useData();
 
     const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null);
-    const selectedLesson = gameData.find(
+
+    const selectedLesson = gameVocabulary.find(
         (l) => l.id === selectedLessonId
     );
 
@@ -42,6 +37,7 @@ export function LessonsSettings() {
 
     const snapPoints = useMemo(() => ["50%", "80%"], []);
 
+    // OPEN vocabulary lesson
     function handleOpenLesson(lesson: GameStage) {
         setSelectedLessonId(lesson.id);
 
@@ -54,6 +50,7 @@ export function LessonsSettings() {
         bottomSheetRef.current?.close();
     }
 
+    // VOCABULARY ITEM
     function renderLessonItem({ item }: { item: GameStage }) {
         return (
             <TouchableOpacity
@@ -73,6 +70,24 @@ export function LessonsSettings() {
         );
     }
 
+    // TEXT ITEM
+    function renderTextItem({ item }: { item: GameText }) {
+        return (
+            <View style={styles.lessonCard}>
+                <Text style={styles.lessonTitle}>{item.title}</Text>
+
+                <View style={styles.rightSection}>
+                    <Text style={styles.countText}>
+                        Texte
+                    </Text>
+
+                    <IconPlus size={20} color="#333" />
+                </View>
+            </View>
+        );
+    }
+
+    // WORD ITEM INSIDE VOCABULARY
     function renderWordPairItem({ item }: { item: WordPair }) {
         return (
             <View style={styles.wordCard}>
@@ -93,46 +108,69 @@ export function LessonsSettings() {
 
     return (
         <View style={styles.container}>
-          {/* <Text style={styles.screenTitle}>Settings</Text> */}
-          <AddNewLessonForm />
 
-          <FlatList
-            data={gameData}
-            keyExtractor={(item) => item.lessonTitle}
-            renderItem={renderLessonItem}
-            contentContainerStyle={styles.listContent}
-            showsVerticalScrollIndicator={false}
-          />
+            {/* ADD LESSON FORM */}
+            <AddNewLessonForm />
 
+            {/* ===================== */}
+            {/* VOCABULARY SECTION */}
+            {/* ===================== */}
+            <Text style={styles.sectionTitle}>Vocabulary</Text>
 
-          <BottomSheetModal
-            ref={bottomSheetRef}
-            index={0} // Changed to 0 because present() triggers it
-            snapPoints={snapPoints}
-            enablePanDownToClose
-            backgroundStyle={{ backgroundColor: "#fff" }}
-            handleIndicatorStyle={{ backgroundColor: "#999" }}
-          >
-            {/* Wrap content in BottomSheetView for better height calculation */}
-            <BottomSheetView style={styles.sheetContent}>
-              <View style={styles.sheetHeader}>
-                <Text style={styles.sheetTitle}>{selectedLesson?.lessonTitle || "Lesson"}</Text>
-                <Pressable onPress={() => bottomSheetRef.current?.dismiss()}>
-                  <IconXboxX size={24} color="#222" />
-                </Pressable>
-              </View>
-
-              <AddNewWorldForm selectedLessonId={selectedLesson?.id || ""} />
-
-              <FlatList
-                data={selectedLesson?.wordPairs || []}
+            <FlatList
+                data={gameVocabulary}
                 keyExtractor={(item) => item.id}
-                renderItem={renderWordPairItem}
-              // Important: BottomSheet scrolls better if you use the library's FlatList
-              // but for now, let's just get it appearing.
-              />
-            </BottomSheetView>
-          </BottomSheetModal>
+                renderItem={renderLessonItem}
+                contentContainerStyle={styles.listContent}
+                showsVerticalScrollIndicator={false}
+            />
+
+            {/* ===================== */}
+            {/* TEXT SECTION */}
+            {/* ===================== */}
+            <Text style={styles.sectionTitle}>Textes</Text>
+
+            <FlatList
+                data={gameText}
+                keyExtractor={(item) => item.id}
+                renderItem={renderTextItem}
+                contentContainerStyle={styles.listContent}
+                showsVerticalScrollIndicator={false}
+            />
+
+            {/* ===================== */}
+            {/* BOTTOM SHEET (VOCAB ONLY) */}
+            {/* ===================== */}
+            <BottomSheetModal
+                ref={bottomSheetRef}
+                index={0}
+                snapPoints={snapPoints}
+                enablePanDownToClose
+                backgroundStyle={{ backgroundColor: "#fff" }}
+                handleIndicatorStyle={{ backgroundColor: "#999" }}
+            >
+                <BottomSheetView style={styles.sheetContent}>
+                    <View style={styles.sheetHeader}>
+                        <Text style={styles.sheetTitle}>
+                            {selectedLesson?.lessonTitle || "Lesson"}
+                        </Text>
+
+                        <Pressable onPress={handleCloseSheet}>
+                            <IconXboxX size={24} color="#222" />
+                        </Pressable>
+                    </View>
+
+                    <AddNewWorldForm
+                        selectedLessonId={selectedLesson?.id || ""}
+                    />
+
+                    <FlatList
+                        data={selectedLesson?.wordPairs || []}
+                        keyExtractor={(item) => item.id}
+                        renderItem={renderWordPairItem}
+                    />
+                </BottomSheetView>
+            </BottomSheetModal>
         </View>
     );
 }
@@ -142,20 +180,17 @@ const styles = StyleSheet.create({
         flex: 1,
         padding: 16,
         backgroundColor: "#FFF",
-        flexDirection: "column",
-        justifyContent: "flex-start",
-        alignItems: "center",
         gap: 12,
     },
 
-    screenTitle: {
-        fontSize: 24,
+    sectionTitle: {
+        fontSize: 18,
         fontWeight: "700",
-        marginBottom: 20,
+        marginTop: 10,
     },
 
     listContent: {
-        paddingBottom: 120,
+        paddingBottom: 20,
     },
 
     lessonCard: {
@@ -185,6 +220,22 @@ const styles = StyleSheet.create({
         color: "#666",
     },
 
+    wordCard: {
+        backgroundColor: "#FAFAFA",
+        borderRadius: 12,
+        padding: 16,
+        marginBottom: 10,
+
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+    },
+
+    wordText: {
+        fontSize: 16,
+        fontWeight: "500",
+    },
+
     sheetContent: {
         backgroundColor: "#FFF",
         paddingHorizontal: 16,
@@ -202,21 +253,5 @@ const styles = StyleSheet.create({
     sheetTitle: {
         fontSize: 20,
         fontWeight: "700",
-    },
-
-    wordCard: {
-        backgroundColor: "#FAFAFA",
-        borderRadius: 12,
-        padding: 16,
-        marginBottom: 10,
-
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-    },
-
-    wordText: {
-        fontSize: 16,
-        fontWeight: "500",
     },
 });

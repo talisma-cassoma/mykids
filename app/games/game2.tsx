@@ -7,12 +7,12 @@ import { Button } from "@/components/Button";
 import { ArabicKeyboard } from "@/components/ArabicKeyboard";
 import { useGame } from "@/context/gameContext";
 import { useData } from "@/context/DataContext";
-
-import { useSpeech, GameStage, WordPair, TimerConverter } from "@/utils/lessons";
+import { GameStage, WordPair } from "@/types";
+import { useSpeech, TimerConverter  } from "@/utils/lessons";
 
 export default function WriteTheWordsGameScreen() {
     const gameTittle = "ecris le mot en arabe"
-    const { selectedLessons } = useData();
+    const { selectedVocaluries } = useData();
     const { speak } = useSpeech();
     
     const [time, setTime] = useState(0);
@@ -45,7 +45,7 @@ export default function WriteTheWordsGameScreen() {
 
     // 🎯 escolher lesson
     const pickRandomLesson = () => {
-        return selectedLessons[Math.floor(Math.random() * selectedLessons.length)];
+        return selectedVocaluries[Math.floor(Math.random() * selectedVocaluries.length)];
 
     };
 

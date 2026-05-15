@@ -5,10 +5,10 @@ import { Button } from "@/components/Button";
 import { IconX } from "@tabler/icons-react-native";
 
 export function AddNewWorldForm({ selectedLessonId }: { selectedLessonId: string }) {
-  
+
   console.log("selectedLessonId", selectedLessonId);
 
-  const { addWordPair} = useData();
+  const { addWordPair } = useData();
 
   const [showForm, setShowForm] = useState(false);
   const [fr, setFr] = useState("");
@@ -37,26 +37,30 @@ export function AddNewWorldForm({ selectedLessonId }: { selectedLessonId: string
 
     <View style={styles.container}>
       <Text style={styles.label}>Choisir une leçon</Text>
-
-      <TextInput
-        placeholder="Mot en français"
-        value={fr}
-        onChangeText={setFr}
-        style={styles.input}
-      />
-
-      <TextInput
-        placeholder="Mot en arabe"
-        value={ar}
-        onChangeText={setAr}
-        style={styles.input}
-      />
+      <View>
+        <Text>Mot en français</Text>
+        <TextInput
+          placeholder="Mot en français"
+          value={fr}
+          onChangeText={setFr}
+          style={styles.input}
+        />
+      </View>
+      <View>
+        <Text>Mot en arabe</Text>
+        <TextInput
+          placeholder="Mot en arabe"
+          value={ar}
+          onChangeText={setAr}
+          style={styles.input}
+        />
+      </View>
 
       <View style={styles.actions}>
         <Button
           onPress={() => {
             handleSubmit();
-      
+
           }}
         >
           <Button.Title>Enregistrer</Button.Title>

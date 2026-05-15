@@ -20,23 +20,8 @@ import {
 import { Button } from "@/components/Button";
 import { IconSquareRoundedCheck } from "@tabler/icons-react-native";
 import { useSpeech, sentenceToText } from "@/utils/lessons";
+import { SentenceItem } from "@/types";
 
-export type SentenceData = {
-    translation: string;
-
-    sentence: SentenceItem[];
-};
-
-export type SentenceItem =
-    | {
-        type: "word";
-        value: string;
-    }
-    | {
-        type: "drop";
-        id: string;
-        answer: string;
-    };
 
 type Props = {
     sentence: SentenceItem[];
@@ -60,8 +45,8 @@ export function FillinTheBlanks({
     const [isSpeaking, setIsSpeaking] = useState(false);
     const [availableWords, setAvailableWords] =
         useState(draggableWords);
-     const arabicSentence =
-                    sentenceToText(sentence);
+    const arabicSentence =
+        sentenceToText(sentence);
 
     const initialPlacements = useMemo(() => {
         const obj: Record<string, string | null> =
@@ -140,26 +125,14 @@ export function FillinTheBlanks({
     }
 
     useEffect(() => {
-        let mounted = true;
-
-        async function runLoop() {
-            while (mounted && isSpeaking) {
-               
-
-                await speak(
-                    arabicSentence,
-                    "ar-MA"
-                );
-            }
-        }
-
-        runLoop();
-
-        return () => {
-            mounted = false;
-        };
-
-    }, []);
+        const interval = setInterval(async () => {
+            await speak(
+                arabicSentence,
+                "ar-MA"
+            );
+        }, 4000);
+        return () => clearInterval(interval);
+    }, [sentence, translation]);
 
     return (
         <DropProvider>
@@ -254,8 +227,10 @@ const styles = StyleSheet.create({
     translation: {
         fontSize: 18,
         color: "#666",
-        textAlign: "left",
+        textAlign: "right",
         fontStyle: "italic",
+        //alignSelf: "flex-end",
+        width:"auto"
     },
     container: {
         gap: 30,

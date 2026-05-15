@@ -4,15 +4,15 @@ import { useCreatePersister } from "tinybase/ui-react";
 import { createExpoSqlitePersister } from "tinybase/persisters/persister-expo-sqlite";
 import { useEffect } from 'react';
 import { get } from 'react-native/Libraries/NativeComponent/NativeComponentRegistry';
-import { gameData } from "@/utils/lessons";
+import { gameData, gameText } from "@/utils/lessons";
 
 
 export async function initStorage() {
-  const db = SQLite.openDatabaseSync("app.db");
-  const persister = createExpoSqlitePersister(store, db);
+    const db = SQLite.openDatabaseSync("app.db");
+    const persister = createExpoSqlitePersister(store, db);
 
-  await persister.load(); // carrega os dados do banco para a store
-  persister.startAutoSave();
+    await persister.load(); // carrega os dados do banco para a store
+    persister.startAutoSave();
 }
 
 export const lessonRepository = {
@@ -33,6 +33,7 @@ export const lessonRepository = {
             // cria lesson
             store.setRow('lessons', lessonId, {
                 lessonTitle: stage.lessonTitle,
+                type: "vocabulary",
             });
 
             // cria wordPairs
@@ -47,14 +48,34 @@ export const lessonRepository = {
 
             //console.log("Word pairs:", wordpair);
         });
+
+        //adiciona texto
+        gameText.forEach((text) => {
+            const lessonId = Date.now().toString() + Math.random();
+
+            // cria lesson
+            store.setRow('lessons', lessonId, {
+                lessonTitle: text.title,
+                type: "text",
+            });
+
+            // cria wordPairs
+            const wordpair = store.setRow('wordPairs', `${lessonId}-1`, {
+                lessonId,
+                fr: text.content.french_translation,
+                ar: text.content.arabic_text,
+            });
+        });
     },
+
     getLessonByTitle(title: string) {
         const lessons = store.getTable('lessons');
 
         return Object.entries(lessons).find(
-            ([_, lesson]) => lesson.lessonTitle === title
+            ([_, lesson]: any) => lesson.lessonTitle === title
         );
     },
+
     getAllLessons() {
         return store.getTable('lessons');
     },
@@ -63,25 +84,37 @@ export const lessonRepository = {
         return store.getTable('wordPairs');
     },
 
-    addLesson(lessonTitle: string) {
-        const id = Date.now().toString();
-
-        store.setRow('lessons', id, {
-            lessonTitle,
-        });
-        return id;
-    },
-
-
     addWordPair(lessonId: string, fr: string, ar: string) {
-        console.log("Adding word pair to lessonId:", lessonId);
         const id = Date.now().toString();
 
-        return store.setRow('wordPairs', id, {
+        store.setRow('wordPairs', id, {
             lessonId,
             fr,
             ar,
         });
+
+        return id;
+    },
+
+    async addLesson(
+        lessonTitle: string,
+        type: "text" | "vocabulary",
+        ar?: string,
+        fr?: string
+    ) {
+        const id = Date.now().toString();
+
+        store.setRow('lessons', id, {
+            lessonTitle,
+            type,
+        });
+
+        // TEXT = 1 único conteúdo (wordPair)
+        if (type === "text" && ar && fr) {
+            this.addWordPair(id, fr, ar);
+        }
+
+        return id;
     },
 
     updateWordPair(id: string, fr: string, ar: string) {

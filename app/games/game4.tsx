@@ -20,9 +20,9 @@ import { Button } from "@/components/Button";
 import {
   GameStage,
   WordPair,
-  TimerConverter,
-  useSpeech,
-} from "@/utils/lessons";
+
+} from "@/types";
+import { TimerConverter, useSpeech} from "@/utils/lessons";
 import { useGame } from "@/context/gameContext";
 import { Header } from "@/components/Header";
 import { useData } from "@/context/DataContext";
@@ -31,7 +31,7 @@ const screenWidth = Dimensions.get("window").width;
 export default function MatchingWordsGameScreen() {
   const gameTitle = "glisser et déposer les mots";
   const { setGameScore, nextStage } = useGame();
-  const { selectedLessons } = useData();
+  const { selectedVocaluries } = useData();
 
   const { speak } = useSpeech();
 
@@ -54,8 +54,8 @@ export default function MatchingWordsGameScreen() {
   const hasSavedScoreRef = useRef(false);
 
   useEffect(() => {
-    const randomIndex = Math.floor(Math.random() * selectedLessons.length);
-    setCurrentLesson(selectedLessons[randomIndex]);
+    const randomIndex = Math.floor(Math.random() * selectedVocaluries.length);
+    setCurrentLesson(selectedVocaluries[randomIndex]);
   }, []);
 
   const data = currentLesson?.wordPairs ?? [];

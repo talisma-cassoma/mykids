@@ -2,7 +2,8 @@ import React, { use, useEffect, useState, useRef } from "react";
 import { View, StyleSheet, FlatList, TouchableOpacity, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "@/components/Button";
-import { GameStage, WordPair, useSpeech, TimerConverter } from "@/utils/lessons";
+import { GameStage, WordPair} from "@/types"; 
+import {useSpeech, TimerConverter } from "@/utils/lessons";
 import { useGame } from "@/context/gameContext";
 import { useData } from "@/context/DataContext";
 import { Header } from "@/components/Header";
@@ -10,9 +11,9 @@ import { Header } from "@/components/Header";
 
 
 export default function MactchingWordsGameScreen() {
-  const { selectedLessons } = useData();
-  const randomIndex = Math.floor(Math.random() * selectedLessons.length);
-  const gameTittle = useRef(`match les mots: ${selectedLessons[randomIndex]?.lessonTitle}` as string).current;
+  const { selectedVocaluries } = useData();
+  const randomIndex = Math.floor(Math.random() * selectedVocaluries.length);
+  const gameTittle = useRef(`match les mots: ${selectedVocaluries[randomIndex]?.lessonTitle}` as string).current;
   
   const { speak } = useSpeech();
   const { nextStage, setGameScore } = useGame();
@@ -60,7 +61,7 @@ export default function MactchingWordsGameScreen() {
 
 
 
-  const [currentLesson, setCurrentLesson] = useState<GameStage | null>(selectedLessons[randomIndex]);
+  const [currentLesson, setCurrentLesson] = useState<GameStage | null>(selectedVocaluries[randomIndex]);
 
   const [matched, setMatched] = useState<string[]>([]);
   const [phaseScore, setPhaseScore] = useState(0);
@@ -74,11 +75,11 @@ export default function MactchingWordsGameScreen() {
 
   // 🎲 escolhe UMA fase apenas no início
   // useEffect(() => {
-  //   const randomIndex = Math.floor(Math.random() * selectedLessons.length);
-  //   setCurrentLesson(selectedLessons[randomIndex]);
-  //   setGameTittle(`match les mots: ${selectedLessons[randomIndex]?.lessonTitle}`)
+  //   const randomIndex = Math.floor(Math.random() * selectedVocaluries.length);
+  //   setCurrentLesson(selectedVocaluries[randomIndex]);
+  //   setGameTittle(`match les mots: ${selectedVocaluries[randomIndex]?.lessonTitle}`)
 
-  // }, [ nextStage, selectedLessons]);
+  // }, [ nextStage, selectedVocaluries]);
 
   // 📦 dados seguros
   const data = currentLesson?.wordPairs ?? [];

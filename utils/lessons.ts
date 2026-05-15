@@ -1,19 +1,10 @@
 import React from "react";
 import * as Speech from "expo-speech";
-
-export interface WordPair {
-  id: string;
-  fr: string;
-  ar: string;
-}
-
-export interface GameStage {
-  lessonTitle: string;
-  wordPairs: WordPair[];
-}
+import { GameStage, GameText, SentenceData } from "@/types";
 
 export const gameData: GameStage[] = [
   {
+    id: "1",
     lessonTitle: "salutations",
     wordPairs: [
       { id: "1", fr: "Bonjour", ar: "مرحبا" },
@@ -23,6 +14,7 @@ export const gameData: GameStage[] = [
     ],
   },
   {
+    id: "2",
     lessonTitle: "verbe ecrire au présent",
     wordPairs: [
       { id: "5", fr: "j'écris", ar: "أكتب" },
@@ -38,6 +30,7 @@ export const gameData: GameStage[] = [
     ],
   },
   {
+    id: "3",
     lessonTitle: "verbe ecrire au passé composé",
     wordPairs: [
       { id: "15", fr: "j'ai écrit", ar: "كتبت" },
@@ -53,6 +46,7 @@ export const gameData: GameStage[] = [
     ],
   },
   {
+    id: "4",
   "lessonTitle": "Vocabulaire : ملعب حيّنا",
   "wordPairs": [
     { "id": "25", "fr": "terrain de jeu", "ar": "مَلْعَب" },
@@ -76,6 +70,7 @@ export const gameData: GameStage[] = [
   ]
 },
 {
+  "id": "5",
   "lessonTitle": "Vocabulaire : le voisin",
   "wordPairs": [
     { "id": "44", "fr": "mon voisin", "ar": "جَارِي" },
@@ -95,6 +90,20 @@ export const gameData: GameStage[] = [
 }
 
 ];
+
+
+export const gameText: GameText[]  = [
+  {
+    id: "1",
+    title: "الحيوانات",
+    content: {
+        arabic_text:"لسارة قطة لطيفة، تحبها كثيرًا، وتقدم لها الطعام بانتظام، وتعتني بصحتها. وبعد مدة لاحظت سارة أن قطتها أصبحت تأخذ الطعام وتختفي بسرعة، دون أن تتناول منه شيئًا. قررت سارة أن تكتشف السرّ. وعندما حان وقت الطعام، قدمت لقطتها سمكة؛ فأخذتها، وانطلقت كالسهم تعدو. تبعتها سارة، وهي تتجه نحو مكان مهجور، فرأتها تضع السمكة أمام قطة أخرى، ولدت حديثًا قطيطات. تعجبت سارة، وأصبحت منذ ذلك اليوم، تقدم لقطتها مزيدًا من الطعام.",
+        french_translation: "Sara a une gentille chatte qu’elle aime beaucoup. Elle lui donne régulièrement de la nourriture et prend soin de sa santé. Après quelque temps, Sara remarqua que sa chatte prenait la nourriture et disparaissait rapidement sans rien manger. Sara décida de découvrir le secret. Quand l’heure du repas arriva, elle donna un poisson à sa chatte ; celle-ci le prit et partit en courant comme une flèche. Sara la suivit vers un endroit abandonné et la vit poser le poisson devant une autre chatte qui venait de mettre bas à de petits chatons. Sara fut étonnée, et depuis ce jour-là, elle donna davantage de nourriture à sa chatte.",
+    }
+
+}
+]
+
 
 export const useSpeech = () => {
     const speak = React.useCallback((text: string, lang: string) => {
@@ -152,4 +161,21 @@ export function sentenceToText(
       return item.answer;
     })
     .join(" ");
+}
+
+export function splitIntoSentences(arabic: string, french: string) {
+  const arabicSentences = arabic
+    .split(/[.,،]/) // ponto, vírgula árabe e ocidental
+    .map(s => s.trim())
+    .filter(Boolean);
+
+  const frenchSentences = french
+    .split(/[.,]/)
+    .map(s => s.trim())
+    .filter(Boolean);
+
+  return arabicSentences.map((ar, index) => ({
+    arabic: ar,
+    french: frenchSentences[index] ?? "",
+  }));
 }

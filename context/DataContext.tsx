@@ -1,57 +1,56 @@
-import React, { createContext, useState, useContext, useEffect, use, } from 'react';
+import React, { createContext, useState, useContext, useEffect } from 'react';
 import { Alert } from 'react-native';
 import { GameStage, GameText, WordPair } from '@/types';
 import { lessonRepository, initStorage } from '@/database/lessonRepository';
 import { store } from '@/database/tinybase';
 import { router } from 'expo-router';
 
-
 interface DataContextType {
-  gameData: GameStage[];
+  gameVocabulary: GameStage[];
   gameText: GameText[];
-  selectedLessons: GameStage[];
-  setSelectedLessons: (lessons: GameStage[]) => void;
-  refreshData: () => void;
-  addWordPair: (lessonId: string, fr: string, ar: string) => void;
-  getAllLessons: () => Record<string, any>;
-  deleteWordPair: (id: string) => void;
-  addLesson: (lessonTitle: string) => string;
-}
 
+  selectedVocaluries: GameStage[];
+  setSelectedVocaluries: (lessons: GameStage[]) => void;
+
+  selectedTexts: GameText[];
+  setSelectedTexts: (texts: GameText[]) => void;
+
+  refreshData: () => void;
+
+  addWordPair: (lessonId: string, fr: string, ar: string) => void;
+
+  getAllLessons: () => Record<string, any>;
+  getAllVocabularyLessons: () => any[];
+  getAllTextLessons: () => any[];
+
+  deleteWordPair: (id: string) => void;
+
+  addLesson: (
+    lessonTitle: string,
+    type: "text" | "vocabulary",
+    ar?: string,
+    fr?: string
+  ) => Promise<string>;
+}
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
 export const DataProvider = ({ children }: { children: React.ReactNode }) => {
+  const [gameVocabulary, setGameVocabulary] = useState<GameStage[]>([]);
+  const [gameText, setGameText] = useState<GameText[]>([]);
 
- const [gameText, setGameText] = useState<GameText[]>([{
-    id: "txt_002",
-    title: "قطة متضامنة",
-    content: {
-        arabic_text:
-            "لسارة قطة لطيفة، تحبها كثيرًا، وتقدم لها الطعام بانتظام، وتعتني بصحتها. وبعد مدة لاحظت سارة أن قطتها أصبحت تأخذ الطعام وتختفي بسرعة، دون أن تتناول منه شيئًا. قررت سارة أن تكتشف السرّ. وعندما حان وقت الطعام، قدمت لقطتها سمكة؛ فأخذتها، وانطلقت كالسهم تعدو. تبعتها سارة، وهي تتجه نحو مكان مهجور، فرأتها تضع السمكة أمام قطة أخرى، ولدت حديثًا قطيطات. تعجبت سارة، وأصبحت منذ ذلك اليوم، تقدم لقطتها مزيدًا من الطعام.",
-        french_translation:
-            "Sara a une gentille chatte qu’elle aime beaucoup. Elle lui donne régulièrement de la nourriture et prend soin de sa santé. Après quelque temps, Sara remarqua que sa chatte prenait la nourriture et disparaissait rapidement sans rien manger. Sara décida de découvrir le secret.",
-    }}] as GameText[]);
-
-  const [gameData, setGameData] = useState<GameStage[]>([]);
-  const [selectedLessons, setSelectedLessons] = useState<GameStage[]>([
-    // {
-    //   lessonTitle: "salutations",
-    //   wordPairs: [
-    //     { id: "1", fr: "Bonjour", ar: "مرحبا" },
-    //     { id: "2", fr: "Merci", ar: "شكرا" },
-    //     { id: "3", fr: "Chat", ar: "قط" },
-    //     { id: "4", fr: "Maison", ar: "منزل" },
-    //   ],
-    // }
-  ] as GameStage[]
-  ); //selecionar quais lições aparecem no jogo
+  const [selectedVocaluries, setSelectedVocaluries] = useState<GameStage[]>([]);
+  const [selectedTexts, setSelectedTexts] = useState<GameText[]>([]);
 
   function refreshData() {
     const lessons = lessonRepository.getAllLessons();
     const wordPairs = lessonRepository.getAllWordPairs();
-    const data: GameStage[] = Object.entries(lessons).map(
-      ([lessonId, lesson]: any) => {
+
+    const vocab: GameStage[] = [];
+    const texts: GameText[] = [];
+
+    Object.entries(lessons).forEach(([lessonId, lesson]: any) => {
+      if (lesson.type === "vocabulary") {
         const pairs: WordPair[] = Object.entries(wordPairs)
           .filter(([_, pair]: any) => pair.lessonId === lessonId)
           .map(([id, pair]: any) => ({
@@ -60,30 +59,75 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
             ar: pair.ar,
           }));
 
-        return {
-          id: lessonId, // 👈 IMPORTANTE
+        vocab.push({
+          id: lessonId,
           lessonTitle: lesson.lessonTitle,
           wordPairs: pairs,
-        };
+        });
       }
-    );
 
-    setGameData(data);
+      if (lesson.type === "text") {
+        const pair = Object.entries(wordPairs).find(
+          ([_, p]: any) => p.lessonId === lessonId
+        );
+
+        if (pair) {
+          const [_, p]: any = pair;
+
+          texts.push({
+            id: lessonId,
+            title: lesson.lessonTitle,
+            content: {
+              arabic_text: p.ar,
+              french_translation: p.fr,
+            },
+          });
+        }
+      }
+    });
+
+    setGameVocabulary(vocab);
+    setGameText(texts);
   }
 
   function addWordPair(lessonId: string, fr: string, ar: string) {
-
-    const data = lessonRepository.addWordPair(lessonId, fr, ar);
+    lessonRepository.addWordPair(lessonId, fr, ar);
     refreshData();
-
   }
 
   function getAllLessons() {
     return lessonRepository.getAllLessons();
   }
 
-  function addLesson(lessonTitle: string) {
-    const id = lessonRepository.addLesson(lessonTitle);
+  function getAllVocabularyLessons() {
+    const lessons = lessonRepository.getAllLessons();
+
+    return Object.entries(lessons)
+      .filter(([_, lesson]: any) => lesson.type === "vocabulary")
+      .map(([id, lesson]: any) => ({ id, ...lesson }));
+  }
+
+  function getAllTextLessons() {
+    const lessons = lessonRepository.getAllLessons();
+
+    return Object.entries(lessons)
+      .filter(([_, lesson]: any) => lesson.type === "text")
+      .map(([id, lesson]: any) => ({ id, ...lesson }));
+  }
+
+  async function addLesson(
+    lessonTitle: string,
+    type: "text" | "vocabulary",
+    ar?: string,
+    fr?: string
+  ) {
+    const id = await lessonRepository.addLesson(
+      lessonTitle,
+      type,
+      ar,
+      fr
+    );
+
     refreshData();
     return id;
   }
@@ -95,10 +139,9 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     async function init() {
-      await initStorage(); // 👈 espera carregar
+      await initStorage();
 
-      lessonRepository.initializeIfEmpty(); // 👈 agora sim
-
+      lessonRepository.initializeIfEmpty();
       refreshData();
 
       const l1 = store.addTableCellIdsListener('lessons', refreshData);
@@ -113,30 +156,37 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
     init();
   }, []);
 
-useEffect(() => {
-  console.log("Selected lessons updated:", selectedLessons);
+  useEffect(() => {
+    if (selectedVocaluries.length === 0) {
+      Alert.alert(
+        "Attention",
+        "Aucune leçon sélectionnée.",
+        [{ text: "OK" }]
+      );
 
-  if (selectedLessons.length === 0) {
-    Alert.alert(
-      "Atention",
-      "aucune leçon sélectionnée. Veuillez sélectionner au moins une leçon pour jouer.",
-      [{ text: "OK" }]
-    );
-    router.replace("/games/settings/SettingsScreen"); // redireciona para a tela de configurações
-  } 
-},[selectedLessons])
-
+      router.replace("/games/settings/SettingsScreen");
+    }
+  }, [selectedVocaluries]);
 
   return (
     <DataContext.Provider
       value={{
-        gameData,
+        gameVocabulary,
         gameText,
-        selectedLessons,
-        setSelectedLessons,
+
+        selectedVocaluries,
+        setSelectedVocaluries,
+
+        selectedTexts,
+        setSelectedTexts,
+
         refreshData,
+
         addWordPair,
         getAllLessons,
+        getAllVocabularyLessons,
+        getAllTextLessons,
+
         deleteWordPair,
         addLesson,
       }}

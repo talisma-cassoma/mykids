@@ -18,3 +18,21 @@ export interface GameStage {
   lessonTitle: string;
   wordPairs: WordPair[];
 }
+
+
+export type SentenceData = {
+    translation: string;
+
+    sentence: SentenceItem[];
+};
+
+export type SentenceItem =
+    | {
+        type: "word";
+        value: string;
+    }
+    | {
+        type: "drop";
+        id: string;
+        answer: string;
+    };

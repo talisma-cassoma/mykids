@@ -16,13 +16,13 @@ import { useGame } from "@/context/gameContext";
 
 import {
     useSpeech,
-    GameStage,
-    WordPair,
     TimerConverter,
 } from "@/utils/lessons";
+import { GameStage, WordPair } from "@/types";
 
 const gameData: GameStage[] = [
     {
+        id: "1",
         lessonTitle: "salutations",
         wordPairs: [
             { id: "1", fr: "Bonjour", ar: "مرحبا" },

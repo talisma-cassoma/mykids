@@ -87,7 +87,21 @@ export const gameData: GameStage[] = [
     { "id": "56", "fr": "sincérité", "ar": "صَفَاء" },
     { "id": "59", "fr": "tout le temps", "ar": "كُلَّ وَقْت" }
   ]
-}
+},
+{
+    id: "6",
+    lessonTitle: "Mots-clés : La chatte de Sara",
+    wordPairs: [
+      { id: "60", fr: "Une chatte", ar: "قِطَّة" },
+      { id: "61", fr: "La nourriture", ar: "الطَّعَام" },
+      { id: "62", fr: "Le secret", ar: "السِّرّ" },
+      { id: "63", fr: "Un poisson", ar: "سَمَكَة" },
+      { id: "64", fr: "Elle court / cavale", ar: "تَعْدُو" },
+      { id: "65", fr: "Un endroit abandonné", ar: "مَكَان مَهْجُور" },
+      { id: "66", fr: "Des chatons", ar: "قُطَيْطَات" },
+      { id: "67", fr: "Elle fut étonnée", ar: "تَعَجَّبَتْ" }
+    ],
+  },
 
 ];
 

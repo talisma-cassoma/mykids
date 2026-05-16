@@ -21,7 +21,7 @@ import {
 import { Button } from "@/components/Button";
 import { IconSquareRoundedCheck } from "@tabler/icons-react-native";
 import { useSpeech, sentenceToText } from "@/utils/lessons";
-import { IconVolume } from "@tabler/icons-react-native";
+import { IconVolume, IconRefreshDot } from "@tabler/icons-react-native";
 import { SentenceItem } from "@/types";
 
 
@@ -127,7 +127,7 @@ export function FillinTheBlanks({
     }
 
     useEffect(() => {
-        const interval =async () => {
+        const interval = async () => {
             await speak(
                 arabicSentence,
                 "ar-MA"
@@ -135,13 +135,27 @@ export function FillinTheBlanks({
             setIsSpeaking(false);
         };
 
-       interval()
+        interval()
     }, [sentence, translation]);
 
     return (
         <DropProvider>
             <View style={styles.container}>
                 <View style={styles.sentenceContainer}>
+                    <TouchableOpacity
+                        onPress={() =>
+                            speak(
+                                arabicSentence,
+                                "ar-MA"
+                            )
+                        }
+                    >
+                        <IconRefreshDot
+                            size={24}
+                            color="#666"
+                        />
+
+                    </TouchableOpacity>
                     <View style={styles.sentenceRow}>
                         {sentence.map((item, index) => {
                             if (item.type === "word") {
@@ -161,6 +175,7 @@ export function FillinTheBlanks({
                                         handleDrop(item.id, word)
                                     }
                                 >
+
                                     <View style={styles.dropZone}>
                                         <TouchableOpacity
                                             onPress={() =>
@@ -220,9 +235,9 @@ export function FillinTheBlanks({
                         </Draggable>
                     ))}
                 </View>
-                <Button 
-                disabled={isSpeaking}
-                onPress={() => validate()} style={{ flexDirection: "row", gap: 6 }}>
+                <Button
+                    disabled={isSpeaking}
+                    onPress={() => validate()} style={{ flexDirection: "row", gap: 6 }}>
                     <Button.Title>Vérifier</Button.Title>
                     <Button.Icon icon={IconSquareRoundedCheck} />
                 </Button>
@@ -249,7 +264,7 @@ const styles = StyleSheet.create({
         textAlign: "right",
         fontStyle: "italic",
         //alignSelf: "flex-end",
-        width:"auto"
+        width: "auto"
     },
     container: {
         gap: 30,

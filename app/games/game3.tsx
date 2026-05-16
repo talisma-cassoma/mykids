@@ -178,6 +178,11 @@ const vocabularyIndex = useMemo(() => {
           mode: "increasing",
           time,
         }}
+        score={{
+          isActive: true,
+          current: currentIndex,
+          total: sentences.length,
+        }}
       />
 
       <View style={styles.container}>

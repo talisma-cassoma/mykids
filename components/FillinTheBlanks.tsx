@@ -9,6 +9,7 @@ import {
     Text,
     StyleSheet,
     Pressable,
+    TouchableOpacity,
 } from "react-native";
 
 import {
@@ -20,6 +21,7 @@ import {
 import { Button } from "@/components/Button";
 import { IconSquareRoundedCheck } from "@tabler/icons-react-native";
 import { useSpeech, sentenceToText } from "@/utils/lessons";
+import { IconVolume } from "@tabler/icons-react-native";
 import { SentenceItem } from "@/types";
 
 
@@ -42,7 +44,7 @@ export function FillinTheBlanks({
     onValidate,
 }: Props) {
     const { speak } = useSpeech();
-    const [isSpeaking, setIsSpeaking] = useState(false);
+    const [isSpeaking, setIsSpeaking] = useState(true);
     const [availableWords, setAvailableWords] =
         useState(draggableWords);
     const arabicSentence =
@@ -125,13 +127,15 @@ export function FillinTheBlanks({
     }
 
     useEffect(() => {
-        const interval = setInterval(async () => {
+        const interval =async () => {
             await speak(
                 arabicSentence,
                 "ar-MA"
             );
-        }, 4000);
-        return () => clearInterval(interval);
+            setIsSpeaking(false);
+        };
+
+       interval()
     }, [sentence, translation]);
 
     return (
@@ -158,6 +162,19 @@ export function FillinTheBlanks({
                                     }
                                 >
                                     <View style={styles.dropZone}>
+                                        <TouchableOpacity
+                                            onPress={() =>
+                                                speak(
+                                                    item.answer,
+                                                    "ar-MA"
+                                                )
+                                            }
+                                        >
+                                            <IconVolume
+                                                size={24}
+                                                color="#666"
+                                            />
+                                        </TouchableOpacity>
                                         {placements[item.id] ? (
                                             <Pressable
                                                 onPress={() =>
@@ -203,7 +220,9 @@ export function FillinTheBlanks({
                         </Draggable>
                     ))}
                 </View>
-                <Button onPress={() => validate()} style={{ flexDirection: "row", gap: 6 }}>
+                <Button 
+                disabled={isSpeaking}
+                onPress={() => validate()} style={{ flexDirection: "row", gap: 6 }}>
                     <Button.Title>Vérifier</Button.Title>
                     <Button.Icon icon={IconSquareRoundedCheck} />
                 </Button>

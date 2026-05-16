@@ -137,9 +137,9 @@ export function SelectedLessonsSettings() {
   }
 
   return (
-    <View style={{ gap: 30 }}>
+    <View style={{ flex: 1, gap: 30 }}>
       {/* ================= VOCABULARY ================= */}
-      <View>
+       <View style={{height: 220,}}>
         <Text style={styles.sectionTitle}>
           Vocabulary
         </Text>
@@ -153,7 +153,7 @@ export function SelectedLessonsSettings() {
       </View>
 
       {/* ================= TEXT ================= */}
-      <View>
+      <View style={{ height: 220}}>
         <Text style={styles.sectionTitle}>
           Textes
         </Text>
@@ -174,7 +174,8 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: "700",
-    marginBottom: 10,
+    marginBottom: 20,
+    marginTop: 20,
   },
 
   list: {

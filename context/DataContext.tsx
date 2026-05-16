@@ -87,7 +87,9 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
     });
 
     setGameVocabulary(vocab);
+    setSelectedVocaluries(vocab[0] ? [vocab[0]] : []);
     setGameText(texts);
+    setSelectedTexts(texts[0] ? [texts[0]] : []);
   }
 
   function addWordPair(lessonId: string, fr: string, ar: string) {
@@ -157,16 +159,16 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   useEffect(() => {
-    if (selectedVocaluries.length === 0) {
+    if (selectedVocaluries.length === 0 || selectedTexts.length === 0) {
       Alert.alert(
         "Attention",
-        "Aucune leçon sélectionnée.",
+        "selectionne au moins une leçon de vocabulaire et un texte pour jouer",
         [{ text: "OK" }]
       );
 
       router.replace("/games/settings/SettingsScreen");
     }
-  }, [selectedVocaluries]);
+  }, [selectedVocaluries, selectedTexts]);
 
   return (
     <DataContext.Provider

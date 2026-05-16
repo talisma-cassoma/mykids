@@ -164,18 +164,30 @@ export function sentenceToText(
 }
 
 export function splitIntoSentences(arabic: string, french: string) {
+  // Dividir estritamente por ponto final (.)
   const arabicSentences = arabic
-    .split(/[.,،]/) // ponto, vírgula árabe e ocidental
+    .split('.')
     .map(s => s.trim())
     .filter(Boolean);
 
   const frenchSentences = french
-    .split(/[.,]/)
+    .split('.')
     .map(s => s.trim())
     .filter(Boolean);
 
+  // Mapeia garantindo o alinhamento correto das frases
   return arabicSentences.map((ar, index) => ({
-    arabic: ar,
-    french: frenchSentences[index] ?? "",
+    arabic: ar + '.', // Readiciona o ponto para manter a pontuação original
+    french: frenchSentences[index] ? frenchSentences[index] + '.' : "",
   }));
 }
+
+export const normalizeArabic = (text: string) => {
+  return text
+    .replace(/[ًٌٍَُِّْـ]/g, "") // remove diacríticos
+    .replace(/[.,!?؟،؛]/g, "") // remove pontuação
+    .replace(/^ال/, "") // remove artigo "ال"
+    .replace(/ة$/, "") // ة -> ""
+    .replace(/ها$|ه$|هم$|هن$/g, "") // remove possessivos simples
+    .trim();
+};

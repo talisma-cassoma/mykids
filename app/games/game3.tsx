@@ -5,18 +5,15 @@ import {
   StyleSheet,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import {
-  FillinTheBlanks,
-  SentenceItem,
-  SentenceData,
-} from "@/components/FillinTheBlanks";
+import {FillinTheBlanks} from "@/components/FillinTheBlanks";
+import { SentenceItem, SentenceData } from "@/types"
 import { Header } from "@/components/Header";
 import {
   TimerConverter,
 } from "@/utils/lessons";
 import { useGame } from "@/context/gameContext";
 import { useData } from "@/context/DataContext";
-import { splitIntoSentences } from "@/utils/lessons";
+import { splitIntoSentences, normalizeArabic } from "@/utils/lessons";
 
 
 export default function SentenceGame() {
@@ -25,52 +22,61 @@ export default function SentenceGame() {
   const { nextStage, setGameScore } = useGame();
   const gameTitle = "Remplir les Mots Manquants";
   const { selectedTexts, gameVocabulary } = useData();
-  const vocabulary = useMemo(() => {
-  const words = gameVocabulary.flatMap(stage =>
-    stage.wordPairs.flatMap(pair => [pair.ar, pair.fr])
-  );
 
-  // remover duplicados
-  return Array.from(new Set(words));
-}, [gameVocabulary]);
-  const sentences: SentenceData[] = useMemo(() => {
-  const all: SentenceData[] = [];
+  //console.log("selectedTexts", selectedTexts);
 
-  selectedTexts.forEach((item) => {
-    const pairs = splitIntoSentences(
-      item.content.arabic_text,
-      item.content.french_translation
+  const vocabularySet = useMemo(() => {
+    return new Set(
+      gameVocabulary.flatMap(stage =>
+        stage.wordPairs.map(pair =>
+          normalizeArabic(pair.ar)
+        )
+      )
     );
+  }, [gameVocabulary]);
 
-    pairs.forEach((p) => {
-      const words = p.arabic.split(" ");
+  //console.log("Vocabulary Set", vocabularySet);
 
-      const sentence: SentenceData = {
-        translation: p.french,
-        sentence: words.map((w, i) => {
-          // estratégia simples: transformar algumas palavras em "drop"
-          const isDrop = i % 2 === 1; // alterna palavras
+  const sentences: SentenceData[] = useMemo(() => {
+    const all: SentenceData[] = [];
 
-          return isDrop
-            ? {
+    selectedTexts.forEach((item) => {
+      const pairs = splitIntoSentences(
+        item.content.arabic_text,
+        item.content.french_translation
+      );
+
+      pairs.forEach((p, sentenceIndex) => {
+        const words = p.arabic.split(" ");
+
+        const sentence: SentenceData = {
+          translation: p.french,
+          sentence: words.map((w, i) => {
+            const normalized = normalizeArabic(w);
+
+            const isVocabularyWord =
+              vocabularySet.has(normalized);
+
+            return isVocabularyWord
+              ? {
                 type: "drop",
-                id: `drop-${i}`,
-                answer: w,
+                id: `drop-${sentenceIndex}-${i}`,
+                answer: normalized,
               }
-            : {
+              : {
                 type: "word",
-                value: w,
+                value: normalized,
               };
-        }),
-      };
+          }),
+        };
 
-      all.push(sentence);
+        all.push(sentence);
+      });
     });
-  });
 
-  // limitar a 20 frases
-  return all.slice(0, 20);
-}, [selectedTexts]);
+    // limitar a 20 frases
+    return all.slice(0, 20);
+  }, [selectedTexts, vocabularySet]);
 
 
   //console.log("selectedTexts", selectedTexts);
@@ -78,32 +84,56 @@ export default function SentenceGame() {
   const [currentIndex, setCurrentIndex] =
     useState(0);
 
- const current = sentences[currentIndex];
+  const current = sentences[currentIndex];
 
-  const draggableWords = useMemo(() => {
-    // palavras corretas da frase
-    const correctWords = current.sentence
-      .filter(
-        (item) => item.type === "drop"
+const vocabularyIndex = useMemo(() => {
+  const normalizedWords =
+    gameVocabulary.flatMap(stage =>
+      stage.wordPairs.map(pair =>
+        normalizeArabic(pair.ar)
       )
-      .map((item) => item.answer);
+    );
 
-    // palavras falsas aleatórias
-    const randomWords = vocabulary
-      .filter(
-        (word) =>
-          !correctWords.includes(word)
-      )
-      .sort(() => Math.random() - 0.5)
-      .slice(0, 2);
+  return [...new Set(normalizedWords)];
+}, [gameVocabulary]);
 
-    // mistura tudo
-    return [
-      ...correctWords,
-      ...randomWords,
-    ].sort(() => Math.random() - 0.5);
+ const draggableWords = useMemo(() => {
+  if (!current) return [];
 
-  }, [current]);
+  // palavras corretas
+  const correctWords = current.sentence
+    .filter(
+      (item): item is SentenceItem & {
+        type: "drop";
+      } => item.type === "drop"
+    )
+    .map((item) => item.answer);
+
+  // mínimo desejado
+  const MIN_WORDS = 2;
+
+  // quantidade de falsas necessárias
+  const fakeNeeded = Math.max(
+    0,
+    MIN_WORDS - correctWords.length
+  );
+
+  // palavras falsas
+  const fakeWords = vocabularyIndex
+    .filter(
+      (word) =>
+        !correctWords.includes(word)
+    )
+    .sort(() => Math.random() - 0.5)
+    .slice(0, fakeNeeded);
+
+  // mistura tudo
+  return [
+    ...correctWords,
+    ...fakeWords,
+  ].sort(() => Math.random() - 0.5);
+
+}, [current, vocabularyIndex]);
 
   function handleValidation(
     correct: boolean
@@ -163,7 +193,7 @@ export default function SentenceGame() {
 }
 
 const styles = StyleSheet.create({
-   safeArea: {
+  safeArea: {
     flex: 1,
     backgroundColor: "#F8FAFC",
     paddingHorizontal: 16,

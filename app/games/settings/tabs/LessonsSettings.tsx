@@ -191,6 +191,7 @@ const styles = StyleSheet.create({
 
     listContent: {
         paddingBottom: 20,
+        minHeight: 220,
     },
 
     lessonCard: {

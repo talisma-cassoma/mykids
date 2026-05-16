@@ -90,13 +90,13 @@ export const gameData: GameStage[] = [
 },
 {
     id: "6",
-    lessonTitle: "Mots-clés : La chatte de Sara",
+    lessonTitle: "La chatte de Sara",
     wordPairs: [
       { id: "60", fr: "Une chatte", ar: "قِطَّة" },
       { id: "61", fr: "La nourriture", ar: "الطَّعَام" },
       { id: "62", fr: "Le secret", ar: "السِّرّ" },
       { id: "63", fr: "Un poisson", ar: "سَمَكَة" },
-      { id: "64", fr: "Elle court / cavale", ar: "تَعْدُو" },
+      { id: "64", fr: "Elle court", ar: "تَعْدُو" },
       { id: "65", fr: "Un endroit abandonné", ar: "مَكَان مَهْجُور" },
       { id: "66", fr: "Des chatons", ar: "قُطَيْطَات" },
       { id: "67", fr: "Elle fut étonnée", ar: "تَعَجَّبَتْ" }
@@ -109,12 +109,27 @@ export const gameData: GameStage[] = [
 export const gameText: GameText[]  = [
   {
     id: "1",
-    title: "الحيوانات",
+    title: "la chatte de Sara",
     content: {
         arabic_text:"لسارة قطة لطيفة، تحبها كثيرًا، وتقدم لها الطعام بانتظام، وتعتني بصحتها. وبعد مدة لاحظت سارة أن قطتها أصبحت تأخذ الطعام وتختفي بسرعة، دون أن تتناول منه شيئًا. قررت سارة أن تكتشف السرّ. وعندما حان وقت الطعام، قدمت لقطتها سمكة؛ فأخذتها، وانطلقت كالسهم تعدو. تبعتها سارة، وهي تتجه نحو مكان مهجور، فرأتها تضع السمكة أمام قطة أخرى، ولدت حديثًا قطيطات. تعجبت سارة، وأصبحت منذ ذلك اليوم، تقدم لقطتها مزيدًا من الطعام.",
         french_translation: "Sara a une gentille chatte qu’elle aime beaucoup. Elle lui donne régulièrement de la nourriture et prend soin de sa santé. Après quelque temps, Sara remarqua que sa chatte prenait la nourriture et disparaissait rapidement sans rien manger. Sara décida de découvrir le secret. Quand l’heure du repas arriva, elle donna un poisson à sa chatte ; celle-ci le prit et partit en courant comme une flèche. Sara la suivit vers un endroit abandonné et la vit poser le poisson devant une autre chatte qui venait de mettre bas à de petits chatons. Sara fut étonnée, et depuis ce jour-là, elle donna davantage de nourriture à sa chatte.",
     }
 
+},
+  {
+    id: "2",
+    title: "Tu es un bel enfant, mon fils",
+    content: {
+        arabic_text:"اعتاد أبي أن يصنع واجهة منزلنا، فحرص على إصلاح المصباح المنكسر، ليختار ما يناسبه. عرض عليّ أبي الألوان، فاخترتُ لونًا أخضرًا يناسب الحديقة، وأخي نبيل الذي اقترح لونًا بنيًّا، فاختار ما يناسبه. نحرص على أن تكون واجهة منزلنا جميلة كل صباح ومساء. قال أبي: «أحسنتما، والذي أريده باختيار لونٍ يليق بواجهتنا». قال جدي: «أنت طفل جميل يا بني».",
+        french_translation: "Mon père avait l’habitude d’aménager la façade de notre maison.Il a donc veillé à réparer la lampe casséepour choisir ce qui lui convenait.Mon père m’a montré les couleurs, alors j’ai choisiune couleur verte qui convient au jardin,et mon frère Nabil a proposéune couleur marron, puis il a choisi ce qui lui convenait.Nous veillons à ce que la façade de notre maisonsoit belle chaque matin et chaque soir.Mon père a dit :« Vous avez bien fait, et je veuxchoisir une couleur qui convient à notre façade. »Mon grand-père a dit :« Tu es un bel enfant, mon fils. »",
+    },},
+    {
+        id: "3",
+        title: "Le terrain de notre quartier",
+        content: {
+            arabic_text:"لم نَعُدْ بعدَ اليومِ نَلْعَبُ في الطُّرُقِ المُزْدَحِمَةِ بالسَّيَّاراتِ، أو في الأزِقَّةِ المُظْلِمَةِ بالمَارَّةِ. لقد شَهِدَ حَيُّنا تَدْشِينَ مَلْعَبٍ جَمِيلٍ. فَبَعْدَ أنْ كانَتْ لَنا مَكْتَبَةٌ لِلْحَيِّ، وَدارٌ لِلشَّبابِ، تَعَزَّزَ حَيُّنا بِهذا المَلْعَبِ. اتَّفَقْنا، نَحْنُ أَوْلادَ الحَيِّ وبَناتُهُ، على تَوْزِيعِ حِصَصِ اللَّعِبِ بَيْنَنا داخِلَ المَلْعَبِ في مَجْمُوعاتٍ، بِحُضُورِ مُنَشِّطِ الألْعابِ. وَهكَذا صارَ لَنا مَلْعَبٌ ومَكْتَبَةٌ، وفَضاءٌ للأنْشِطَةِ المُخْتَلِفَةِ؛ فيهِ نَقْضِي وَقْتَنا، ونُنَمِّي عُقولَنا، ونُحافِظُ على صِحَّتِنا.",
+            french_translation: "À partir d’aujourd’hui, nous ne jouerons plus dans les rues encombrées de voitures ni dans les ruelles sombres pleines de passants. Notre quartier a assisté à l’inauguration d’un beau terrain de jeu. Après avoir eu une bibliothèque pour le quartier et une maison des jeunes, notre quartier s’est enrichi de ce terrain. Nous, les garçons et les filles du quartier, nous nous sommes mis d’accord pour répartir entre nous les horaires de jeu à l’intérieur du terrain, en groupes, sous la supervision de l’animateur des jeux. Ainsi, nous avons maintenant un terrain, une bibliothèque et un espace pour différentes activités ; nous y passons notre temps, nous développons notre intelligence et nous préservons notre santé.",
+    }
 }
 ]
 

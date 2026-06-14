@@ -173,7 +173,15 @@ export const gameText: GameText[] = [
       arabic_text: "لم نَعُدْ بعدَ اليومِ نَلْعَبُ في الطُّرُقِ المُزْدَحِمَةِ بالسَّيَّاراتِ، أو في الأزِقَّةِ المُظْلِمَةِ بالمَارَّةِ. لقد شَهِدَ حَيُّنا تَدْشِينَ مَلْعَبٍ جَمِيلٍ. فَبَعْدَ أنْ كانَتْ لَنا مَكْتَبَةٌ لِلْحَيِّ، وَدارٌ لِلشَّبابِ، تَعَزَّزَ حَيُّنا بِهذا المَلْعَبِ. اتَّفَقْنا، نَحْنُ أَوْلادَ الحَيِّ وبَناتُهُ، على تَوْزِيعِ حِصَصِ اللَّعِبِ بَيْنَنا داخِلَ المَلْعَبِ في مَجْمُوعاتٍ، بِحُضُورِ مُنَشِّطِ الألْعابِ. وَهكَذا صارَ لَنا مَلْعَبٌ ومَكْتَبَةٌ، وفَضاءٌ للأنْشِطَةِ المُخْتَلِفَةِ؛ فيهِ نَقْضِي وَقْتَنا، ونُنَمِّي عُقولَنا، ونُحافِظُ على صِحَّتِنا.",
       french_translation: "À partir d’aujourd’hui, nous ne jouerons plus dans les rues encombrées de voitures ni dans les ruelles sombres pleines de passants. Notre quartier a assisté à l’inauguration d’un beau terrain de jeu. Après avoir eu une bibliothèque pour le quartier et une maison des jeunes, notre quartier s’est enrichi de ce terrain. Nous, les garçons et les filles du quartier, nous nous sommes mis d’accord pour répartir entre nous les horaires de jeu à l’intérieur du terrain, en groupes, sous la supervision de l’animateur des jeux. Ainsi, nous avons maintenant un terrain, une bibliothèque et un espace pour différentes activités ; nous y passons notre temps, nous développons notre intelligence et nous préservons notre santé.",
     }
+  },
+  {
+  "id": "4",
+  "title": "L'été est arrivé",
+  "content": {
+    "arabic_text": "حَلَّ فَصْلُ الصَّيْفِ وَأَطَلَّتِ الشَّمْسُ بِأَشِعَّتِهَا الَّتِي تَلْفَحُ وُجُوهَ. قَصَدَ الحَالُ هَيْثَمْ وَأُسْرَتُهُ شَاطِئَ البَحْرِ.",
+    "french_translation": "L'été est arrivé et le soleil est apparu avec ses rayons qui caressent les visages. Haitham et sa famille se sont alors rendus à la plage."
   }
+}
 ]
 
 

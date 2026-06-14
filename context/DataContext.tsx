@@ -15,6 +15,8 @@ interface DataContextType {
   selectedTexts: GameText[];
   setSelectedTexts: (texts: GameText[]) => void;
 
+  init: () => void;
+  
   refreshData: () => void;
 
   addWordPair: (lessonId: string, fr: string, ar: string) => void;
@@ -24,7 +26,7 @@ interface DataContextType {
   getAllTextLessons: () => any[];
 
   deleteWordPair: (id: string) => void;
-
+  
   addLesson: (
     lessonTitle: string,
     type: "text" | "vocabulary",
@@ -87,8 +89,10 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
     });
 
     setGameVocabulary(vocab);
+    console.log("vocab", JSON.stringify(vocab));
     setSelectedVocaluries(vocab[0] ? [vocab[0]] : []);
     setGameText(texts);
+    console.log("texts", texts);
     setSelectedTexts(texts[0] ? [texts[0]] : []);
   }
 
@@ -139,22 +143,22 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
     refreshData();
   }
 
+  async function init() {
+    await initStorage();
+
+    lessonRepository.initializeIfEmpty();
+    refreshData();
+
+    const l1 = store.addTableCellIdsListener('lessons', refreshData);
+    const l2 = store.addTableCellIdsListener('wordPairs', refreshData);
+
+    return () => {
+      store.delListener(l1);
+      store.delListener(l2);
+    };
+  }
+
   useEffect(() => {
-    async function init() {
-      await initStorage();
-
-      lessonRepository.initializeIfEmpty();
-      refreshData();
-
-      const l1 = store.addTableCellIdsListener('lessons', refreshData);
-      const l2 = store.addTableCellIdsListener('wordPairs', refreshData);
-
-      return () => {
-        store.delListener(l1);
-        store.delListener(l2);
-      };
-    }
-
     init();
   }, []);
 
@@ -182,6 +186,7 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
         selectedTexts,
         setSelectedTexts,
 
+        init,
         refreshData,
 
         addWordPair,

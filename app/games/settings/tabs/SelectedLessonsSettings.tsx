@@ -139,7 +139,7 @@ export function SelectedLessonsSettings() {
   return (
     <View style={{ flex: 1, gap: 30 }}>
       {/* ================= VOCABULARY ================= */}
-       <View style={{height: 220,}}>
+      <View style={styles.listSection}>
         <Text style={styles.sectionTitle}>
           Vocabulary
         </Text>
@@ -153,7 +153,7 @@ export function SelectedLessonsSettings() {
       </View>
 
       {/* ================= TEXT ================= */}
-      <View style={{ height: 220}}>
+      <View style={styles.listSection}>
         <Text style={styles.sectionTitle}>
           Textes
         </Text>
@@ -177,16 +177,19 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     marginTop: 20,
   },
-
+  listSection:{ flex: 1, minHeight: 100 },
   list: {
     padding: 16,
+    minHeight: 240,
+    maxHeight: "auto",
+    width: "auto",
   },
 
   card: {
-    padding: 16,
+    backgroundColor: "#F7F7F7",
+    borderRadius: 14,
+    padding: 18,
     marginBottom: 12,
-    borderRadius: 12,
-    backgroundColor: "#fff",
 
     flexDirection: "row",
     justifyContent: "space-between",

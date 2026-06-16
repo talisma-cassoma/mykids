@@ -27,13 +27,11 @@ export type GameStage = {
 export const stages: GameStage[] = [
   { name: "Mactching Words", href: "/games/game1" },
   { name: "Find the word", href: "/games/game2" },
-  { name: "Drag the Word", href: "/games/game3" },
-  { name: "Complete the sentence", href: "/games/game4" },
+  { name: "Complete the sentence", href: "/games/game3" },
+  { name: "Drag the Word", href: "/games/game4" },
   { name: "Memory Game", href: "/games/game5" },
   { name: "Complete with words", href: "/games/game6" },
 ];
-
-
 
 const GameContext = createContext<GameContextType | null>(null);
 
@@ -50,7 +48,8 @@ export function GameProvider({ children }: Props) {
   const [currentStage, setCurrentStage] = useState(0);
   const [progress, setProgress] = useState(0);
   const [gameScore, setGameScore] = useState<gameScoreProps[]>([]);
-  const [selectedGames, setSelectedGames] = useState<{ name: string, href: Href }[]>(stages);
+  const [selectedGames, setSelectedGames] = useState<{ name: string, href: Href }[]>([ 
+    { name: "Mactching Words", href: "/games/game1" }]);
 
   const nextStage = () => {
     const current = currentStage + 1;

@@ -1,6 +1,6 @@
 import React from "react";
 import * as Speech from "expo-speech";
-import { GameStage, GameText, SentenceData } from "@/types";
+import { GameStage, GameText, SentenceItem } from "@/types";
 
 export const gameData: GameStage[] = [
   {
@@ -255,16 +255,7 @@ export function TimerConverter(time: number) {
   return `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`
 }
 
-export type SentenceItem =
-  | {
-    type: "word";
-    value: string;
-  }
-  | {
-    type: "drop";
-    id: string;
-    answer: string;
-  };
+
 
 export function sentenceToText(
   sentence: SentenceItem[]
@@ -275,7 +266,7 @@ export function sentenceToText(
         return item.value;
       }
 
-      return item.answer;
+      return item.arabic;
     })
     .join(" ");
 }

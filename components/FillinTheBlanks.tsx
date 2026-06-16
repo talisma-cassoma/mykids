@@ -116,7 +116,7 @@ export function FillinTheBlanks({
         sentence.forEach((item) => {
             if (item.type === "drop") {
                 if (
-                    placements[item.id] !== item.answer
+                    placements[item.id] !== item.arabic
                 ) {
                     correct = false;
                 }
@@ -180,7 +180,7 @@ export function FillinTheBlanks({
                                         <TouchableOpacity
                                             onPress={() =>
                                                 speak(
-                                                    item.answer,
+                                                    item.arabic,
                                                     "ar-MA"
                                                 )
                                             }
@@ -209,6 +209,9 @@ export function FillinTheBlanks({
                                                 _____
                                             </Text>
                                         )}
+                                            <Text>
+                                                {item.french}
+                                            </Text>
                                     </View>
                                 </Droppable>
                             );

@@ -16,7 +16,7 @@ import { useData } from "@/context/DataContext";
 import { splitIntoSentences, normalizeArabic } from "@/utils/lessons";
 
 
-export default function DragtheWordsGame() {
+export default function DragTheWordsGame() {
   const [time, setTime] = useState(0);
   const [isTimerRunning] = useState(true);
   const { nextStage, setGameScore } = useGame();
@@ -37,47 +37,50 @@ export default function DragtheWordsGame() {
 
   //console.log("Vocabulary Set", vocabularySet);
 
+ 
   const sentences: SentenceData[] = useMemo(() => {
-    const all: SentenceData[] = [];
-
-    selectedTexts.forEach((item) => {
-      const pairs = splitIntoSentences(
-        item.content.arabic_text,
-        item.content.french_translation
-      );
-
-      pairs.forEach((p, sentenceIndex) => {
-        const words = p.arabic.split(" ");
-
-        const sentence: SentenceData = {
-          translation: p.french,
-          sentence: words.map((w, i) => {
-            const normalized = normalizeArabic(w);
-
-            const isVocabularyWord =
-              vocabularySet.has(normalized);
-
-            return isVocabularyWord
-              ? {
-                type: "drop",
-                id: `drop-${sentenceIndex}-${i}`,
-                answer: normalized,
-              }
-              : {
-                type: "word",
-                value: normalized,
-              };
-          }),
-        };
-
-        all.push(sentence);
-      });
-    });
-
-    // limitar a 20 frases
-    return all.slice(0, 20);
-  }, [selectedTexts, vocabularySet]);
-
+   const all: SentenceData[] = [];
+   
+   selectedTexts.forEach((item) => {
+     const pairs = splitIntoSentences(
+       item.content.arabic_text,
+       item.content.french_translation
+     );
+     
+     pairs.forEach((p, sentenceIndex) => {
+       const words = p.arabic.split(" ");
+       
+       const sentence: SentenceData = {
+         translation: p.french,
+         sentence: words.map((w, i) => {
+           const normalized = normalizeArabic(w);
+           const isVocabularyWord = vocabularySet.has(normalized);
+           
+           // 1. Encontra o par correspondente no vocabulário para pegar o FR
+           const vocabularyMatch = gameVocabulary
+             .flatMap(stage => stage.wordPairs)
+             .find(pair => normalizeArabic(pair.ar) === normalized);
+ 
+           return isVocabularyWord 
+             ? { 
+                 type: "drop", 
+                 id: `drop-${sentenceIndex}-${i}`, 
+                 arabic: normalized,
+                 french: vocabularyMatch ? vocabularyMatch.fr : "" // 2. Injeta o FR aqui
+               } 
+             : { 
+                 type: "word", 
+                 value: normalized, 
+               };
+         }),
+       };
+       all.push(sentence);
+     });
+   });
+   
+   return all.slice(0, 20);
+ }, [selectedTexts, vocabularySet]);
+ 
 
   //console.log("selectedTexts", selectedTexts);
 
@@ -107,7 +110,7 @@ const vocabularyIndex = useMemo(() => {
         type: "drop";
       } => item.type === "drop"
     )
-    .map((item) => item.answer);
+    .map((item) => item.arabic);
 
   // mínimo desejado
   const MIN_WORDS = 2;

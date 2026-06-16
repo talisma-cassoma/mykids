@@ -34,6 +34,7 @@ export type SentenceItem =
     | {
         type: "drop";
         id: string;
-        answer: string;
+        arabic: string;
+        french: string 
     };
 

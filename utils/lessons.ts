@@ -143,6 +143,35 @@ export const gameData: GameStage[] = [
     { "id": "102", "fr": "Il a acheté", "ar": "اِشْتَرَى" },
     { "id": "103", "fr": "Un hôpital", "ar": "مُسْتَشْفَى" }
   ]
+},
+{
+  "id": "8",
+  "lessonTitle": "Vocabulaire: Le lion du zoo",
+  "wordPairs": [
+    { "id": "104", "fr": "Un lion", "ar": "أَسَدٌ" },
+    { "id": "105", "fr": "Un zoo", "ar": "حَدِيقَةٌ" },
+    { "id": "106", "fr": "Des animaux", "ar": "حَيَوَانَاتٌ" },
+    { "id": "107", "fr": "En compagnie de", "ar": "صُحْبَةَ" },
+    { "id": "108", "fr": "Mes parents", "ar": "وَالِدَيَّ" },
+    { "id": "109", "fr": "Ma sœur", "ar": "أُخْتِي" },
+    { "id": "110", "fr": "Un tigre", "ar": "نَمِرٌ" },
+    { "id": "111", "fr": "Une gazelle", "ar": "غَزَالَةٌ" },
+    { "id": "112", "fr": "Une girafe", "ar": "زَرَافَةٌ" },
+    { "id": "113", "fr": "Un rhinocéros", "ar": "وَحِيدُ الْقَرْنِ" },
+    { "id": "114", "fr": "Un éléphant", "ar": "فِيلٌ" },
+    { "id": "115", "fr": "Mon admiration", "ar": "إِعْجَابِي" },
+    { "id": "116", "fr": "Un roi", "ar": "مَلِكٌ" },
+    { "id": "117", "fr": "La forêt", "ar": "الْغَابَةُ" },
+    { "id": "118", "fr": "La chasse", "ar": "الصَّيْدُ" },
+    { "id": "119", "fr": "Ma mère", "ar": "أُمِّي" },
+    { "id": "120", "fr": "Puissant", "ar": "قَوِيٌّ" },
+    { "id": "121", "fr": "La vitesse", "ar": "السُّرْعَةُ" },
+    { "id": "122", "fr": "La vie", "ar": "الْعَيْشُ" },
+    { "id": "123", "fr": "La communauté", "ar": "الْجَمَاعَةُ" },
+    { "id": "124", "fr": "Des photos souvenirs", "ar": "صُوَرٌ تَذْكَارِيَّةٌ" },
+    { "id": "125", "fr": "La maison", "ar": "الْمَنْزِلُ" },
+    { "id": "126", "fr": "Ma mémoire", "ar": "ذِهْنِي" }
+  ]
 }
 
 ];
@@ -180,6 +209,14 @@ export const gameText: GameText[] = [
   "content": {
     "arabic_text": "حَلَّ فَصْلُ الصَّيْفِ وَأَطَلَّتِ الشَّمْسُ بِأَشِعَّتِهَا الَّتِي تَلْفَحُ وُجُوهَ. قَصَدَ الحَالُ هَيْثَمْ وَأُسْرَتُهُ شَاطِئَ البَحْرِ.",
     "french_translation": "L'été est arrivé et le soleil est apparu avec ses rayons qui caressent les visages. Haitham et sa famille se sont alors rendus à la plage."
+  }
+},
+{
+  "id": "5",
+  "title": "Le lion du zoo",
+  "content": {
+    "arabic_text": "أَسَدُ الحَدِيقَةِ. زُرْتُ حَدِيقَةَ الحَيَوَانَاتِ صُحْبَةَ وَالِدِي وَأُخْتِي. تَعَرَّفْتُ حَيَوَانَاتٍ كَثِيرَةً: النَّمِرَ، وَالغَزَالَةَ، وَالثَّعْلَبَ، وَالزَّرَافَةَ، وَوَحِيدَ القَرْنِ، وَالفِيلَ.. عَبَّرْتُ لِأَبِي عَنْ إِعْجَابِي بِالأَسَدِ، فَقَالَ لِي: «إِنَّهُ مَلِكُ الغَابَةِ، وَهُوَ مِنَ الحَيَوَانَاتِ الَّتِي تَعِيشُ عَلَى الصَّيْدِ.» وَأَضَافَتْ أُمِّي: «إِنَّ الأَسَدَ حَيَوَانٌ قَوِيٌّ، يَمْتَازُ بِالسُّرْعَةِ، وَمِيزَتُهُ الكُبْرَى هِيَ حُبُّهُ العَيْشَ وَسْطَ الجَمَاعَةِ..» أَخَذَ لَنَا أَبِي صُوَرًا تِذْكَارِيَّةً مَعَ الأَسَدِ وَمَعَ حَيَوَانَاتٍ أُخْرَى، ثُمَّ عُدْنَا إِلَى المَنْزِلِ، وَبَقِيَتْ صُورَةُ الأَسَدِ عَالِقَةً بِذِهْنِي.",
+    "french_translation": "Le lion du zoo. J'ai visité le zoo en compagnie de mon père et de ma sœur. J'ai découvert de nombreux animaux : le tigre, la gazelle, le renard, la girafe, le rhinocéros et l'éléphant... J'ai exprimé à mon père mon admiration pour le lion, et il m'a dit : « C'est le roi de la forêt, et c'est un animal qui vit de la chasse. » Ma mère a ajouté : « Le lion est un animal puissant, il se distingue par sa rapidité, et sa plus grande caractéristique est son amour de la vie en communauté... » Mon père nous a pris des photos souvenirs avec le lion et avec d'autres animaux, puis nous sommes rentrés à la maison, et l'image du lion est restée gravée dans mon esprit."
   }
 }
 ]

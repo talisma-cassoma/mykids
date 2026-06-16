@@ -8,7 +8,9 @@ import React, {
 import { router, Href } from "expo-router";
 
 type GameContextType = {
-  stages: Href[];
+
+  selectedGames: { name: string, href: Href }[];
+  setSelectedGames: React.Dispatch<React.SetStateAction<{ name: string, href: Href }[]>>;
   currentStage: number;
   progress: number;
   gameScore: gameScoreProps[];
@@ -17,13 +19,21 @@ type GameContextType = {
   resetGame: () => void;
 };
 
-const stages: Href[] = [
-  "/games/game1",
-  "/games/game2",
-  "/games/game4",
-  "/games/game5",
-  "/games/game3",
+export type GameStage = {
+  name: string;
+  href: Href;
+};
+
+export const stages: GameStage[] = [
+  { name: "Mactching Words", href: "/games/game1" },
+  { name: "Find the word", href: "/games/game2" },
+  { name: "Drag the Word", href: "/games/game3" },
+  { name: "Complete the sentence", href: "/games/game4" },
+  { name: "Memory Game", href: "/games/game5" },
+  { name: "Complete with words", href: "/games/game6" },
 ];
+
+
 
 const GameContext = createContext<GameContextType | null>(null);
 
@@ -40,6 +50,7 @@ export function GameProvider({ children }: Props) {
   const [currentStage, setCurrentStage] = useState(0);
   const [progress, setProgress] = useState(0);
   const [gameScore, setGameScore] = useState<gameScoreProps[]>([]);
+  const [selectedGames, setSelectedGames] = useState<{ name: string, href: Href }[]>(stages);
 
   const nextStage = () => {
     const current = currentStage + 1;
@@ -50,13 +61,13 @@ export function GameProvider({ children }: Props) {
     setCurrentStage(current);
     setProgress(current);
 
-    if (current >= stages.length) {
+    if (current >= selectedGames.length) {
       //console.log("max stage", stages.length)
       router.replace("/games/EndScreen")
       return;
     }
 
-    router.replace(stages[current]);
+    router.replace(selectedGames[current].href);
   };
 
   const resetGame = () => {
@@ -68,13 +79,14 @@ export function GameProvider({ children }: Props) {
   return (
     <GameContext.Provider
       value={{
-        stages,
         currentStage,
         progress,
         gameScore,
         setGameScore,
         nextStage,
         resetGame,
+        selectedGames,
+        setSelectedGames,
       }}
     >
       {children}

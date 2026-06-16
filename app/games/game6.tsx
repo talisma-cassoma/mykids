@@ -6,7 +6,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {FillinTheBlanks} from "@/components/FillinTheBlanks";
-import { SentenceItem, SentenceData } from "@/types"
+import { SentenceItem, SentenceData, GameText, GameStage } from "@/types"
 import { Header } from "@/components/Header";
 import {
   TimerConverter,
@@ -16,12 +16,38 @@ import { useData } from "@/context/DataContext";
 import { splitIntoSentences, normalizeArabic } from "@/utils/lessons";
 
 
-export default function DragtheWordsGame() {
+const gameVocabulary : GameStage[] = [
+{
+  "id": "v1",
+  "lessonTitle": "Mots cibles à trou",
+  "wordPairs": [
+    { "id": "1", "fr": "Ce", "ar": "هذا" },
+    { "id": "2", "fr": "Cette", "ar": "هذه" },
+    { "id": "3", "fr": "Qui / Que (m)", "ar": "الذي" },
+    { "id": "4", "fr": "Qui / Que (f)", "ar": "التي" },
+    { "id": "5", "fr": "Devant", "ar": "أمام" },
+    { "id": "6", "fr": "Derrière", "ar": "خلف" },
+    { "id": "7", "fr": "Sur", "ar": "فوق" },
+    { "id": "8", "fr": "Sous", "ar": "تحت" },
+    { "id": "9", "fr": "Dans", "ar": "داخل" }
+  ]
+}
+]
+ const selectedTexts: GameText[] = [
+{
+  "id": "txt-1",
+  "title": "Exercices de grammaire et d'espace",
+  "content": {
+    "arabic_text": "هذا أسد قوي. هذه غزالة سريعة. يقع المعلم أمام التلاميذ. ينام الكلب تحت السرير. هذا هو الكتاب الذي قرأته. نجحت البنت التي درست. الأسد داخل القفص. العصفور فوق الشجرة.",
+    "french_translation": "Ce lion est puissant. Cette gazelle est rapide. L'enseignant se tient devant les élèves. Le chien dort sous le lit. C'est le livre que j'ai lu. La fille qui a étudié a réussi. Le lion est à l'intérieur de la cage. L'oiseau est sur l'arbre."
+  }
+}
+]
+export default function CompleteTheSentenceGame() {
   const [time, setTime] = useState(0);
   const [isTimerRunning] = useState(true);
   const { nextStage, setGameScore } = useGame();
   const gameTitle = "Remplir les Mots Manquants";
-  const { selectedTexts, gameVocabulary } = useData();
 
   //console.log("selectedTexts", selectedTexts);
 

@@ -89,10 +89,10 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
     });
 
     setGameVocabulary(vocab);
-    console.log("vocab", JSON.stringify(vocab));
+    //console.log("vocab", JSON.stringify(vocab));
     setSelectedVocaluries(vocab[0] ? [vocab[0]] : []);
     setGameText(texts);
-    console.log("texts", texts);
+    //console.log("texts", texts);
     setSelectedTexts(texts[0] ? [texts[0]] : []);
   }
 

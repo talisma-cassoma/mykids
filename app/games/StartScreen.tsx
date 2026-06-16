@@ -13,7 +13,7 @@ import { IconArrowLeft } from "@tabler/icons-react-native";
 import { Button } from "@/components/Button";
 
 export default function StartScreen() {
-  const { stages } = useGame();
+  const { selectedGames} = useGame();
   const [loading, setLoading] = useState(true);
 
   return (
@@ -44,7 +44,7 @@ export default function StartScreen() {
       />
       {!loading && (
         <TouchableOpacity
-          onPress={() => router.replace(stages[0])}
+          onPress={() => router.replace(selectedGames[0].href)}
           style={{
             position: "absolute",
             top: 290,

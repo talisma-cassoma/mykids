@@ -10,7 +10,7 @@ import { useData } from "@/context/DataContext";
 import { GameStage, WordPair } from "@/types";
 import { useSpeech, TimerConverter  } from "@/utils/lessons";
 
-export default function WriteTheWordsGameScreen() {
+export default function FindTheWordGameScreen() {
     const gameTittle = "ecris le mot en arabe"
     const { selectedVocaluries } = useData();
     const { speak } = useSpeech();

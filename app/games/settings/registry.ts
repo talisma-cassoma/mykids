@@ -2,6 +2,7 @@
 import { SelectedLessonsSettings } from "./tabs/SelectedLessonsSettings";
 import { LessonsSettings } from "./tabs/LessonsSettings";
 import { DatasetBackup } from "./tabs/DatasetBackup";
+import { SelectedGamesSettings } from "./tabs/SelectedGamesSettings";
 
 export type SettingsTab = {
   id: string;
@@ -23,10 +24,17 @@ export const SETTINGS_TABS: SettingsTab[] = [
     icon: "person",
     Component: LessonsSettings,
   },
+    {
+      id: "games",
+      label: "Jeux",
+      icon: "gamepad",
+      Component: SelectedGamesSettings,
+    },
   {
     id: "dataset_backup",
     label: "Backup de leçons",
     icon: "backup",
     Component: DatasetBackup,
   },
+
 ];

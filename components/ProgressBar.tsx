@@ -4,9 +4,9 @@ import { ThemedText } from "./ThemedText";
 import { useGame } from "@/context/gameContext";
 
 export function ProgressBar() {
-  const { currentStage, stages } = useGame();
+  const { currentStage, selectedGames } = useGame();
 
-  const totalStages = stages.length;
+  const totalStages = selectedGames.length;
 
   // evita divisão por zero
   const progress = totalStages > 0

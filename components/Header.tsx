@@ -4,8 +4,6 @@ import { Score } from "@/components/Score";
 import { ProgressBar } from "@/components/ProgressBar";
 import { Timer } from "@/components/Timer";
 import { PlayAndPauseToggleButton } from "@/components/PlayAndPauseToggleButton";
-import { useGame } from "@/context/gameContext";
-import { resume } from "expo-speech";
 
 interface HeaderProps {
     gameDescription?: string;

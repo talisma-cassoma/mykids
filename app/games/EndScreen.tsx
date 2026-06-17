@@ -4,6 +4,7 @@ import { useGame } from "@/context/gameContext";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "@/components/Button";
 
+
 export default function EndScreen() {
   const { resetGame, gameScore } = useGame();
   const [isButtonLoading, setIsButtonLoading] = useState<boolean>(false);

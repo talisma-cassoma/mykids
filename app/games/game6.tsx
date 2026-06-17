@@ -15,34 +15,53 @@ import { useGame } from "@/context/gameContext";
 import { useData } from "@/context/DataContext";
 import { splitIntoSentences, normalizeArabic } from "@/utils/lessons";
 
+const gameVocabulary: GameStage[] = [
+  {
+    "id": "v1",
+    "lessonTitle": "Mots cibles à trou",
+    "wordPairs": [
+      // === أسماء الإشارة (Pronoms Démonstratifs) ===
+      { "id": "1", "fr": "Ce / Ceci (m. singulier)", "ar": "هَذَا" },
+      { "id": "2", "fr": "Cette / Ceci (f. singulier)", "ar": "هَذِهِ" },
+      { "id": "3", "fr": "Ces deux (m. duel)", "ar": "هَذَانِ" },
+      { "id": "4", "fr": "Ces deux (f. duel)", "ar": "هَاتَانِ" },
+      { "id": "5", "fr": "Ces (Pluriel - humains)", "ar": "هَؤُلَاءِ" },
 
-const gameVocabulary : GameStage[] = [
-{
-  "id": "v1",
-  "lessonTitle": "Mots cibles à trou",
-  "wordPairs": [
-    { "id": "1", "fr": "Ce", "ar": "هذا" },
-    { "id": "2", "fr": "Cette", "ar": "هذه" },
-    { "id": "3", "fr": "Qui / Que (m)", "ar": "الذي" },
-    { "id": "4", "fr": "Qui / Que (f)", "ar": "التي" },
-    { "id": "5", "fr": "Devant", "ar": "أمام" },
-    { "id": "6", "fr": "Derrière", "ar": "خلف" },
-    { "id": "7", "fr": "Sur", "ar": "فوق" },
-    { "id": "8", "fr": "Sous", "ar": "تحت" },
-    { "id": "9", "fr": "Dans", "ar": "داخل" }
-  ]
-}
-]
- const selectedTexts: GameText[] = [
-{
-  "id": "txt-1",
-  "title": "Exercices de grammaire et d'espace",
-  "content": {
-    "arabic_text": "هذا أسد قوي. هذه غزالة سريعة. يقع المعلم أمام التلاميذ. ينام الكلب تحت السرير. هذا هو الكتاب الذي قرأته. نجحت البنت التي درست. الأسد داخل القفص. العصفور فوق الشجرة.",
-    "french_translation": "Ce lion est puissant. Cette gazelle est rapide. L'enseignant se tient devant les élèves. Le chien dort sous le lit. C'est le livre que j'ai lu. La fille qui a étudié a réussi. Le lion est à l'intérieur de la cage. L'oiseau est sur l'arbre."
+      // === الأسماء الموصولة (Pronoms Relatifs) ===
+      { "id": "6", "fr": "Qui / Que (m. singulier)", "ar": "الَّذِي" },
+      { "id": "7", "fr": "Qui / Que (f. singulier)", "ar": "الَّتِي" },
+      { "id": "8", "fr": "Qui / Que (m. duel)", "ar": "اللَّذَانِ" },
+      { "id": "9", "fr": "Qui / Que (f. duel)", "ar": "اللَّتَانِ" },
+      { "id": "10", "fr": "Qui (m. pluriel)", "ar": "الَّذِينَ" },
+      { "id": "11", "fr": "Qui (f. pluriel)", "ar": "اللَّوَاتِي" },
+
+      // === صيغ التفضيل / المقارنة (Les Comparatifs) ===
+      { "id": "12", "fr": "Plus vaste / Plus large", "ar": "أَوْسَعُ" },
+      { "id": "13", "fr": "Plus fort", "ar": "أَقْوَى" },
+      { "id": "14", "fr": "Plus grand", "ar": "أَكْبَرُ" },
+      { "id": "15", "fr": "Plus rapide", "ar": "أَسْرَعُ" },
+
+      // === مفردات أخرى وظروف المكان ===
+      { "id": "16", "fr": "Devant", "ar": "أَمَامَ" },
+      { "id": "17", "fr": "Derrière", "ar": "خَلْفَ" },
+      { "id": "18", "fr": "Sur", "ar": "فَوْقَ" },
+      { "id": "19", "fr": "Sous", "ar": "تَحْتَ" },
+      { "id": "20", "fr": "Dans / À l'intérieur", "ar": "دَاخِلَ" }
+    ]
   }
-}
-]
+];
+
+const selectedTexts: GameText[] = [
+  {
+    "id": "txt-1",
+    "title": "Exercices de grammaire, de comparaison et d'espace",
+    "content": {
+      "arabic_text": "هَذَا أَسَدٌ قَوِيٌّ. هَذِهِ غَزَالَةٌ سَرِيعَةٌ. هَذَانِ الْوَلَدَانِ ذَكِيَّانِ. هَاتَانِ الْبِنْتَانِ نَظِيفَتَانِ. هَؤُلَاءِ الرِّجَالُ أَقْوِيَاءُ. هَذَا هُوَ الْكِتَابُ الَّذِي قَرَأْتُهُ. نَجَحَتِ التِّلْمِيذَةُ الَّتِي تَجْتَهِدُ. الْفَلَّاحُونَ الَّذِينَ يَزْرَعُونَ الأَرْضَ نَشِيطُونَ. النِّسَاءُ اللَّوَاتِي يَعْمَلْنَ مُجْتَهِدَاتٌ. الْبَحْرُ أَوْسَعُ مِنَ الْبُحَيْرَةِ. الأَسَدُ أَقْوَى مِنَ الزَّرَافَةِ. الْقِطَارُ أَسْرَعُ مِنَ الْحَافِلَةِ. الْعَصْفُورُ فَوْقَ الشَّجَرَةِ. الْكَلْبُ تَحْتَ السَّرِيرِ.",
+      "french_translation": "Ce lion est puissant. Cette gazelle est rapide. Ces deux garçons sont intelligents. Ces deux filles sont propres. Ces hommes sont forts. C'est le livre que j'ai lu. L'élève (f) qui travaille dur a réussi. Les paysans qui cultivent la terre sont actifs. Les femmes qui travaillent sont assidues. La mer est plus vaste que le lac. Le lion est plus fort que la girafe. Le train est plus rapide que le bus. L'oiseau est sur l'arbre. Le chien dort sous le lit."
+    }
+  }
+];
+
 export default function CompleteTheSentenceGame() {
   const [time, setTime] = useState(0);
   const [isTimerRunning] = useState(true);

@@ -8,7 +8,8 @@ import React, {
 import { router, Href } from "expo-router";
 
 type GameContextType = {
-
+  mode: mode;
+  setMode: React.Dispatch<React.SetStateAction<mode>>;
   selectedGames: { name: string, href: Href }[];
   setSelectedGames: React.Dispatch<React.SetStateAction<{ name: string, href: Href }[]>>;
   currentStage: number;
@@ -44,8 +45,11 @@ interface gameScoreProps {
   name: string;
   duration?: string;
 }
+ type mode = "dark" | "light";
+
 export function GameProvider({ children }: Props) {
   const [currentStage, setCurrentStage] = useState(0);
+  const [mode, setMode]= useState<mode>("dark")
   const [progress, setProgress] = useState(0);
   const [gameScore, setGameScore] = useState<gameScoreProps[]>([]);
   const [selectedGames, setSelectedGames] = useState<{ name: string, href: Href }[]>([ 
@@ -78,6 +82,8 @@ export function GameProvider({ children }: Props) {
   return (
     <GameContext.Provider
       value={{
+        mode,
+        setMode,
         currentStage,
         progress,
         gameScore,

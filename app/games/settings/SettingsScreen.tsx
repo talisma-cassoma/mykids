@@ -17,7 +17,6 @@ export default function SettingsScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: "#fff", padding: 16, marginTop: 40 }}>
-      
       {/* Retour */}
       <View style={{ height: 40, width: "100%" }}>
         <Button 
@@ -27,7 +26,6 @@ export default function SettingsScreen() {
           <Button.Icon icon={IconArrowLeft} color="#333" />
         </Button>
       </View>
-
       {/* Tabs avec Défilement Horizontal */}
       <View style={{ height: 60, marginBottom: 16 }}> {/* Conteneur avec hauteur fixe */}
         <ScrollView 

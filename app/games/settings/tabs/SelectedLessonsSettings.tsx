@@ -9,18 +9,21 @@ import {
 
 import { useData } from "@/context/DataContext";
 import { GameStage, GameText } from "@/types";
+import { ThemedView } from "@/components/ThemedView";
+import { ThemedText } from "@/components/ThemedText";
+import { Colors } from "@/constants/Colors";
 
 function Checkbox({ selected }: { selected: boolean }) {
   return (
     <View style={{
-      width: 24,
-      height: 24,
-      borderRadius: 6,
+      width: 30,
+      height: 30,
+      borderRadius: "100%",
       borderWidth: 2,
       borderColor: "#333",
       justifyContent: "center",
       alignItems: "center",
-      backgroundColor: selected ? "#333" : "transparent",
+      backgroundColor: selected ? "#000" : "transparent",
     }}>
       {selected && (
         <Text style={{ color: "#fff" }}>✓</Text>
@@ -89,22 +92,24 @@ export function SelectedLessonsSettings() {
     );
 
     return (
+      <ThemedView darkColor="#333" lightColor="#F7F7F7" style={{ borderRadius: 14 }}>
       <TouchableOpacity
         onPress={() => toggleVocabulary(item)}
         style={styles.card}
       >
         <View>
-          <Text style={styles.title}>
+          <ThemedText style={styles.title}>
             {item.lessonTitle}
-          </Text>
+          </ThemedText>
 
-          <Text style={styles.subtitle}>
+          <ThemedText style={styles.subtitle}>
             {item.wordPairs.length} mots
-          </Text>
+          </ThemedText>
         </View>
 
         <Checkbox selected={selected} />
       </TouchableOpacity>
+      </ThemedView>
     );
   }
 
@@ -117,32 +122,34 @@ export function SelectedLessonsSettings() {
     );
 
     return (
-      <TouchableOpacity
-        onPress={() => toggleText(item)}
-        style={styles.card}
-      >
-        <View>
-          <Text style={styles.title}>
-            {item.title}
-          </Text>
+      <ThemedView darkColor="#333" lightColor="#F7F7F7" style={{ borderRadius: 14 }}>
+        <TouchableOpacity
+          onPress={() => toggleText(item)}
+          style={styles.card}
+        >
+          <ThemedView darkColor="transparent" lightColor="transparent">
+            <ThemedText style={styles.title}>
+              {item.title}
+            </ThemedText>
 
-          <Text style={styles.subtitle}>
-            Texte
-          </Text>
-        </View>
+            <ThemedText style={styles.subtitle}>
+              Texte
+            </ThemedText>
+          </ThemedView>
 
-        <Checkbox selected={selected} />
-      </TouchableOpacity>
+          <Checkbox selected={selected} />
+        </TouchableOpacity>
+      </ThemedView>
     );
   }
 
   return (
-    <View style={{ flex: 1, gap: 30 }}>
+    <ThemedView style={{ flex: 1, gap: 30 }}>
       {/* ================= VOCABULARY ================= */}
       <View style={styles.listSection}>
-        <Text style={styles.sectionTitle}>
+        <ThemedText style={styles.sectionTitle}>
           Vocabulary
-        </Text>
+        </ThemedText>
 
         <FlatList
           data={gameVocabulary}
@@ -153,10 +160,10 @@ export function SelectedLessonsSettings() {
       </View>
 
       {/* ================= TEXT ================= */}
-      <View style={styles.listSection}>
-        <Text style={styles.sectionTitle}>
+      <ThemedView style={styles.listSection}>
+        <ThemedText style={styles.sectionTitle}>
           Textes
-        </Text>
+        </ThemedText>
 
         <FlatList
           data={gameText}
@@ -164,8 +171,8 @@ export function SelectedLessonsSettings() {
           renderItem={renderTextItem}
           contentContainerStyle={styles.list}
         />
-      </View>
-    </View>
+      </ThemedView>
+    </ThemedView>
   );
 }
 
@@ -177,16 +184,16 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     marginTop: 20,
   },
-  listSection:{ flex: 1, minHeight: 100 },
+  listSection: { flex: 1, minHeight: 100 },
   list: {
     padding: 16,
     minHeight: 240,
     maxHeight: "auto",
     width: "auto",
+    gap: 10,
   },
 
   card: {
-    backgroundColor: "#F7F7F7",
     borderRadius: 14,
     padding: 18,
     marginBottom: 12,
@@ -203,6 +210,6 @@ const styles = StyleSheet.create({
 
   subtitle: {
     marginTop: 4,
-    color: "#666",
+    //color: "#666",
   },
 });

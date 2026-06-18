@@ -26,11 +26,17 @@ import { TimerConverter, useSpeech} from "@/utils/lessons";
 import { useGame } from "@/context/gameContext";
 import { Header } from "@/components/Header";
 import { useData } from "@/context/DataContext";
+import { Colors } from "@/constants/Colors";
+import { ThemedText } from "@/components/ThemedText";
+import { ThemedView } from "@/components/ThemedView";
+
+
+
 const screenWidth = Dimensions.get("window").width;
 
 export default function MatchingWordsGameScreen() {
   const gameTitle = "glisser et déposer les mots";
-  const { setGameScore, nextStage } = useGame();
+  const { setGameScore, nextStage, mode } = useGame();
   const { selectedVocaluries } = useData();
 
   const { speak } = useSpeech();
@@ -198,7 +204,8 @@ export default function MatchingWordsGameScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView style={[{ flex: 1, padding: 20, paddingBottom: 50 }, 
+                  { backgroundColor: Colors[mode].background}]}>
       <Header
         gameDescription={gameTitle}
         timer={{
@@ -213,7 +220,7 @@ export default function MatchingWordsGameScreen() {
         }}
       />
 
-      <View style={styles.buttonWrapper}>
+      <ThemedView style={styles.buttonWrapper}>
         <Button onPress={restartGame}>
           <Button.Icon icon={IconRefresh} />
         </Button>
@@ -222,10 +229,10 @@ export default function MatchingWordsGameScreen() {
           <Button.Title>Vérifier</Button.Title>
           <Button.Icon icon={IconSquareRoundedCheck} />
         </Button>
-      </View>
+      </ThemedView>
 
       <DropProvider>
-        <View style={styles.wrapper}>
+        <ThemedView style={styles.wrapper}>
           {/* SCROLL 1 -> OPTIONS DRAG */}
           <ScrollView
             showsVerticalScrollIndicator={false}
@@ -235,8 +242,10 @@ export default function MatchingWordsGameScreen() {
               <Draggable key={item.id} data={item} onDragStart={() => speak(item.ar, "ar-MA")}>
                 <TouchableOpacity
                   onPress={speak.bind(null, item.ar, "ar-MA")}
-                  style={styles.optionCard}>
-                  <Text style={styles.dragText}>{item.ar}</Text>
+                  style={[styles.optionCard,
+                    mode === "dark"?({backgroundColor: "#333"}):({backgroundColor: "#FFFFFF"})
+                   ]}>
+                  <ThemedText style={styles.dragText} lightColor="#1E293B">{item.ar}</ThemedText>
                 </TouchableOpacity>
               </Draggable>
             ))}
@@ -248,15 +257,15 @@ export default function MatchingWordsGameScreen() {
             contentContainerStyle={styles.mainColumn}
           >
             {data.map((item) => (
-              <View key={item.id} style={styles.rowCard}>
-                <Text style={styles.leftText}>{item.fr}</Text>
+              <ThemedView key={item.id} style={styles.rowCard} darkColor="#333" lightColor="#FFFFFF">
+                <ThemedText style={styles.leftText}>{item.fr}</ThemedText>
 
                 <Droppable
                   onDrop={(dragged: WordPair) =>
                     handleDrop(item.id, dragged)
                   }
                 >
-                  <View style={styles.dropZone}>
+                  <ThemedView style={styles.dropZone} darkColor="#000" lightColor="#F8FAFC">
                     {placements[item.id] ? (
                       /**
                        * regra 3:
@@ -267,21 +276,21 @@ export default function MatchingWordsGameScreen() {
                         onPress={() => removeFromDropZone(item.id)}
                         style={styles.dragFilled}
                       >
-                        <Text style={styles.dragText}>
+                        <ThemedText style={styles.dragText}>
                           {placements[item.id]?.ar}
-                        </Text>
+                        </ThemedText>
                       </Pressable>
                     ) : (
-                      <Text style={styles.placeholder}>
+                      <ThemedText style={styles.placeholder}>
                         laisse ici
-                      </Text>
+                      </ThemedText>
                     )}
-                  </View>
+                  </ThemedView>
                 </Droppable>
-              </View>
+              </ThemedView>
             ))}
           </ScrollView>
-        </View>
+        </ThemedView>
       </DropProvider>
     </SafeAreaView>
   );
@@ -290,7 +299,6 @@ export default function MatchingWordsGameScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#F8FAFC",
     paddingHorizontal: 16,
     paddingTop: 10,
   },
@@ -328,7 +336,6 @@ const styles = StyleSheet.create({
   optionCard: {
     minWidth: 140,
     maxWidth: 160,
-    backgroundColor: "#FFFFFF",
     borderRadius: 14,
     paddingVertical: 14,
     paddingHorizontal: 14,
@@ -353,7 +360,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    backgroundColor: "#FFFFFF",
     borderRadius: 18,
     paddingVertical: 14,
     paddingHorizontal: 16,
@@ -367,7 +373,6 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     fontWeight: "600",
-    color: "#0F172A",
   },
 
   dropZone: {
@@ -377,7 +382,6 @@ const styles = StyleSheet.create({
     borderStyle: "dashed",
     borderColor: "#94A3B8",
     borderRadius: 14,
-    backgroundColor: "#F8FAFC",
     justifyContent: "center",
     alignItems: "center",
     padding: 6,
@@ -386,7 +390,6 @@ const styles = StyleSheet.create({
   dragFilled: {
     width: "100%",
     minHeight: 42,
-    backgroundColor: "#fff",
     borderRadius: 10,
     justifyContent: "center",
     alignItems: "center",
@@ -404,7 +407,6 @@ const styles = StyleSheet.create({
   dragText: {
     fontSize: 15,
     fontWeight: "600",
-    color: "#1E293B",
     textAlign: "center",
   },
 });

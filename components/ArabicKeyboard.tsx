@@ -1,5 +1,8 @@
+import { Colors } from "@/constants/Colors";
 import React, { useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, StyleProp, ViewStyle} from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, StyleProp, ViewStyle } from "react-native";
+import { useGame } from "@/context/gameContext";
+import { ThemedText } from "@/components/ThemedText";
 
 const ARABIC_KEYS = [
   "ا", "ب", "ت", "ث", "ج", "ح", "خ",
@@ -53,19 +56,21 @@ export function ArabicKeyboard({
     onChange(value.slice(0, -1));
   }
 
-function displayVariant(v: string) {
-  const diacritics = ["َ", "ِ", "ُ", "ْ", "ّ", "ً", "ٍ", "ٌ"];
+  function displayVariant(v: string) {
+    const diacritics = ["َ", "ِ", "ُ", "ْ", "ّ", "ً", "ٍ", "ٌ"];
 
-  if (!diacritics.includes(v)) {
-    return v;
+    if (!diacritics.includes(v)) {
+      return v;
+    }
+
+    // usa última letra digitada como base
+    const lastChar =
+      value.length > 0 ? value[value.length - 1] : "ب";
+
+    return `${lastChar}${v}`;
   }
+  const { mode } = useGame();
 
-  // usa última letra digitada como base
-  const lastChar =
-    value.length > 0 ? value[value.length - 1] : "ب";
-
-  return `${lastChar}${v}`;
-}
   return (
     <View style={[styles.container, style]}>
 
@@ -76,7 +81,8 @@ function displayVariant(v: string) {
             key={key}
             onPress={() => handlePress(key)}
             onLongPress={() => handleLongPress(key)}
-            style={styles.key}
+            style={[styles.key,
+            mode === "dark" ? { backgroundColor: "#eee", borderColor: "#fff" } : { backgroundColor: "#eee", borderColor: "#eee" }]}
           >
             <Text style={styles.keyText}>{key}</Text>
           </TouchableOpacity>
@@ -95,7 +101,9 @@ function displayVariant(v: string) {
             <TouchableOpacity
               key={v}
               onPress={() => handleVariantPress(v)}
-              style={styles.variantKey}
+              style={[styles.variantKey,
+              mode === "dark" ? { backgroundColor: "#eee", borderColor: "#fff" } : { backgroundColor: "#eee", borderColor: "#eee" }
+              ]}
             >
               <Text style={styles.variantText}>
                 {displayVariant(v)}
@@ -123,8 +131,9 @@ const styles = StyleSheet.create({
     margin: 4,
     backgroundColor: "#eee",
     borderRadius: 6,
-    minWidth: 40,
+    minWidth: 45,
     alignItems: "center",
+    borderWidth: 1
   },
   keyText: {
     fontSize: 18,

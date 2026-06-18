@@ -18,8 +18,14 @@ import { AddNewWorldForm } from "@/components/AddNewWordForm";
 import { AddNewLessonForm } from "@/components/AddNewLessonForm";
 import { useData } from "@/context/DataContext";
 import { GameStage, GameText, WordPair } from "@/types";
+import { ThemedView } from "@/components/ThemedView";
+import { ThemedText } from "@/components/ThemedText";
+import { Colors } from "@/constants/Colors";
+import { useGame } from "@/context/gameContext";
+
 
 export function LessonsSettings() {
+  const { mode } = useGame();
   const { gameVocabulary, gameText, deleteWordPair } = useData();
   const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null);
 
@@ -40,36 +46,39 @@ export function LessonsSettings() {
 
   function renderLessonItem({ item }: { item: GameStage }) {
     return (
-      <TouchableOpacity style={styles.lessonCard} onPress={() => handleOpenLesson(item)}>
-        <Text style={styles.lessonTitle}>{item.lessonTitle}</Text>
-        <View style={styles.rightSection}>
-          <Text style={styles.countText}>{item.wordPairs.length} mots</Text>
+      <TouchableOpacity style={[styles.lessonCard,
+        mode === "dark"?({backgroundColor: "#333"}):({backgroundColor: "#F7F7F7"})
+      ]} 
+       onPress={() => handleOpenLesson(item)}>
+        <ThemedText style={styles.lessonTitle}>{item.lessonTitle}</ThemedText>
+        <ThemedView style={styles.rightSection}>
+          <ThemedText style={styles.countText}>{item.wordPairs.length} mots</ThemedText>
           <IconPlus size={20} color="#333" />
-        </View>
+        </ThemedView>
       </TouchableOpacity>
     );
   }
 
   function renderTextItem({ item }: { item: GameText }) {
     return (
-      <View style={styles.lessonCard}>
-        <Text style={styles.lessonTitle}>{item.title}</Text>
-        <View style={styles.rightSection}>
-          <Text style={styles.countText}>Texte</Text>
+      <ThemedView style={styles.lessonCard} darkColor="#333" lightColor="#F7F7F7">
+        <ThemedText style={styles.lessonTitle}>{item.title}</ThemedText>
+        <ThemedView style={styles.rightSection}>
+          <ThemedText style={styles.countText}>Texte</ThemedText>
           <IconPlus size={20} color="#333" />
-        </View>
-      </View>
+        </ThemedView>
+      </ThemedView>
     );
   }
 
   function renderWordPairItem({ item }: { item: WordPair }) {
     return (
-      <View style={styles.wordCard}>
-        <Text style={styles.wordText}>{item.fr}</Text>
+      <ThemedView darkColor="#232121" lightColor="#F7F7F7" style={styles.wordCard}>
+        <ThemedText style={styles.wordText}>{item.fr}</ThemedText>
         <TouchableOpacity onPress={() => deleteWordPair(item.id)}>
           <IconXboxX size={22} color="#D11A2A" />
         </TouchableOpacity>
-      </View>
+      </ThemedView>
     );
   }
 
@@ -80,14 +89,14 @@ export function LessonsSettings() {
   }, []);
 
   return (
-    <View style={styles.container}>
+    <ThemedView style={styles.container}>
       {/* Main container wrapped in ScrollView so the entire page can scroll */}
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContainer}>
         {/* ADD LESSON FORM */}
         <AddNewLessonForm />
 
         {/* VOCABULARY SECTION */}
-        <Text style={styles.sectionTitle}>Vocabulary</Text>
+        <ThemedText style={styles.sectionTitle}>Vocabulary</ThemedText>
         <FlatList
           data={gameVocabulary}
           keyExtractor={(item) => item.id}
@@ -97,7 +106,7 @@ export function LessonsSettings() {
         />
 
         {/* TEXT SECTION */}
-        <Text style={styles.sectionTitle}>Textes</Text>
+        <ThemedText style={styles.sectionTitle}>Textes</ThemedText>
         <FlatList
           data={gameText}
           keyExtractor={(item) => item.id}
@@ -113,38 +122,43 @@ export function LessonsSettings() {
         index={0}
         snapPoints={snapPoints}
         enablePanDownToClose
-        backgroundStyle={{ backgroundColor: "#fff" }}
-        handleIndicatorStyle={{ backgroundColor: "#999" }}
+        backgroundStyle={ mode === "dark"
+            ? { backgroundColor: "#333" }: 
+            { backgroundColor: "#F7F7F7" }}
+        handleIndicatorStyle={
+          mode === "dark"
+            ? { backgroundColor: "#333" }: 
+            { backgroundColor: "#F7F7F7" }}
       >
         {/* Removed fixed-height BottomSheetView to let the FlatList dictate structure */}
-        <View style={styles.sheetHeaderWrapper}>
-          <View style={styles.sheetHeader}>
-            <Text style={styles.sheetTitle}>
+        <ThemedView darkColor="#333" lightColor="#F7F7F7" style={styles.sheetHeaderWrapper}>
+          <ThemedView  darkColor="#333" lightColor="#F7F7F7" style={styles.sheetHeader}>
+            <ThemedText style={styles.sheetTitle}>
               {selectedLesson?.lessonTitle || "Lesson"}
-            </Text>
+            </ThemedText>
             <Pressable onPress={handleCloseSheet}>
-              <IconXboxX size={24} color="#222" />
+              <IconXboxX size={24} color={Colors[mode].icon} />
             </Pressable>
-          </View>
+          </ThemedView>
           <AddNewWorldForm selectedLessonId={selectedLesson?.id || ""} />
-        </View>
+        </ThemedView>
 
         {/* CRITICAL FIX: Use BottomSheetFlatList instead of standard FlatList */}
         <BottomSheetFlatList
           data={selectedLesson?.wordPairs || []}
           keyExtractor={(item) => item.id}
           renderItem={renderWordPairItem}
-          contentContainerStyle={styles.modalListContent}
+          contentContainerStyle={[styles.modalListContent]}
         />
       </BottomSheetModal>
-    </View>
+    </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FFF",
+    //backgroundColor: "#FFF",
   },
   scrollContainer: {
     padding: 16,
@@ -160,7 +174,7 @@ const styles = StyleSheet.create({
     // Removed flex: 1 which was destroying the height constraints
   },
   lessonCard: {
-    backgroundColor: "#F7F7F7",
+    //backgroundColor: "#F7F7F7",
     borderRadius: 14,
     padding: 18,
     marginBottom: 12,
@@ -176,14 +190,14 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
+    backgroundColor: "transparent"
   },
   countText: {
     fontSize: 14,
     color: "#666",
   },
   wordCard: {
-    backgroundColor: "#FAFAFA",
-    borderRadius: 12,
+    borderRadius: 14,
     padding: 16,
     marginBottom: 10,
     flexDirection: "row",

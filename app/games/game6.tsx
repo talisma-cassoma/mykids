@@ -12,6 +12,7 @@ import {
   TimerConverter,
 } from "@/utils/lessons";
 import { useGame } from "@/context/gameContext";
+import { Colors } from "@/constants/Colors";
 import { useData } from "@/context/DataContext";
 import { splitIntoSentences, normalizeArabic } from "@/utils/lessons";
 
@@ -65,7 +66,7 @@ const selectedTexts: GameText[] = [
 export default function CompleteTheSentenceGame() {
   const [time, setTime] = useState(0);
   const [isTimerRunning] = useState(true);
-  const { nextStage, setGameScore } = useGame();
+  const { nextStage, setGameScore, mode } = useGame();
   const gameTitle = "Remplir les Mots Manquants";
 
   //console.log("selectedTexts", selectedTexts);
@@ -218,7 +219,8 @@ const vocabularyIndex = useMemo(() => {
   }, [isTimerRunning]);
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView style={[{ flex: 1, padding: 20, paddingBottom: 50 }, 
+                     { backgroundColor: Colors[mode].background}]}>
       <Header
         gameDescription={gameTitle}
         timer={{
@@ -248,7 +250,6 @@ const vocabularyIndex = useMemo(() => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#F8FAFC",
     paddingHorizontal: 16,
     paddingTop: 10,
   },
@@ -257,7 +258,5 @@ const styles = StyleSheet.create({
     padding: 20,
     justifyContent: "center",
     gap: 50,
-    backgroundColor: "#fff",
-
   },
 });

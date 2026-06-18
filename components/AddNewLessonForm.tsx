@@ -3,11 +3,16 @@ import { View, Text, TextInput, StyleSheet } from "react-native";
 import { useData } from "@/context/DataContext";
 import { Button } from "@/components/Button";
 import { IconPlus } from "@tabler/icons-react-native";
+import { ThemedView } from "@/components/ThemedView";
+import { ThemedText } from "@/components/ThemedText";
+import { useGame } from "@/context/gameContext";
+import { Colors } from "@/constants/Colors";
 
 type LessonType = "text" | "vocabulary";
 
 export function AddNewLessonForm() {
   const { addLesson } = useData();
+  const {mode } = useGame();
 
   const [showForm, setShowForm] = useState(false);
   const [type, setType] = useState<LessonType>("vocabulary");
@@ -51,11 +56,11 @@ export function AddNewLessonForm() {
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.label}>Type de leçon</Text>
+    <ThemedView style={styles.container}>
+      <ThemedText style={styles.label}>Type de leçon</ThemedText>
 
       {/* SELECT TYPE */}
-      <View style={styles.typeRow}>
+      <ThemedView style={styles.typeRow}>
         <Button
           onPress={() => setType("vocabulary")}
           style={type === "vocabulary" ? styles.selected : styles.notSelected}
@@ -67,46 +72,49 @@ export function AddNewLessonForm() {
           onPress={() => setType("text")}
           style={type === "text" ? styles.selected : styles.notSelected}
         >
-          <Button.Title>Text</Button.Title>
+          <Button.Title>ThemedText</Button.Title>
         </Button>
-      </View>
+      </ThemedView>
 
       {/* TITLE */}
-      <View>
-        <Text style={styles.label}>Titre de la leçon</Text>
+      <ThemedView>
+        <ThemedText style={styles.label}>Titre de la leçon</ThemedText>
         <TextInput
           placeholder="Titre de la leçon"
           value={lessonTitle}
           onChangeText={setLessonTitle}
-          style={styles.input}
+          style={[styles.input, {
+            color: Colors[mode].text,
+            borderColor: Colors[mode].text,
+          }]}
         />
-      </View>
+      </ThemedView>
 
       {/* CONDITIONAL FIELDS */}
       {type === "text" && (
         <>
-          <View>
-            <Text style={styles.label}>Texte en arabe</Text>
+          <ThemedView>
+            <ThemedText style={styles.label}>Texte en arabe</ThemedText>
             <TextInput
               placeholder="Texte en arabe"
               value={arText}
               onChangeText={setArText}
               style={styles.input}
             />
-          </View>
-          <View>
-            <Text style={styles.label}>Traduction en français</Text>
+          </ThemedView>
+          <ThemedView>
+            <ThemedText style={styles.label}>Traduction en français</ThemedText>
             <TextInput
               placeholder="Traduction en français"
               value={frText}
               onChangeText={setFrText}
               style={styles.input}
             />
-          </View>
+          </ThemedView>
         </>
       )}
 
-      <View style={styles.actions}>
+      <ThemedView style={styles.actions}>
         <Button onPress={handleSubmit}>
           <Button.Title>Enregistrer</Button.Title>
         </Button>
@@ -114,8 +122,8 @@ export function AddNewLessonForm() {
         <Button onPress={() => setShowForm(false)}>
           <Button.Title>Annuler</Button.Title>
         </Button>
-      </View>
-    </View>
+      </ThemedView>
+    </ThemedView>
   );
 }
 const styles = StyleSheet.create({

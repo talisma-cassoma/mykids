@@ -11,7 +11,8 @@ import {
     Pressable,
     TouchableOpacity,
 } from "react-native";
-
+import { ThemedText } from "@/components/ThemedText";
+import { ThemedView } from "@/components/ThemedView";
 import {
     DropProvider,
     Draggable,
@@ -139,9 +140,9 @@ export function FillinTheBlanks({
     }, [sentence, translation]);
 
     return (
-        <DropProvider>
-            <View style={styles.container}>
-                <View style={styles.sentenceContainer}>
+        <DropProvider >
+            <ThemedView style={styles.container}>
+                <ThemedView style={styles.sentenceContainer}>
                     <TouchableOpacity
                         onPress={() =>
                             speak(
@@ -156,16 +157,16 @@ export function FillinTheBlanks({
                         />
 
                     </TouchableOpacity>
-                    <View style={styles.sentenceRow}>
+                    <ThemedView style={styles.sentenceRow}>
                         {sentence.map((item, index) => {
                             if (item.type === "word") {
                                 return (
-                                    <Text
+                                    <ThemedText
                                         key={index}
                                         style={styles.word}
                                     >
                                         {item.value}
-                                    </Text>
+                                    </ThemedText>
                                 );
                             }
                             return (
@@ -176,7 +177,7 @@ export function FillinTheBlanks({
                                     }
                                 >
 
-                                    <View style={styles.dropZone}>
+                                    <ThemedView style={styles.dropZone}>
                                         <TouchableOpacity
                                             onPress={() =>
                                                 speak(
@@ -196,55 +197,55 @@ export function FillinTheBlanks({
                                                     removeWord(item.id)
                                                 }
                                             >
-                                                <Text
+                                                <ThemedText
                                                     style={styles.dropWord}
                                                 >
                                                     {placements[item.id]}
-                                                </Text>
+                                                </ThemedText>
                                             </Pressable>
                                         ) : (
-                                            <Text
+                                            <ThemedText
                                                 style={styles.placeholder}
                                             >
                                                 _____
-                                            </Text>
+                                            </ThemedText>
                                         )}
-                                            <Text>
+                                            <ThemedText>
                                                 {item.french}
-                                            </Text>
-                                    </View>
+                                            </ThemedText>
+                                    </ThemedView>
                                 </Droppable>
                             );
                         })}
-                    </View>
+                    </ThemedView>
 
                     {/* Tradução */}
-                    <Text style={styles.translation}>
+                    <ThemedText style={styles.translation}>
                         {translation}
-                    </Text>
-                </View>
+                    </ThemedText>
+                </ThemedView>
 
-                <View style={styles.bank}>
+                <ThemedView style={styles.bank}>
                     {availableWords.map((word) => (
                         <Draggable
                             key={word}
                             data={word}
                         >
-                            <View style={styles.card}>
-                                <Text style={styles.cardText}>
+                            <ThemedView style={styles.card} darkColor="#333" lightColor="#e2e8f0">
+                                <ThemedText style={styles.cardText}>
                                     {word}
-                                </Text>
-                            </View>
+                                </ThemedText>
+                            </ThemedView>
                         </Draggable>
                     ))}
-                </View>
+                </ThemedView>
                 <Button
                     disabled={isSpeaking}
                     onPress={() => validate()} style={{ flexDirection: "row", gap: 6 }}>
                     <Button.Title>Vérifier</Button.Title>
                     <Button.Icon icon={IconSquareRoundedCheck} />
                 </Button>
-            </View>
+            </ThemedView>
         </DropProvider>
     );
 }
@@ -252,6 +253,7 @@ export function FillinTheBlanks({
 const styles = StyleSheet.create({
     sentenceContainer: {
         gap: 14,
+        
     },
 
     sentenceRow: {
@@ -276,6 +278,7 @@ const styles = StyleSheet.create({
         fontSize: 24,
         fontWeight: "600",
         writingDirection: "rtl",
+        
     },
 
     dropZone: {
@@ -307,10 +310,9 @@ const styles = StyleSheet.create({
     },
 
     card: {
-        backgroundColor: "#e2e8f0",
         paddingHorizontal: 16,
         paddingVertical: 12,
-        borderRadius: 12,
+        borderRadius: 14,
     },
 
     cardText: {
@@ -319,7 +321,7 @@ const styles = StyleSheet.create({
     },
 
     checkButton: {
-        backgroundColor: "#111",
+        //backgroundColor: "#111",
         padding: 14,
         borderRadius: 10,
         alignItems: "center",

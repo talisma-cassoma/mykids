@@ -11,18 +11,27 @@ import { useGame } from "@/context/gameContext";
 import { router } from "expo-router";
 import { IconArrowLeft } from "@tabler/icons-react-native";
 import { Button } from "@/components/Button";
+import { ThemeToggleButton } from "@/components/ThemeToggleButton";
+import { ThemedView } from "@/components/ThemedView";
+import { Colors } from "@/constants/Colors";
+
 
 export default function StartScreen() {
   const { selectedGames} = useGame();
   const [loading, setLoading] = useState(true);
+  const { mode } = useGame();
+
 
   return (
-    <View style={styles.container}>
+    <ThemedView style={styles.container}>
       <View style={{ height: "auto", width: "100%" }} >
-        <Button style={{ width: 40, height: 40, padding: 40, backgroundColor: "transparent", justifyContent: "flex-start" }}
+        <View style={{  padding: 40,flexDirection: "row", width: "100%", justifyContent: "space-between" }}>
+        <TouchableOpacity style={{ width: 40, height: 40, backgroundColor: "transparent", alignItems: "center", justifyContent: "center"}}
           onPress={() => router.replace("/")}>
-          <Button.Icon icon={IconArrowLeft} color="#333" />
-        </Button>
+          <IconArrowLeft color={Colors[mode].icon}/>
+        </TouchableOpacity>
+        <ThemeToggleButton />
+        </View>
       </View>
       {loading && (
         <ActivityIndicator
@@ -47,7 +56,7 @@ export default function StartScreen() {
           onPress={() => router.replace(selectedGames[0].href)}
           style={{
             position: "absolute",
-            top: 290,
+            top: 330,
             marginTop: 20,
             backgroundColor: "#4caf50",
             padding: 10,
@@ -61,7 +70,7 @@ export default function StartScreen() {
         </TouchableOpacity>
       )}
 
-    </View>
+  </ThemedView>
   );
 }
 
@@ -69,7 +78,6 @@ const styles = StyleSheet.create({
   container: {
     position: "relative",
     flex: 1,
-    backgroundColor: "#fff",
     paddingTop: 20,
     paddingHorizontal: 60,
     alignItems: "center",

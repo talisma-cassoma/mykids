@@ -10,6 +10,9 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import LinearGradient from 'react-native-linear-gradient'
+import { IconSettings } from "@tabler/icons-react-native";
+import { router } from "expo-router";
+import { Colors } from "@/constants/Colors";
 
 import { ArabicKeyboard } from "@/components/ArabicKeyboard";
 import { useGame } from "@/context/gameContext";
@@ -44,7 +47,7 @@ export default function WriteTheWordsIfRememberGameScreen() {
     const [emojiEmotion, setEmojiEmotion] =
         useState<EmojiEmotion>("defy");
 
-    const { nextStage, setGameScore } = useGame();
+    const { nextStage, setGameScore, mode } = useGame();
 
     const [currentLesson, setCurrentLesson] =
         useState<GameStage | null>(null);
@@ -140,6 +143,17 @@ export default function WriteTheWordsIfRememberGameScreen() {
         //         style={{ flex: 1 }}
         //     >
         <SafeAreaView style={styles.safeArea}>
+            <TouchableOpacity
+                style={[{
+                    justifyContent: "center",
+                    alignItems: "center",
+                    width: 40, height: 40, borderRadius: 20,
+                    marginLeft: "auto"
+                }, { backgroundColor: Colors[mode].background }]}
+                onPress={() => router.replace("/games/settings/SettingsScreen")}
+            >
+                <IconSettings size={30} color={mode === "dark" ? "#fff" : "#333"} />
+            </TouchableOpacity>
             <Text style={styles.text}>
                 Écris ce que tu entends
             </Text>

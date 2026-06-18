@@ -6,6 +6,8 @@ import {
     StyleSheet,
     View,
 } from "react-native";
+import { useGame } from "@/context/gameContext";
+import { Colors } from "@/constants/Colors";
 
 interface PlayAndPauseToggleButtonProps {
     resumeStatus: "playing" | "paused";
@@ -14,7 +16,8 @@ interface PlayAndPauseToggleButtonProps {
 
 export function PlayAndPauseToggleButton({ resumeStatus, onToggle }: PlayAndPauseToggleButtonProps) {
 
-   
+   const { mode } = useGame();
+
     const translateX = useRef(new Animated.Value(resumeStatus === "playing"? 0 : 26)).current;
 
     useEffect(() => {
@@ -30,7 +33,10 @@ export function PlayAndPauseToggleButton({ resumeStatus, onToggle }: PlayAndPaus
             <View
                 style={[
                     styles.switch,
-                    { backgroundColor: resumeStatus=== "playing"? "#a5d6a7" : "#ccc" , marginBottom: 20 },
+                    { backgroundColor: resumeStatus=== "playing"? 
+                        (mode === "dark" ? Colors.dark.icon : "#a5d6a7" ) : 
+                        (mode === "dark" ? Colors.dark.icon : "#ccc" ), 
+                        marginBottom: 20 },
                 ]}
             >
                 <Animated.View
@@ -42,9 +48,9 @@ export function PlayAndPauseToggleButton({ resumeStatus, onToggle }: PlayAndPaus
                     ]}
                 >
                     {resumeStatus=== "playing"? (
-                        <IconPlayerPauseFilled color="#a5d6a7" size={18} />
+                        <IconPlayerPauseFilled color={mode === "dark" ? Colors.dark.icon : "#a5d6a7"}  size={18} />
                     ) : (
-                        <IconPlayerPlayFilled color="#ccc" size={18} />
+                        <IconPlayerPlayFilled color={mode === "dark" ? Colors.dark.icon : "#ccc"} size={18} />
                     )}
                 </Animated.View>
             </View>

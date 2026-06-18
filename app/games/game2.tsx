@@ -9,6 +9,8 @@ import { useGame } from "@/context/gameContext";
 import { useData } from "@/context/DataContext";
 import { GameStage, WordPair } from "@/types";
 import { useSpeech, TimerConverter  } from "@/utils/lessons";
+import { Colors } from "@/constants/Colors";
+
 
 export default function FindTheWordGameScreen() {
     const gameTittle = "ecris le mot en arabe"
@@ -21,7 +23,7 @@ export default function FindTheWordGameScreen() {
     const [isDoubleCheck, setIsDoubleCheck] = useState(false);
     const [showModal, setShowModal] = useState(false);
 
-    const { nextStage, setGameScore } = useGame();
+    const { nextStage, setGameScore, mode } = useGame();
 
     const [currentLesson, setCurrentLesson] = useState<GameStage | null>(null);
     const [currentWord, setCurrentWord] = useState<WordPair | null>(null);
@@ -121,7 +123,8 @@ export default function FindTheWordGameScreen() {
     }, [currentWord]);
 
     return (
-        <SafeAreaView style={{ flex: 1, backgroundColor: "#fff", padding: 20 }}>
+        <SafeAreaView style={[{ flex: 1, padding: 20, paddingBottom: 50 }, 
+            { backgroundColor: Colors[mode].background}]}>
             <Header
                 gameDescription={gameTittle}
                 timer={{
@@ -190,6 +193,7 @@ export default function FindTheWordGameScreen() {
                             textAlign: "right",
                             fontSize: 20,
                             borderRadius: 8,
+                            color: Colors[mode].text
                         }}
                     />
 

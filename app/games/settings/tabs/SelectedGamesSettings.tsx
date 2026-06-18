@@ -10,18 +10,22 @@ import {
 import { useData } from "@/context/DataContext";
 import {  GameText } from "@/types";
 import { useGame, GameStage, stages} from "@/context/gameContext";
+import { ThemedView } from "@/components/ThemedView";
+import { ThemedText } from "@/components/ThemedText";
+import { Colors } from "@/constants/Colors";
+
 
 function Checkbox({ selected }: { selected: boolean }) {
   return (
     <View style={{
-      width: 24,
-      height: 24,
-      borderRadius: 6,
+     width: 30,
+      height: 30,
+      borderRadius:"100%",
       borderWidth: 2,
       borderColor: "#333",
       justifyContent: "center",
       alignItems: "center",
-      backgroundColor: selected ? "#333" : "transparent",
+      backgroundColor: selected ? "#000" : "transparent",
     }}>
       {selected && (
         <Text style={{ color: "#fff" }}>✓</Text>
@@ -59,29 +63,32 @@ export function SelectedGamesSettings() {
     );
 
     return (
+      <ThemedView darkColor="#333" lightColor="#F7F7F7" style={{borderRadius: 14}}>
       <TouchableOpacity
         onPress={() => toggleGame(item)}
-        style={styles.card}
+        style={[styles.card,
+        ]}
       >
         <View>
-          <Text style={styles.title}>
+          <ThemedText style={styles.title}>
             {item.name}
-          </Text>
+          </ThemedText>
         </View>
 
         <Checkbox selected={selected} />
       </TouchableOpacity>
+      </ThemedView>
     );
   }
 
 
   return (
-    <View style={{ flex: 1, gap: 30 }}>
+    <ThemedView style={{ flex: 1, gap: 30 }}>
       {/* ================= Game ================= */}
       <View style={styles.listSection}>
-        <Text style={styles.sectionTitle}>
+        <ThemedText style={styles.sectionTitle}>
           Games
-        </Text>
+        </ThemedText>
 
         <FlatList
           data={stages}
@@ -90,7 +97,7 @@ export function SelectedGamesSettings() {
           contentContainerStyle={styles.list}
         />
       </View>
-    </View>
+    </ThemedView>
   );
 }
 
@@ -108,14 +115,12 @@ const styles = StyleSheet.create({
     minHeight: 240,
     maxHeight: "auto",
     width: "auto",
+    gap: 10
   },
 
   card: {
-    backgroundColor: "#F7F7F7",
-    borderRadius: 14,
     padding: 18,
     marginBottom: 12,
-
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",

@@ -1,5 +1,6 @@
 import { Pressable, View, Image } from "react-native";
 import { ThemedText } from "./ThemedText";
+import { Colors } from "@/constants/Colors";
 
 export default function SignInWithGoogleButton({
   onPress,
@@ -31,7 +32,7 @@ export default function SignInWithGoogleButton({
             marginRight: 6,
           }}
         />
-        <ThemedText type="defaultSemiBold" darkColor="#000">
+        <ThemedText type="defaultSemiBold" darkColor={Colors.dark.text}>
           Continue with Google
         </ThemedText>
       </View>

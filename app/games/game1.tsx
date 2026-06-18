@@ -2,21 +2,22 @@ import React, { use, useEffect, useState, useRef } from "react";
 import { View, StyleSheet, FlatList, TouchableOpacity, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "@/components/Button";
-import { GameStage, WordPair} from "@/types"; 
-import {useSpeech, TimerConverter } from "@/utils/lessons";
+import { GameStage, WordPair } from "@/types";
+import { useSpeech, TimerConverter } from "@/utils/lessons";
 import { useGame } from "@/context/gameContext";
 import { useData } from "@/context/DataContext";
 import { Header } from "@/components/Header";
-
-
+import { ThemedText } from "@/components/ThemedText";
+import { ThemedView } from "@/components/ThemedView";
+import { Colors } from "@/constants/Colors";
 
 export default function MactchingWordsGameScreen() {
   const { selectedVocaluries } = useData();
   const randomIndex = Math.floor(Math.random() * selectedVocaluries.length);
   const gameTittle = useRef(`match les mots: ${selectedVocaluries[randomIndex]?.lessonTitle}` as string).current;
-  
+
   const { speak } = useSpeech();
-  const { nextStage, setGameScore } = useGame();
+  const { nextStage, setGameScore, mode } = useGame();
   const [isButtonLoading, setIsButtonLoading] = useState<boolean>(false)
   const [isMacthActive, setIsMactchActive] = useState<boolean>(true)
   const [hasSavedScore, setHasSavedScore] = useState(false);
@@ -132,6 +133,7 @@ export default function MactchingWordsGameScreen() {
           styles.card,
           isMatched && styles.matched,
           selectedLeft?.id === item.id && styles.selected,
+          {backgroundColor: Colors[mode].background}
         ]}
 
         disabled={!isMacthActive}
@@ -142,7 +144,7 @@ export default function MactchingWordsGameScreen() {
           }
         }}
       >
-        <Text style={styles.text}>{item.fr}</Text>
+        <ThemedText style={styles.text}>{item.fr}</ThemedText>
       </TouchableOpacity>
     );
   };
@@ -156,6 +158,7 @@ export default function MactchingWordsGameScreen() {
           styles.card,
           isMatched && styles.matched,
           selectedRight?.id === item.id && styles.selected,
+          {backgroundColor: Colors[mode].background}
         ]}
         disabled={!isMacthActive}
         onPress={() => {
@@ -165,13 +168,14 @@ export default function MactchingWordsGameScreen() {
           }
         }}
       >
-        <Text style={styles.text}>{item.ar}</Text>
+        <ThemedText style={styles.text}>{item.ar}</ThemedText>
       </TouchableOpacity>
     );
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#fff", padding: 20, paddingBottom: 50 }}>
+    <SafeAreaView style={[{ flex: 1, padding: 20, paddingBottom: 50 }, 
+    { backgroundColor: Colors[mode].background}]}>
       <Header gameDescription={gameTittle}
         playAndPauseButton={{
           isActive: true,

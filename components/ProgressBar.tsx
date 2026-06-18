@@ -2,9 +2,10 @@ import { Image, useColorScheme,Text, View, StyleSheet } from "react-native";
 import { Redirect } from "expo-router";
 import { ThemedText } from "./ThemedText";
 import { useGame } from "@/context/gameContext";
+import { Colors } from "@/constants/Colors";
 
 export function ProgressBar() {
-  const { currentStage, selectedGames } = useGame();
+  const { currentStage, selectedGames, mode } = useGame();
 
   const totalStages = selectedGames.length;
 
@@ -18,7 +19,7 @@ export function ProgressBar() {
   return (
     <View style={styles.container}>
       <View style={[styles.progress, { width: `${percentage}%` }]} />
-      <Text style={styles.progressText}>{percentage}%</Text>
+      <Text style={[styles.progressText]}>{percentage}%</Text>
     </View>
   );
 }
@@ -39,7 +40,7 @@ const styles = StyleSheet.create({
   progressText: {
     position: "absolute",
     alignSelf: "center",
-    color: "#fff",
+    color: "#000",
     fontWeight: "bold",
   },
 });

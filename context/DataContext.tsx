@@ -15,8 +15,13 @@ interface DataContextType {
   selectedTexts: GameText[];
   setSelectedTexts: (texts: GameText[]) => void;
 
+  currentGameText: GameText | null;
+
+  currentGameVocabulary: GameStage[];
+
+
   init: () => void;
-  
+
   refreshData: () => void;
 
   addWordPair: (lessonId: string, fr: string, ar: string) => void;
@@ -26,7 +31,7 @@ interface DataContextType {
   getAllTextLessons: () => any[];
 
   deleteWordPair: (id: string) => void;
-  
+
   addLesson: (
     lessonTitle: string,
     type: "text" | "vocabulary",
@@ -43,6 +48,8 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
 
   const [selectedVocaluries, setSelectedVocaluries] = useState<GameStage[]>([]);
   const [selectedTexts, setSelectedTexts] = useState<GameText[]>([]);
+  const [currentGameText, setCurrentGameText] = useState<GameText | null>(null);
+  const [currentGameVocabulary, setCurrentGameVocabulary] = useState<GameStage[]>([]);
 
   function refreshData() {
     const lessons = lessonRepository.getAllLessons();
@@ -94,6 +101,8 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
     setGameText(texts);
     //console.log("texts", texts);
     setSelectedTexts(texts[0] ? [texts[0]] : []);
+    setCurrentGameText(selectedTexts[Math.floor(Math.random() * setSelectedTexts.length)])
+    setCurrentGameVocabulary([...selectedVocaluries].sort(() => 0.5 - Math.random()).slice(0, 10))
   }
 
   function addWordPair(lessonId: string, fr: string, ar: string) {
@@ -185,6 +194,9 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
 
         selectedTexts,
         setSelectedTexts,
+
+        currentGameText,
+        currentGameVocabulary,
 
         init,
         refreshData,

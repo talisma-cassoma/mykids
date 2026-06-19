@@ -62,7 +62,23 @@ export default function MactchingWordsGameScreen() {
 
 
 
-  const [currentLesson, setCurrentLesson] = useState<GameStage | null>(selectedVocaluries[randomIndex]);
+  const [currentLesson, setCurrentLesson] = useState<GameStage | null>(null);
+
+  useEffect(() => {
+    if (!selectedVocaluries?.length) return;
+
+    const randomLesson =
+      selectedVocaluries[
+      Math.floor(Math.random() * selectedVocaluries.length)
+      ];
+//pegar apenas 8 
+    setCurrentLesson({
+      ...randomLesson,
+      wordPairs: [...randomLesson.wordPairs]
+        .sort(() => Math.random() - 0.5)
+        .slice(0, 6),
+    });
+  }, [selectedVocaluries]);
 
   const [matched, setMatched] = useState<string[]>([]);
   const [phaseScore, setPhaseScore] = useState(0);

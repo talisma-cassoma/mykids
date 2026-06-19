@@ -12,25 +12,7 @@ import { GameStage, GameText } from "@/types";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
 import { Colors } from "@/constants/Colors";
-
-function Checkbox({ selected }: { selected: boolean }) {
-  return (
-    <View style={{
-      width: 30,
-      height: 30,
-      borderRadius: "100%",
-      borderWidth: 2,
-      borderColor: "#333",
-      justifyContent: "center",
-      alignItems: "center",
-      backgroundColor: selected ? "#000" : "transparent",
-    }}>
-      {selected && (
-        <Text style={{ color: "#fff" }}>✓</Text>
-      )}
-    </View>
-  );
-}
+import { Checkbox } from "@/components/Checkbox";
 
 
 export function SelectedLessonsSettings() {
@@ -92,24 +74,25 @@ export function SelectedLessonsSettings() {
     );
 
     return (
-      <ThemedView darkColor="#333" lightColor="#F7F7F7" style={{ borderRadius: 14 }}>
-      <TouchableOpacity
-        onPress={() => toggleVocabulary(item)}
-        style={styles.card}
-      >
-        <View>
-          <ThemedText style={styles.title}>
-            {item.lessonTitle}
-          </ThemedText>
+   
+        <ThemedView darkColor="#333" lightColor="#F7F7F7" style={{ borderRadius: 14 }}>
+          <TouchableOpacity
+            onPress={() => toggleVocabulary(item)}
+            style={styles.card}
+          >
+            <View>
+              <ThemedText style={styles.title}>
+                {item.lessonTitle}
+              </ThemedText>
 
-          <ThemedText style={styles.subtitle}>
-            {item.wordPairs.length} mots
-          </ThemedText>
-        </View>
+              <ThemedText style={styles.subtitle}>
+                {item.wordPairs.length} mots
+              </ThemedText>
+            </View>
 
-        <Checkbox selected={selected} />
-      </TouchableOpacity>
-      </ThemedView>
+            <Checkbox selected={selected} />
+          </TouchableOpacity>
+        </ThemedView>
     );
   }
 

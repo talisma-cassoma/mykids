@@ -4,7 +4,7 @@ import {
   View,
   StyleSheet,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { ThemedSafeAreaView } from "@/components/ThemedSafeAreaView";
 import {FillinTheBlanks} from "@/components/FillinTheBlanks";
 import { SentenceItem, SentenceData, GameText, GameStage } from "@/types"
 import { Header } from "@/components/Header";
@@ -219,8 +219,7 @@ const vocabularyIndex = useMemo(() => {
   }, [isTimerRunning]);
 
   return (
-      <SafeAreaView style={[{ flex: 1, padding: 20, paddingBottom: 50 }, 
-                     { backgroundColor: Colors[mode].background}]}>
+      <ThemedSafeAreaView>
       <Header
         gameDescription={gameTitle}
         timer={{
@@ -243,7 +242,7 @@ const vocabularyIndex = useMemo(() => {
           onValidate={handleValidation}
         />
       </View>
-    </SafeAreaView>
+    </ThemedSafeAreaView>
   );
 }
 

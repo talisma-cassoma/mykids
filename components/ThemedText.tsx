@@ -19,11 +19,14 @@ export function ThemedText({
   ...rest
 }: ThemedTextProps) {
   const { mode } = useGame();
- 
+ const color =
+    mode === "dark"
+      ? darkColor ?? Colors.dark.text
+      : lightColor ?? Colors.light.text;
   return (
     <Text
       style={[
-        {  color: Colors[mode].text,},
+        {  color: color},
         type === 'default' ? styles.default : undefined,
         type === 'title' ? styles.title : undefined,
         type === 'defaultSemiBold' ? styles.defaultSemiBold : undefined,

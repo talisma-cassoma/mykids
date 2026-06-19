@@ -13,26 +13,8 @@ import { useGame, GameStage, stages} from "@/context/gameContext";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
 import { Colors } from "@/constants/Colors";
+import { Checkbox } from "@/components/Checkbox";
 
-
-function Checkbox({ selected }: { selected: boolean }) {
-  return (
-    <View style={{
-     width: 30,
-      height: 30,
-      borderRadius:"100%",
-      borderWidth: 2,
-      borderColor: "#333",
-      justifyContent: "center",
-      alignItems: "center",
-      backgroundColor: selected ? "#000" : "transparent",
-    }}>
-      {selected && (
-        <Text style={{ color: "#fff" }}>✓</Text>
-      )}
-    </View>
-  );
-}
 
 export function SelectedGamesSettings() {
 ;

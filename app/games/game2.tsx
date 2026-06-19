@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, TextInput, ScrollView, Modal, Image } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { ThemedSafeAreaView } from "@/components/ThemedSafeAreaView";
 import { IconSwitchHorizontal } from "@tabler/icons-react-native"
 import { Header } from "@/components/Header";
 import { Button } from "@/components/Button";
@@ -123,8 +123,7 @@ export default function FindTheWordGameScreen() {
     }, [currentWord]);
 
     return (
-        <SafeAreaView style={[{ flex: 1, padding: 20, paddingBottom: 50 }, 
-            { backgroundColor: Colors[mode].background}]}>
+        <ThemedSafeAreaView>
             <Header
                 gameDescription={gameTittle}
                 timer={{
@@ -238,7 +237,7 @@ export default function FindTheWordGameScreen() {
                         </Button>
                     )}
             </ScrollView>
-        </SafeAreaView>
+        </ThemedSafeAreaView>
     );
 }
 

@@ -12,7 +12,7 @@ import { router } from "expo-router";
 import { IconArrowLeft } from "@tabler/icons-react-native";
 import { Button } from "@/components/Button";
 import { ThemeToggleButton } from "@/components/ThemeToggleButton";
-import { ThemedView } from "@/components/ThemedView";
+import { ThemedSafeAreaView } from "@/components/ThemedSafeAreaView";
 import { Colors } from "@/constants/Colors";
 
 
@@ -23,15 +23,8 @@ export default function StartScreen() {
 
 
   return (
-    <ThemedView style={styles.container}>
+    <ThemedSafeAreaView backIcon={true} theme={true} style={styles.container}>
       <View style={{ height: "auto", width: "100%" }} >
-        <View style={{  padding: 40,flexDirection: "row", width: "100%", justifyContent: "space-between" }}>
-        <TouchableOpacity style={{ width: 40, height: 40, backgroundColor: "transparent", alignItems: "center", justifyContent: "center"}}
-          onPress={() => router.replace("/")}>
-          <IconArrowLeft color={Colors[mode].icon}/>
-        </TouchableOpacity>
-        <ThemeToggleButton />
-        </View>
       </View>
       {loading && (
         <ActivityIndicator
@@ -70,14 +63,13 @@ export default function StartScreen() {
         </TouchableOpacity>
       )}
 
-  </ThemedView>
+  </ThemedSafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     position: "relative",
-    flex: 1,
     paddingTop: 20,
     paddingHorizontal: 60,
     alignItems: "center",

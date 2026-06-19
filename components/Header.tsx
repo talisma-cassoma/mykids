@@ -5,6 +5,7 @@ import { ThemedText } from "./ThemedText";
 import { IconSettings } from "@tabler/icons-react-native";
 import { Score } from "@/components/Score";
 import { ProgressBar } from "@/components/ProgressBar";
+import { Settings } from "@/components/Settings";
 import { Timer } from "@/components/Timer";
 import { PlayAndPauseToggleButton } from "@/components/PlayAndPauseToggleButton";
 import { Redirect, router } from "expo-router";
@@ -38,7 +39,7 @@ export function Header({ gameDescription, timer, score, playAndPauseButton }: He
 
     return (
         <View style={styles.header}>
-            <View style={{ flexDirection: "row", width: "100%", justifyContent: "space-between" }}>
+            <View style={{ flexDirection: "row", width: "100%", justifyContent: "space-between", marginBottom:20 }}>
                 {(playAndPauseButton?.isActive
                     && playAndPauseButton.resumeStatus !== undefined
                     && playAndPauseButton.onToggle !== undefined) && (
@@ -55,16 +56,7 @@ export function Header({ gameDescription, timer, score, playAndPauseButton }: He
                     alignSelf: "center",
                 }}>
                     <ThemeToggleButton />
-                    <TouchableOpacity
-                        style={[{
-                            justifyContent: "center",
-                            alignItems: "center",
-                            width: 40, height: 40, borderRadius: 20,
-                        }, { backgroundColor: Colors[mode].background }]}
-                        onPress={() => router.replace("/games/settings/SettingsScreen")}
-                    >
-                        <IconSettings size={30} color={mode === "dark" ? "#fff" : "#333"} />
-                    </TouchableOpacity>
+                    <Settings />
                 </View>
             </View>
 

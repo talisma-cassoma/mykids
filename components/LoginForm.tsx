@@ -1,13 +1,13 @@
-import { ThemedView } from "./ThemedView";
+import { ThemedSafeAreaView } from "@/components/ThemedSafeAreaView";
 import { ThemedText } from "./ThemedText";
 import { useAuth } from "@/context/auth";
 import SignInWithGoogleButton from "./SignInWithGoogleButton";
 import { Image, useColorScheme, View, StyleSheet, TouchableOpacity } from "react-native";
 import { SignInWithAppleButton } from "./SignInWithAppleButton";
-import { Redirect, router } from "expo-router";
-import { IconSettings } from "@tabler/icons-react-native";
+import {  router } from "expo-router";
 import { Avatars } from "@/assets/avatars";
-
+import { Settings } from "@/components/Settings";
+import { ThemedView } from "@/components/ThemedView"
 
 export default function LoginForm() {
   const { signIn, isLoading } = useAuth();
@@ -26,6 +26,7 @@ export default function LoginForm() {
         overflow: "hidden",
         flexDirection: "column",
         justifyContent: "space-around",
+        paddingTop:80
       }
       }>
         <View style={{
@@ -40,15 +41,7 @@ export default function LoginForm() {
         }}
         >
           <View style={{ height: 100, flexDirection: "row", justifyContent: "flex-end", width: "100%", paddingHorizontal: 20 }}>
-            <TouchableOpacity
-              style={styles.avatarWrapper}
-            onPress={() => router.replace("/games/settings/SettingsScreen")}
-            >
-              <View style={{ justifyContent: "center", alignItems: "center", width: 40, height: 40, borderRadius: 20, backgroundColor: "#FFF", }}>
-                <IconSettings size={30} color="#333" />
-              </View>
-              <ThemedText style={{ fontSize: 14, color: "#fff" }}>settings</ThemedText>
-            </TouchableOpacity>
+          <Settings/>
           </View>
           <View style={{ height: 150, flexDirection: "row", justifyContent: "space-around", alignItems: "center",width: 200 }}>
             {/* Avatar flottant */}
@@ -110,7 +103,8 @@ const styles = StyleSheet.create({
     position: "relative",
     justifyContent: "center",
     alignItems: "center",
-    //padding: 16,
+    padding: 0,
+    paddingTop:0
   },
   titleContainer: {
     alignItems: "center",

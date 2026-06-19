@@ -6,6 +6,8 @@ import {
   ActivityIndicator,
 } from "react-native"
 import { IconProps as TablerIconProps,  } from "@tabler/icons-react-native"
+import {Colors} from "@/constants/Colors"
+import { useGame } from "@/context/gameContext"
 
 
 type ButtonProps = TouchableOpacityProps & {
@@ -13,10 +15,11 @@ type ButtonProps = TouchableOpacityProps & {
 }
 
 export function Button({ children, style, isLoading = false, ...rest }: ButtonProps) {
+  const {mode}= useGame()
   return (
     <TouchableOpacity
       style={[{ marginTop: 20,
-                backgroundColor: "#a5d6a7",
+                backgroundColor: Colors[mode].button,
                 padding: 10,
                 justifyContent: "center",
                 alignItems: "center",

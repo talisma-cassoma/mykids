@@ -1,28 +1,30 @@
 import React, { useState } from "react";
 import { Text, View, StyleSheet, ScrollView } from "react-native";
 import { useGame } from "@/context/gameContext";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { ThemedSafeAreaView } from "@/components/ThemedSafeAreaView";
 import { Button } from "@/components/Button";
-
+import { Colors } from "@/constants/Colors";
+import { ThemedView } from "@/components/ThemedView";
+import { ThemedText } from "@/components/ThemedText";
 
 export default function EndScreen() {
-  const { resetGame, gameScore } = useGame();
+  const { resetGame, gameScore, mode } = useGame();
   const [isButtonLoading, setIsButtonLoading] = useState<boolean>(false);
 
   return (
-    <SafeAreaView style={styles.container}>
+   <ThemedSafeAreaView>
       <ScrollView style={{ flex: 1 }}>
-        <Text style={styles.title}>C'est fini 🎮</Text>
+        <ThemedText style={styles.title}>C'est fini 🎮</ThemedText>
 
         {gameScore.length === 0 ? (
-          <Text style={styles.empty}>Nenhum score ainda</Text>
+          <ThemedText style={styles.empty}>Nenhum score ainda</ThemedText>
         ) : (
           gameScore.map((item, index) => (
-            <View key={index} style={styles.card}>
-              <Text style={styles.name}>{item.name}</Text>
-              <Text style={styles.text}>Score: {item.score}</Text>
-              <Text style={styles.text}>Duração: {item.duration}</Text>
-            </View>
+            <ThemedView key={index} darkColor="#333" lightColor="#f5f5f5" style={styles.card}>
+              <ThemedText style={styles.name}>{item.name}</ThemedText>
+              <ThemedText style={styles.text}>Score: {item.score}</ThemedText>
+              <ThemedText style={styles.text}>Duração: {item.duration}</ThemedText>
+            </ThemedView>
           ))
         )}
       </ScrollView>
@@ -38,7 +40,7 @@ export default function EndScreen() {
           <Button.Title>avancer</Button.Title>
         </Button>
       </View>
-    </SafeAreaView>
+    </ThemedSafeAreaView>
   );
 }
 
@@ -62,7 +64,7 @@ const styles = StyleSheet.create({
   card: {
     padding: 15,
     borderRadius: 10,
-    backgroundColor: "#f5f5f5",
+    //backgroundColor: "#f5f5f5",
     marginBottom: 10,
   },
   name: {

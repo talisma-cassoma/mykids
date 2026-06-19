@@ -33,10 +33,7 @@ export function PlayAndPauseToggleButton({ resumeStatus, onToggle }: PlayAndPaus
             <View
                 style={[
                     styles.switch,
-                    { backgroundColor: resumeStatus=== "playing"? 
-                        (mode === "dark" ? Colors.dark.icon : "#a5d6a7" ) : 
-                        (mode === "dark" ? Colors.dark.icon : "#ccc" ), 
-                        marginBottom: 20 },
+                    { backgroundColor: Colors[mode].box },
                 ]}
             >
                 <Animated.View
@@ -48,9 +45,9 @@ export function PlayAndPauseToggleButton({ resumeStatus, onToggle }: PlayAndPaus
                     ]}
                 >
                     {resumeStatus=== "playing"? (
-                        <IconPlayerPauseFilled color={mode === "dark" ? Colors.dark.icon : "#a5d6a7"}  size={18} />
+                        <IconPlayerPauseFilled color={Colors[mode].box}  size={18} />
                     ) : (
-                        <IconPlayerPlayFilled color={mode === "dark" ? Colors.dark.icon : "#ccc"} size={18} />
+                        <IconPlayerPlayFilled color={Colors[mode].box} size={18} />
                     )}
                 </Animated.View>
             </View>

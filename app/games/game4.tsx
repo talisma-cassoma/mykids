@@ -8,7 +8,7 @@ import {
   Pressable,
   TouchableOpacity,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { ThemedSafeAreaView } from "@/components/ThemedSafeAreaView";
 import { IconSquareRoundedCheck, IconRefresh } from "@tabler/icons-react-native";
 import {
   DropProvider,
@@ -204,8 +204,7 @@ export default function MatchingWordsGameScreen() {
   }
 
   return (
-      <SafeAreaView style={[{ flex: 1, padding: 20, paddingBottom: 50 }, 
-                  { backgroundColor: Colors[mode].background}]}>
+      <ThemedSafeAreaView>
       <Header
         gameDescription={gameTitle}
         timer={{
@@ -292,7 +291,7 @@ export default function MatchingWordsGameScreen() {
           </ScrollView>
         </ThemedView>
       </DropProvider>
-    </SafeAreaView>
+    </ThemedSafeAreaView>
   );
 }
 

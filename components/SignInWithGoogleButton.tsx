@@ -32,7 +32,7 @@ export default function SignInWithGoogleButton({
             marginRight: 6,
           }}
         />
-        <ThemedText type="defaultSemiBold" darkColor={Colors.dark.text}>
+        <ThemedText type="defaultSemiBold" darkColor="#11181C">
           Continue with Google
         </ThemedText>
       </View>

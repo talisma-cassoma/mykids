@@ -1,18 +1,17 @@
 // SettingsScreen.tsx
 import React, { useState } from "react";
 // 1. Importez ScrollView depuis react-native
-import { View, Text, TouchableOpacity, ScrollView } from "react-native"; 
+import { View, Text, TouchableOpacity, ScrollView } from "react-native";
 import { SETTINGS_TABS } from "./registry";
 import { router } from "expo-router";
 import { IconArrowLeft } from "@tabler/icons-react-native";
 import { Button } from "@/components/Button";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
-import { Colors} from "@/constants/Colors";
+import { Colors } from "@/constants/Colors";
 import { useGame } from "@/context/gameContext";
 import { ThemeToggleButton } from "@/components/ThemeToggleButton";
-
-
+import {ThemedSafeAreaView} from "@/components/ThemedSafeAreaView"
 export default function SettingsScreen() {
   const [activeTab, setActiveTab] = useState(SETTINGS_TABS[0].id);
   const { mode } = useGame();
@@ -24,19 +23,19 @@ export default function SettingsScreen() {
   const ActiveComponent = currentTab.Component;
 
   return (
-    <ThemedView style={{ flex: 1, padding: 16, marginTop: 40 }}>
+     <ThemedSafeAreaView>
       {/* Retour */}
-        <View style={{  padding: 40,flexDirection: "row", width: "100%", justifyContent: "space-between" }}>
-        <TouchableOpacity style={{ width: 40, height: 40, backgroundColor: "transparent", alignItems: "center", justifyContent: "center"}}
+      <View style={{ flexDirection: "row", width: "100%", justifyContent: "space-between", height: "auto" }}>
+        <TouchableOpacity style={{ width: 40, height: 40, backgroundColor: "transparent", alignItems: "center", justifyContent: "center" }}
           onPress={() => router.replace("/")}>
-          <IconArrowLeft color={Colors[mode].icon}/>
+          <IconArrowLeft color={Colors[mode].icon} />
         </TouchableOpacity>
         <ThemeToggleButton />
-        </View>
+      </View>
       {/* Tabs avec Défilement Horizontal */}
       <ThemedView style={{ height: 60, marginBottom: 16 }}>
-        <ScrollView 
-          horizontal 
+        <ScrollView
+          horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={{ paddingHorizontal: 4 }}
         >
@@ -51,10 +50,10 @@ export default function SettingsScreen() {
                 alignItems: "center",
                 justifyContent: "center",
               },
-              mode === "dark"?({ borderBottomColor: "#fff"})
-              :({ borderBottomColor: "#000"})
-            ]}
-              
+              mode === "dark" ? ({ borderBottomColor: "#fff" })
+                : ({ borderBottomColor: "#000" })
+              ]}
+
             >
               <ThemedText style={{ fontWeight: activeTab === tab.id ? "bold" : "normal" }}>
                 {tab.label}
@@ -69,6 +68,6 @@ export default function SettingsScreen() {
         <ActiveComponent />
       </ThemedView>
 
-    </ThemedView>
+    </ThemedSafeAreaView>
   );
 }

@@ -1,6 +1,6 @@
 import React, { use, useEffect, useState, useRef } from "react";
 import { View, StyleSheet, FlatList, TouchableOpacity, Text } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { ThemedSafeAreaView } from "@/components/ThemedSafeAreaView";
 import { Button } from "@/components/Button";
 import { GameStage, WordPair } from "@/types";
 import { useSpeech, TimerConverter } from "@/utils/lessons";
@@ -131,9 +131,15 @@ export default function MactchingWordsGameScreen() {
       <TouchableOpacity
         style={[
           styles.card,
-          isMatched && styles.matched,
-          selectedLeft?.id === item.id && styles.selected,
-          {backgroundColor: Colors[mode].background}
+          { backgroundColor: Colors[mode].background },
+          selectedLeft?.id === item.id && {
+            backgroundColor: Colors[mode].selectedBg,
+            borderColor: Colors[mode].selectedBorder,
+          },
+          isMatched && {
+            backgroundColor: Colors[mode].matchedBg,
+            borderColor: Colors[mode].matchedBorder,
+          }
         ]}
 
         disabled={!isMacthActive}
@@ -156,9 +162,15 @@ export default function MactchingWordsGameScreen() {
       <TouchableOpacity
         style={[
           styles.card,
-          isMatched && styles.matched,
-          selectedRight?.id === item.id && styles.selected,
-          {backgroundColor: Colors[mode].background}
+          { backgroundColor: Colors[mode].background },
+          selectedRight?.id === item.id && {
+            backgroundColor: Colors[mode].selectedBg,
+            borderColor: Colors[mode].selectedBorder,
+          },
+          isMatched && {
+            backgroundColor: Colors[mode].matchedBg,
+            borderColor: Colors[mode].matchedBorder,
+          }
         ]}
         disabled={!isMacthActive}
         onPress={() => {
@@ -174,8 +186,7 @@ export default function MactchingWordsGameScreen() {
   };
 
   return (
-    <SafeAreaView style={[{ flex: 1, padding: 20, paddingBottom: 50 }, 
-    { backgroundColor: Colors[mode].background}]}>
+    <ThemedSafeAreaView>
       <Header gameDescription={gameTittle}
         playAndPauseButton={{
           isActive: true,
@@ -236,7 +247,7 @@ export default function MactchingWordsGameScreen() {
             </Button>
           </View>
         )}
-    </SafeAreaView>
+    </ThemedSafeAreaView>
   );
 }
 

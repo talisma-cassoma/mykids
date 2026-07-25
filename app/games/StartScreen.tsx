@@ -14,6 +14,7 @@ import { Button } from "@/components/Button";
 import { ThemeToggleButton } from "@/components/ThemeToggleButton";
 import { ThemedSafeAreaView } from "@/components/ThemedSafeAreaView";
 import { Colors } from "@/constants/Colors";
+import { EmojiHero } from "@/components/EmojiHero";
 
 
 export default function StartScreen() {
@@ -24,33 +25,15 @@ export default function StartScreen() {
 
   return (
     <ThemedSafeAreaView backIcon={true} theme={true} style={styles.container}>
-      <View style={{ height: "auto", width: "100%" }} >
-      </View>
-      {loading && (
-        <ActivityIndicator
-          size="large"
-          color="#4caf50"
-          style={{ position: "absolute", top: 200 }}
-        />
-      )}
-
-      <Image
-        source={require("@/assets/images/startAnimation.gif")}
+      <EmojiHero
         style={{
           height: 300,
-          borderBottomLeftRadius: 50,
-          borderBottomRightRadius: 50,
+          width:300
         }}
-        onLoadStart={() => setLoading(true)}
-        onLoadEnd={() => setLoading(false)}
       />
-      {!loading && (
         <TouchableOpacity
           onPress={() => router.replace(selectedGames[0].href)}
           style={{
-            position: "absolute",
-            top: 330,
-            marginTop: 20,
             backgroundColor: "#4caf50",
             padding: 10,
             justifyContent: "center",
@@ -61,8 +44,6 @@ export default function StartScreen() {
         >
           <Text style={{ color: "#fff" }}>commencer</Text>
         </TouchableOpacity>
-      )}
-
   </ThemedSafeAreaView>
   );
 }
@@ -73,6 +54,7 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     paddingHorizontal: 60,
     alignItems: "center",
+    gap: 20,
     justifyContent: "flex-start",
   }
 });

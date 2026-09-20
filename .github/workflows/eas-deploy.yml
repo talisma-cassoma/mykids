@@ -6,9 +6,11 @@ on:
       - main
       - preview
 
+
 jobs:
   ota_or_build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -16,14 +18,40 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: "yarn"
+          node-version: 24
+          cache: yarn
 
-      - name: Setup Expo
-        uses: expo/expo-github-action@v8
-        with:
-          eas-version: latest
-          token: ${{ secrets.MYKIDS_EXPO_TOKEN }}
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Install EAS CLI
+        run: npm install --global eas-cli@latest
+
+      - name: Set profile and channel
+        run: |
+          echo "PROFILE=preview" >> $GITHUB_ENV
+          echo "CHANNEL=preview" >> $GITHUB_ENV
+
+      - name: Publish OTA update Android
+        run: |
+          eas update \
+            --channel ${{ env.CHANNEL }} \
+            --platform android \
+            --non-interactive \
+            --message "${{ github.event.head_commit.message }}"
+        env:
+          EXPO_TOKEN: ${{ secrets.MYKIDS_EXPO_TOKEN }}
+
+      - name: Build Android APK
+        if: contains(github.event.head_commit.message, '[build]')
+        run: |
+          eas build \
+            --platform android \
+            --profile ${{ env.PROFILE }} \
+            --non-interactive \
+            --no-wait
+        env:
+          EXPO_TOKEN: ${{ secrets.MYKIDS_EXPO_TOKEN }}
 
       - name: Install dependencies
         run: yarn install --frozen-lockfile

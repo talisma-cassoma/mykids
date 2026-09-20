@@ -70,7 +70,7 @@ export default function CountingGameScreen() {
 
     const startTimeRef = useRef<number | null>(null);
 
-    const gameTitle = useMemo(() => `Learn to count: ${MIN_NUMBER} to ${MAX_NUMBER}`, []);
+    const gameTitle = useMemo(() => `Apprendre à compter: ${MIN_NUMBER} à ${MAX_NUMBER}`, []);
 
     const resetTimer = useCallback(() => {
         startTimeRef.current = Date.now();
@@ -200,7 +200,7 @@ export default function CountingGameScreen() {
         setRevealAnswer(true);
         setStatusText("Temps écoulé!");
         setWrongAnswers((prev) => prev + 1);
-        await speak("Faux", "fr-FR");
+        await speak("Oops", "fr-FR");
 
         setTimeout(() => {
             loadQuestionForNumber(currentNumber);

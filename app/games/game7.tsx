@@ -13,8 +13,10 @@ type Question = {
     answer: number;
 };
 
+type QuestionSource = "original" | "mistake";
+
 const ROUND_TIME_MS = 5000;
-const WIN_SCORE = 20;
+const TOTAL_QUESTIONS_GOAL = 20;
 const MULTIPLICATION_LIMIT = 12;
 
 const allQuestions: Question[] = Array.from(
@@ -40,28 +42,8 @@ function shuffle<T>(items: T[]): T[] {
     return copy;
 }
 
-function createRandomMainPool() {
-    return shuffle(allQuestions).slice(0, 20);
-}
-
-function chooseQuestionFromQueues(randomPool: Question[], mistakePool: Question[]) {
-    const hasMain = randomPool.length > 0;
-    const hasMistakes = mistakePool.length > 0;
-
-    if (!hasMain && !hasMistakes) {
-        return null;
-    }
-
-    const useMainQueue = hasMain && (!hasMistakes || Math.random() < 0.75);
-    const sourceQueue = useMainQueue ? randomPool : mistakePool;
-    const selectedIndex = Math.floor(Math.random() * sourceQueue.length);
-    const selectedQuestion = sourceQueue[selectedIndex];
-
-    return {
-        question: selectedQuestion,
-        source: useMainQueue ? "main" : "mistake",
-        index: selectedIndex,
-    };
+function createInitialPool(): Question[] {
+    return shuffle(allQuestions).slice(0, TOTAL_QUESTIONS_GOAL);
 }
 
 function createOptions(correctAnswer: number) {
@@ -89,71 +71,100 @@ function createOptions(correctAnswer: number) {
 export default function MultiplicationGameScreen() {
     const { nextStage, setGameScore, mode } = useGame();
     const { speak } = useSpeech();
-    const [score, setScore] = useState(0);
-    const [wrongAnswers, setWrongAnswers] = useState(0);
-    const [question, setQuestion] = useState<Question | null>(null);
-    const [options, setOptions] = useState<number[]>([]);
-    const [timeLeft, setTimeLeft] = useState(ROUND_TIME_MS);
-    const [randomPool, setRandomPool] = useState<Question[]>(() => createRandomMainPool());
+
+    // Pools Principais
+    const [originalPool, setOriginalPool] = useState<Question[]>(() => createInitialPool());
     const [mistakePool, setMistakePool] = useState<Question[]>([]);
+    const [correctPool, setCorrectPool] = useState<Question[]>([]);
+
+    const [wrongAnswersCount, setWrongAnswersCount] = useState(0);
+    const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
+    const [currentSource, setCurrentSource] = useState<QuestionSource | null>(null);
+    const [options, setOptions] = useState<number[]>([]);
+    
+    const [timeLeft, setTimeLeft] = useState(ROUND_TIME_MS);
     const [isPaused, setIsPaused] = useState(false);
     const [hasFinished, setHasFinished] = useState(false);
     const [statusText, setStatusText] = useState<string>("Ready?");
     const [answerLocked, setAnswerLocked] = useState(false);
     const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
     const [revealAnswer, setRevealAnswer] = useState(false);
+    
     const startTimeRef = useRef<number | null>(null);
-
     const gameTitle = useMemo(() => "Rapid-fire multiplication trainer", []);
+
+    // A fonte da verdade para o Score é o tamanho da correctPool
+    const score = correctPool.length;
 
     const resetTimer = useCallback(() => {
         startTimeRef.current = Date.now();
         setTimeLeft(ROUND_TIME_MS);
     }, []);
 
-    const generateNextQuestion = useCallback(async () => {
-        const selected = chooseQuestionFromQueues(randomPool, mistakePool);
+    const finishGame = useCallback((finalCorrectCount: number, finalWrongCount: number) => {
+        if (hasFinished) return;
 
-        if (!selected) {
-            const replacementQueue = createRandomMainPool();
-            setRandomPool(replacementQueue);
-            const fallbackQuestion = replacementQueue[0];
+        setHasFinished(true);
+        setGameScore((prev) => [
+            ...prev,
+            {
+                score: `${finalCorrectCount}/${TOTAL_QUESTIONS_GOAL} · erros: ${finalWrongCount}`,
+                name: gameTitle,
+                duration: TimerConverter(Math.max(1, Math.round(finalCorrectCount * 4))),
+            },
+        ]);
+        nextStage();
+    }, [gameTitle, hasFinished, nextStage, setGameScore]);
 
-            if (!fallbackQuestion) {
-                return;
-            }
-
-            setQuestion(fallbackQuestion);
-            setOptions(createOptions(fallbackQuestion.answer));
-            setStatusText("Solve it!");
-            setAnswerLocked(false);
-            setSelectedAnswer(null);
-            setRevealAnswer(false);
-            resetTimer();
-            await speak(`${fallbackQuestion.left} fois ${fallbackQuestion.right}`, "fr-FR");
+    // Seleção com base nas 3 Pools
+    const selectNextQuestion = useCallback(() => {
+        if (correctPool.length >= TOTAL_QUESTIONS_GOAL) {
+            finishGame(correctPool.length, wrongAnswersCount);
             return;
         }
 
-        const { question: nextQuestion, source, index } = selected;
+        const hasOriginal = originalPool.length > 0;
+        const hasMistakes = mistakePool.length > 0;
 
-        if (source === "main") {
-            setRandomPool((prev) => prev.filter((_, i) => i !== index));
-        } else {
-            setMistakePool((prev) => prev.filter((_, i) => i !== index));
+        if (!hasOriginal && !hasMistakes) {
+            finishGame(correctPool.length, wrongAnswersCount);
+            return;
         }
 
-        setQuestion(nextQuestion);
-        setOptions(createOptions(nextQuestion.answer));
+        // Regra dos 25% de chance para mistake pool (se ambas existirem)
+        let source: QuestionSource = "original";
+        if (hasOriginal && hasMistakes) {
+            source = Math.random() < 0.25 ? "mistake" : "original";
+        } else if (hasMistakes) {
+            source = "mistake";
+        }
+
+        const targetPool = source === "original" ? originalPool : mistakePool;
+        const randomIndex = Math.floor(Math.random() * targetPool.length);
+        const selected = targetPool[randomIndex];
+
+        setCurrentQuestion(selected);
+        setCurrentSource(source);
+        setOptions(createOptions(selected.answer));
         setStatusText("Solve it!");
         setAnswerLocked(false);
         setSelectedAnswer(null);
         setRevealAnswer(false);
         resetTimer();
-        await speak(`${nextQuestion.left} fois ${nextQuestion.right}`, "fr-FR");
-    }, [randomPool, mistakePool, resetTimer, speak]);
 
+        speak(`${selected.left} fois ${selected.right}`, "fr-FR");
+    }, [correctPool.length, originalPool, mistakePool, wrongAnswersCount, finishGame, resetTimer, speak]);
+
+    // Loop inicial quando não há questão carregada
     useEffect(() => {
-        if (!question || isPaused || hasFinished) {
+        if (!currentQuestion && !hasFinished) {
+            selectNextQuestion();
+        }
+    }, [currentQuestion, hasFinished, selectNextQuestion]);
+
+    // Timer Interval
+    useEffect(() => {
+        if (!currentQuestion || isPaused || hasFinished || answerLocked) {
             return;
         }
 
@@ -173,99 +184,61 @@ export default function MultiplicationGameScreen() {
         }, 50);
 
         return () => clearInterval(interval);
-    }, [question, isPaused, hasFinished]);
+    }, [currentQuestion, isPaused, hasFinished, answerLocked]);
 
-    useEffect(() => {
-        if (!question) {
-            generateNextQuestion();
-        }
-    }, [generateNextQuestion, question]);
-
-    const finishGame = useCallback((finalScore: number) => {
-        if (hasFinished) {
-            return;
-        }
-
-        setHasFinished(true);
-        setGameScore((prev) => [
-            ...prev,
-            {
-                score: `${finalScore}/${WIN_SCORE} · erreurs: ${wrongAnswers}`,
-                name: gameTitle,
-                duration: TimerConverter(Math.max(1, Math.round(finalScore * 4))),
-            },
-        ]);
-        nextStage();
-    }, [gameTitle, hasFinished, nextStage, setGameScore, wrongAnswers]);
-
-    const handleAnswer = useCallback(async (value: number) => {
-        if (!question || answerLocked || hasFinished) {
-            return;
-        }
+    const processAnswer = useCallback(async (isCorrect: boolean, value: number | null) => {
+        if (!currentQuestion || answerLocked || hasFinished) return;
 
         setAnswerLocked(true);
         setSelectedAnswer(value);
         setRevealAnswer(true);
 
-        const isCorrect = value === question.answer;
-
         if (isCorrect) {
-            const nextScore = score + 1;
             setStatusText("Correct!");
             await speak("Correct!", "fr-FR");
-            setRandomPool((prev) => prev.filter((item) => item.id !== question.id));
-            setMistakePool((prev) => prev.filter((item) => item.id !== question.id));
-            setScore(nextScore);
 
-            if (nextScore >= WIN_SCORE) {
-                finishGame(nextScore);
-                return;
+            // Mover para a correctPool e remover de onde veio
+            setCorrectPool((prev) => [...prev, currentQuestion]);
+
+            if (currentSource === "original") {
+                setOriginalPool((prev) => prev.filter((q) => q.id !== currentQuestion.id));
+            } else {
+                setMistakePool((prev) => prev.filter((q) => q.id !== currentQuestion.id));
             }
 
-            setTimeout(() => {
-                setStatusText("Next!");
-                generateNextQuestion();
-            }, 800);
-            return;
+            // Checar condição de vitória imediata
+            if (correctPool.length + 1 >= TOTAL_QUESTIONS_GOAL) {
+                finishGame(TOTAL_QUESTIONS_GOAL, wrongAnswersCount);
+                return;
+            }
+        } else {
+            setStatusText(value === null ? "Time's up!" : "Oops!");
+            setWrongAnswersCount((prev) => prev + 1);
+            await speak(value === null ? "Oops" : "Faux", "fr-FR");
+
+            // Se veio da original, remove da original e adiciona na mistakePool
+            if (currentSource === "original") {
+                setOriginalPool((prev) => prev.filter((q) => q.id !== currentQuestion.id));
+                setMistakePool((prev) => 
+                    prev.some((q) => q.id === currentQuestion.id) ? prev : [...prev, currentQuestion]
+                );
+            }
+            // Se veio da mistake, permanece na mistakePool
         }
 
-        setStatusText("Oops!");
-        setWrongAnswers((prev) => prev + 1);
-        await speak("Faux", "fr-FR");
-        setRandomPool((prev) => prev.filter((item) => item.id !== question.id));
-        setMistakePool(prev =>
-            prev.some(item => item.id === question.id)
-                ? prev
-                : [...prev, question]
-        );
-
         setTimeout(() => {
-            generateNextQuestion();
+            selectNextQuestion();
         }, 800);
-    }, [answerLocked, generateNextQuestion, finishGame, hasFinished, question, score, speak]);
+    }, [currentQuestion, answerLocked, hasFinished, currentSource, correctPool.length, wrongAnswersCount, speak, finishGame, selectNextQuestion]);
 
-    const handleTimeout = useCallback(async () => {
-        if (!question || answerLocked || hasFinished) {
-            return;
-        }
+    const handleAnswer = (value: number) => {
+        if (!currentQuestion) return;
+        processAnswer(value === currentQuestion.answer, value);
+    };
 
-        setAnswerLocked(true);
-        setSelectedAnswer(null);
-        setRevealAnswer(true);
-        setStatusText("Time's up!");
-        setWrongAnswers((prev) => prev + 1);
-        await speak("Faux", "fr-FR");
-        setRandomPool((prev) => prev.filter((item) => item.id !== question.id));
-        setMistakePool(prev =>
-            prev.some(item => item.id === question.id)
-                ? prev
-                : [...prev, question]
-        );
-
-        setTimeout(() => {
-            generateNextQuestion();
-        }, 350);
-    }, [answerLocked, generateNextQuestion, hasFinished, question, speak]);
+    const handleTimeout = () => {
+        processAnswer(false, null);
+    };
 
     const handleToggle = () => {
         setIsPaused((prev) => !prev);
@@ -274,7 +247,7 @@ export default function MultiplicationGameScreen() {
         }
     };
 
-    if (!question) {
+    if (!currentQuestion) {
         return (
             <ThemedSafeAreaView>
                 <Header
@@ -292,7 +265,7 @@ export default function MultiplicationGameScreen() {
                     score={{
                         isActive: true,
                         current: score,
-                        total: WIN_SCORE,
+                        total: TOTAL_QUESTIONS_GOAL,
                     }}
                 />
             </ThemedSafeAreaView>
@@ -316,27 +289,29 @@ export default function MultiplicationGameScreen() {
                 score={{
                     isActive: true,
                     current: score,
-                    total: WIN_SCORE,
+                    total: TOTAL_QUESTIONS_GOAL,
                 }}
             />
 
             <View style={styles.board}>
                 <View style={styles.questionCard}>
-                    <Text style={[styles.prompt, { color: Colors[mode].text }]}>{question.left} × {question.right}</Text>
+                    <Text style={[styles.prompt, { color: Colors[mode].text }]}>
+                        {currentQuestion.left} × {currentQuestion.right}
+                    </Text>
                     <Text style={[styles.statusText, { color: Colors[mode].text }]}>{statusText}</Text>
                     <Text style={[styles.mistakeText, { color: Colors[mode].text }]}>
-                        Erreurs: {wrongAnswers}
+                        Erreurs: {wrongAnswersCount}
                     </Text>
                 </View>
 
                 <View style={styles.optionsGrid}>
                     {options.map((value) => {
-                        const isCorrectOption = revealAnswer && value === question.answer;
+                        const isCorrectOption = revealAnswer && value === currentQuestion.answer;
                         const isSelectedWrong = revealAnswer && selectedAnswer === value && !isCorrectOption;
 
                         return (
                             <TouchableOpacity
-                                key={`${question.id}-${value}`}
+                                key={`${currentQuestion.id}-${value}`}
                                 activeOpacity={0.8}
                                 style={[
                                     styles.optionButton,

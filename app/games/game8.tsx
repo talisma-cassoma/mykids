@@ -200,7 +200,7 @@ export default function CountingGameScreen() {
         setRevealAnswer(true);
         setStatusText("Temps écoulé!");
         setWrongAnswers((prev) => prev + 1);
-        await speak("Oops", "fr-FR");
+        await speak("Oups", "fr-FR");
 
         setTimeout(() => {
             loadQuestionForNumber(currentNumber);

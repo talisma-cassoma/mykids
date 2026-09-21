@@ -34,6 +34,7 @@ export const stages: GameStage[] = [
   { name: "Complete with words", href: "/games/game6" },
   { name: "Rapid-fire multiplication trainer", href: "/games/game7" },
   { name: "Counter", href: "/games/game8" },
+  { name: "Drag and drop Counter", href: "/games/game9" },
 ];
 
 const GameContext = createContext<GameContextType | null>(null);

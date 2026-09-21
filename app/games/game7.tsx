@@ -212,9 +212,9 @@ export default function MultiplicationGameScreen() {
                 return;
             }
         } else {
-            setStatusText(value === null ? "Time's up!" : "Oops!");
+            setStatusText(value === null ? "Time's up!" : "Oups!");
             setWrongAnswersCount((prev) => prev + 1);
-            await speak(value === null ? "Oops" : "Faux", "fr-FR");
+            await speak(value === null ? "Oups" : "Faux", "fr-FR");
 
             // Se veio da original, remove da original e adiciona na mistakePool
             if (currentSource === "original") {

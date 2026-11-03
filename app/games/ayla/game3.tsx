@@ -25,10 +25,13 @@ import { useAyla } from "@/context/AylaContext";
 import { Colors } from "@/constants/Colors";
 import { TimerConverter } from "@/utils/lessons";
 import tracingData from "@/assets/tracingfiles/numbers.json";
+ 
 
 const { width } = Dimensions.get('window');
-const CANVAS_WIDTH = width;
-const CANVAS_HEIGHT = 400;
+   
+const isTablet = width >= 768;
+const CANVAS_WIDTH = isTablet ? 220: 140;
+const CANVAS_HEIGHT = isTablet? 280: 200;
 
 interface Waypoint {
     id: number;
@@ -276,16 +279,16 @@ export default function WaypointTracingApp({ numberKey: numberKeyProp }: Waypoin
                     resumeStatus: isPaused ? "paused" : "playing",
                     onToggle: handleTogglePause,
                 }}
-                timer={{
-                    isActive: true,
-                    mode: "increasing",
-                    time,
-                }}
-                score={{
-                    isActive: true,
-                    current: currentIndex + (completed ? 1 : 0),
-                    total: NUMBER_KEYS.length,
-                }}
+                // timer={{
+                //     isActive: true,
+                //     mode: "increasing",
+                //     time,
+                // }}
+                // score={{
+                //     isActive: true,
+                //     current: currentIndex + (completed ? 1 : 0),
+                //     total: NUMBER_KEYS.length,
+                // }}
                 trophiesCount={12}
                 coinsCount={45}
                 settingsRoute="/games/ayla/settings/SettingsScreen"
@@ -374,19 +377,7 @@ export default function WaypointTracingApp({ numberKey: numberKeyProp }: Waypoin
                 </GestureHandlerRootView>
 
                 <View style={styles.headerContainer}>
-                    <View style={{ flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flexWrap: "wrap" }}>
-                        <Text style={styles.title}>
-                            {completed ? "🎉 Bravo !" : numberConfig.title}
-                        </Text>
-                        <Text style={styles.subtitle}>
-                            {completed
-                                ? `Vous avez réussi le chiffre ${numberKey} !`
-                                : currentWaypointIndex === 0
-                                    ? 'Suivez le point bleu'
-                                    : `Continuez vers le point ${currentWaypointIndex + 1}`}
-                        </Text>
-                    </View>
-
+            
                     {completed && (
                         <TouchableOpacity style={{
                             flexDirection: "row",
@@ -464,6 +455,8 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingHorizontal: 20,
         paddingVertical: 15,
+        flexWrap: "wrap",
+        gap: 12
     },
     title: {
         fontSize: 20,

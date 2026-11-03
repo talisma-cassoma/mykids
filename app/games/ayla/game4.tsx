@@ -7,13 +7,22 @@ import {
   PanResponder,
   GestureResponderEvent,
   ScrollView,
+  Dimensions
 } from "react-native";
 import Svg, { Path } from "react-native-svg";
-import { IconVolume, IconArrowRight } from "@tabler/icons-react-native";
+import { IconVolume, IconArrowRight,  } from "@tabler/icons-react-native";
 import { ThemedSafeAreaView } from "@/components/ThemedSafeAreaView";
 import { GameHeader } from "@/components/Header";
 import { useAyla } from "@/context/AylaContext";
 import { TimerConverter, useSpeech } from "@/utils/lessons";
+
+
+const { width } = Dimensions.get('window');
+   
+const isTablet = width >= 768;
+const CANVAS_WIDTH = isTablet ? 280: 160;
+const CANVAS_HEIGHT = isTablet? 280: 180;
+
 
 type CountingQuestion = {
   id: string;
@@ -255,21 +264,6 @@ export default function NumberTracingGameScreen() {
   const commonHeader = (
     <GameHeader
       gameDescription={gameTitle}
-      playAndPauseButton={{
-        isActive: true,
-        resumeStatus: isPaused ? "paused" : "playing",
-        onToggle: handleToggle,
-      }}
-      timer={{
-        isActive: true,
-        mode: "decreasing",
-        time: Math.ceil(timeLeft / 1000),
-      }}
-      score={{
-        isActive: true,
-        current: score,
-        total: TOTAL_QUESTIONS,
-      }}
       trophiesCount={12}
       coinsCount={45}
       settingsRoute="/games/ayla/settings/SettingsScreen"
@@ -304,14 +298,14 @@ export default function NumberTracingGameScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={true}
       >
-        <View style={styles.topActionsContainer}>
+        {/* <View style={styles.topActionsContainer}>
           <TouchableOpacity
             style={styles.volumeButton}
             onPress={() => speakCurrentNumber(question.targetCount)}
           >
             <IconVolume size={28} color="#FFFFFF" />
           </TouchableOpacity>
-        </View>
+        </View> */}
         <View style={styles.board}>
           <View
             style={styles.canvasContainer}
@@ -423,8 +417,8 @@ const styles = StyleSheet.create({
   },
   canvasContainer: {
     position: "relative",
-    width: 280,
-    height: 360,
+    width: CANVAS_WIDTH,
+    height: CANVAS_HEIGHT,
     backgroundColor: "transparent",
     borderRadius: 24,
     justifyContent: "center",

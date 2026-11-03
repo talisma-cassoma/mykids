@@ -6,13 +6,13 @@ import {
 } from "react-native";
 import { IconCheck } from "@tabler/icons-react-native";
 import CheckBox from "@/components/organisms/check-box";
-import { useGame } from "@/context/gameContext";
+import { useGameControls } from "@/context/GameControlsContext";
 import { Colors } from "@/constants/Colors";
 
 const size = 32
 
 export function Checkbox({ selected }: { selected: boolean }) {
-    const {mode}= useGame()
+    const {mode}= useGameControls()
     return (
         false ? ( //debug
             <View style={{

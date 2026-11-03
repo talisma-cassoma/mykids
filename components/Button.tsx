@@ -7,7 +7,7 @@ import {
 } from "react-native"
 import { IconProps as TablerIconProps,  } from "@tabler/icons-react-native"
 import {Colors} from "@/constants/Colors"
-import { useGame } from "@/context/gameContext"
+import { useGameControls } from "@/context/GameControlsContext"
 
 
 type ButtonProps = TouchableOpacityProps & {
@@ -15,7 +15,7 @@ type ButtonProps = TouchableOpacityProps & {
 }
 
 export function Button({ children, style, isLoading = false, ...rest }: ButtonProps) {
-  const {mode}= useGame()
+  const {mode}= useGameControls()
   return (
     <TouchableOpacity
       style={[{ marginTop: 20,
@@ -38,8 +38,12 @@ export function Button({ children, style, isLoading = false, ...rest }: ButtonPr
   )
 }
 
-function Title({ children }: TextProps) {
-  return <Text style={{ color: "#fff" }}>{children}</Text>
+type TitleProps = TextProps & {
+  children: React.ReactNode
+  color?: string
+}
+function Title({ children, color, style }: TitleProps) {
+  return <Text style={[{ color: color || "#fff" }, style]}>{children}</Text>
 }
 
 type IconProps = {
@@ -53,6 +57,4 @@ function Icon({ icon: Icon, color = "#fff" }: IconProps) {
 
 Button.Title = Title
 Button.Icon = Icon
-
-
 

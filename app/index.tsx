@@ -1,9 +1,9 @@
 import { ActivityIndicator } from "react-native";
 import { ThemedView } from "@/components/ThemedView";
 import { useAuth } from "@/context/auth";
-import LoginForm from "@/components/LoginForm";
 import ProfileCard from "@/components/ProfileCard";
 import ProtectedRequestCard from "@/components/ProtectedRequestCard";
+import Home from "@/components/Home";
 export default function HomeScreen() {
   const { user, isLoading } = useAuth();
 
@@ -18,8 +18,7 @@ export default function HomeScreen() {
   }
 
   if (!user) {
-    return <LoginForm />;
-  }
+    return <Home/>; }
 
   return (
     <ThemedView

@@ -6,7 +6,7 @@ import {
     StyleSheet,
     View,
 } from "react-native";
-import { useGame } from "@/context/gameContext";
+import { useGameControls } from "@/context/GameControlsContext";
 import { Colors } from "@/constants/Colors";
 
 interface PlayAndPauseToggleButtonProps {
@@ -16,7 +16,7 @@ interface PlayAndPauseToggleButtonProps {
 
 export function PlayAndPauseToggleButton({ resumeStatus, onToggle }: PlayAndPauseToggleButtonProps) {
 
-   const { mode } = useGame();
+   const { mode } = useGameControls();
 
     const translateX = useRef(new Animated.Value(resumeStatus === "playing"? 0 : 26)).current;
 

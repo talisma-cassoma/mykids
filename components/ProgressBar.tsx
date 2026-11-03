@@ -1,11 +1,11 @@
 import { Image, useColorScheme,Text, View, StyleSheet } from "react-native";
 import { Redirect } from "expo-router";
 import { ThemedText } from "./ThemedText";
-import { useGame } from "@/context/gameContext";
+import { useGameControls } from "@/context/GameControlsContext";
 import { Colors } from "@/constants/Colors";
 
 export function ProgressBar() {
-  const { currentStage, selectedGames, mode } = useGame();
+  const { currentStage, selectedGames } = useGameControls();
 
   const totalStages = selectedGames.length;
 

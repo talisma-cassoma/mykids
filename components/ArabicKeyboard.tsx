@@ -1,7 +1,7 @@
 import { Colors } from "@/constants/Colors";
 import React, { useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, StyleProp, ViewStyle } from "react-native";
-import { useGame } from "@/context/gameContext";
+import { useGameControls } from "@/context/GameControlsContext";
 import { ThemedText } from "@/components/ThemedText";
 
 const ARABIC_KEYS = [
@@ -69,7 +69,7 @@ export function ArabicKeyboard({
 
     return `${lastChar}${v}`;
   }
-  const { mode } = useGame();
+  const { mode } = useGameControls();
 
   return (
     <View style={[styles.container, style]}>

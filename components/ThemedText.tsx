@@ -1,7 +1,7 @@
 import { Text, type TextProps, StyleSheet } from 'react-native';
 
 import { useThemeColor } from '@/hooks/useThemeColor';
-import { useGame } from '@/context/gameContext';
+import { useGameControls } from '@/context/GameControlsContext';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
 
@@ -18,7 +18,7 @@ export function ThemedText({
   type = 'default',
   ...rest
 }: ThemedTextProps) {
-  const { mode } = useGame();
+  const { mode } = useGameControls();
  const color =
     mode === "dark"
       ? darkColor ?? Colors.dark.text

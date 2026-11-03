@@ -1,18 +1,18 @@
 import { useState } from "react";
 import { View, Text, TextInput, StyleSheet } from "react-native";
-import { useData } from "@/context/DataContext";
+import { useData } from "@/context/YachaneContext";
 import { Button } from "@/components/Button";
 import { IconPlus } from "@tabler/icons-react-native";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
-import { useGame } from "@/context/gameContext";
+import { useGameControls } from "@/context/GameControlsContext";
 import { Colors } from "@/constants/Colors";
 
 type LessonType = "text" | "vocabulary";
 
 export function AddNewLessonForm() {
   const { addLesson } = useData();
-  const {mode } = useGame();
+  const {mode } = useGameControls();
 
   const [showForm, setShowForm] = useState(false);
   const [type, setType] = useState<LessonType>("vocabulary");

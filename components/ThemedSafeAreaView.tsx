@@ -1,5 +1,5 @@
 import { View, type ViewProps, TouchableOpacity } from 'react-native';
-import { useGame } from '@/context/gameContext';
+import { useGameControls } from '@/context/GameControlsContext';
 import { Colors } from '@/constants/Colors';
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
@@ -16,7 +16,7 @@ export type ThemedSafeAreaViewProps = ViewProps & {
 export function ThemedSafeAreaView({ children, style, lightColor, 
     darkColor, backIcon=false,
     theme=false, ...otherProps }: ThemedSafeAreaViewProps) {
-    const { mode } = useGame();
+    const { mode } = useGameControls();
     const backgroundColor =
         mode === "dark"
             ? darkColor ?? Colors.dark.background

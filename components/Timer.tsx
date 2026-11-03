@@ -1,10 +1,5 @@
 import { Text, View, TouchableOpacity } from "react-native";
 
-import { useGame } from "@/context/gameContext";
-import { useEffect } from "react";
-
-
-
 interface TimerProps {
   isActive: boolean;
   mode: "decreasing" | "increasing";
@@ -23,7 +18,7 @@ export function Timer({ mode, isActive, time }: TimerProps) {
     <>
     {isActive && (
     <View style={{ alignItems: "center", gap: 8 }}>
-      <Text style={{ color: "red", fontSize: 18 }}>
+      <Text style={{ color: "red", fontSize: 20, fontWeight: "bold" }}>
         {minutes.toString().padStart(2, "0")}:
         {seconds.toString().padStart(2, "0")}
       </Text>

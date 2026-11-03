@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { View, Text, TextInput, StyleSheet, TouchableOpacity } from "react-native";
-import { useData } from "@/context/DataContext";
+import { useData } from "@/context/YachaneContext";
 import { Button } from "@/components/Button";
 import { IconX } from "@tabler/icons-react-native";
 

@@ -1,11 +1,11 @@
 import { Text, View, StyleSheet } from "react-native";
-import { useGame } from "@/context/gameContext";
+import { useGameControls } from "@/context/GameControlsContext";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
 
 export function Score({ score, total }: { score: number; total: number }) {
 
-  const { mode } = useGame();
+  const { mode } = useGameControls();
 
   return (
     <ThemedView style={[styles.container]}>

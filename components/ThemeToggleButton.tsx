@@ -1,12 +1,12 @@
 import React from "react";
 import { TouchableOpacity, StyleSheet, View } from "react-native";
 import { IconMoonFilled, IconSunFilled } from "@tabler/icons-react-native";
-import { useGame } from "@/context/gameContext";
+import { useGameControls } from "@/context/GameControlsContext";
 import { AnimatedThemeToggle } from "@/components/micro-interactions/animated-theme-toggle"
 import { Colors } from "@/constants/Colors";
 
 export function ThemeToggleButton() {
-  const { mode, setMode } = useGame();
+  const { mode, setMode } = useGameControls();
 
   const toggleTheme = () => {
     setMode((prev) => (prev === "dark" ? "light" : "dark"));

@@ -1,0 +1,27 @@
+<svg width="45" height="41" viewBox="0 0 45 41" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<path d="M21.8946 36V27.1416M21.8946 36H17.75M21.8946 36H26.6608" stroke-width="3.5" stroke-linecap="round" stroke="#F8B041"/>
+<path d="M16.4375 15.9808C16.4375 15.9808 8.4375 14.1594 7.1875 15.4808C5.9375 16.8023 5.9375 23.4093 7.1875 24.7308C8.4375 26.0522 16.4375 24.7308 16.4375 24.7308" stroke-width="2.5" stroke-linecap="round" stroke="#F8B041"/>
+<path d="M28.25 15.9808C28.25 15.9808 36.25 14.1594 37.5 15.4808C38.75 16.8023 38.75 23.4093 37.5 24.7308C36.25 26.0522 28.25 24.7308 28.25 24.7308" stroke-width="2.5" stroke-linecap="round" stroke="#F8B041"/>
+<g filter="url(#filter0_d_397_1402)">
+<path d="M11.25 12.5H33.25V23C33.25 27.1421 29.8921 30.5 25.75 30.5H18.75C14.6079 30.5 11.25 27.1421 11.25 23V12.5Z" fill="#F8B041"/>
+<use xlink:href="#stroke0_397_1402" fill="#F8B041"/>
+<mask id="stroke1_397_1402" fill="white">
+<use xlink:href="#stroke0_397_1402"/>
+</mask>
+<path d="M10.5 10.5H34H10.5ZM34 12C34 12.8284 33.3284 13.5 32.5 13.5H12C11.1716 13.5 10.5 12.8284 10.5 12C10.5 12.2761 10.9477 12.5 11.5 12.5H33C33.5523 12.5 34 12.2761 34 12ZM10.5 13V10.5V13ZM34 10.5V13V10.5Z" fill="black" fill-opacity="0.09" mask="url(#stroke1_397_1402)"/>
+</g>
+<path d="M22.5 15L24.8388 17.751L27.9686 19.3186L26.2843 22.5865L25.8798 26.3064L22.5 25.575L19.1202 26.3064L18.7157 22.5865L17.0314 19.3186L20.1612 17.751L22.5 15Z" fill="#FFF5C6"/>
+<defs>
+<filter id="filter0_d_397_1402" x="0" y="0" width="44.5" height="41" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+<feOffset/>
+<feGaussianBlur stdDeviation="5.25"/>
+<feComposite in2="hardAlpha" operator="out"/>
+<feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0"/>
+<feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_397_1402"/>
+<feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_397_1402" result="shape"/>
+</filter>
+<path id="stroke0_397_1402" d="M10.5 11.5C10.5 10.9477 10.9477 10.5 11.5 10.5H33C33.5523 10.5 34 10.9477 34 11.5V12C34 12.5523 33.5523 13 33 13H11.5C10.9477 13 10.5 12.5523 10.5 12V11.5Z"/>
+</defs>
+</svg>

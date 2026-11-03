@@ -1,7 +1,7 @@
 import { View, type ViewProps } from 'react-native';
 
 import { useThemeColor } from '@/hooks/useThemeColor';
-import { useGame } from '@/context/gameContext';
+import { useGameControls } from '@/context/GameControlsContext';
 import { Colors } from '@/constants/Colors';
 
 export type ThemedViewProps = ViewProps & {
@@ -10,7 +10,7 @@ export type ThemedViewProps = ViewProps & {
 };
 
 export function ThemedView({ style, lightColor, darkColor, ...otherProps }: ThemedViewProps) {
-   const { mode } = useGame();
+   const { mode } = useGameControls();
    const backgroundColor =
     mode === "dark"
       ? darkColor ?? Colors.dark.background

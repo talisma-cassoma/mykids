@@ -1,0 +1,17 @@
+<svg width="111" height="95" viewBox="0 0 111 95" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g clip-path="url(#clip0_745_1570)">
+<ellipse cx="55.5" cy="58.2749" rx="55.5" ry="36.225" fill="#B8B7AF"/>
+<path d="M0 36.225H111V58.275H0V36.225Z" fill="#B8B7AF"/>
+<use xlink:href="#stroke0_745_1570" fill="#F7F5EB"/>
+<mask id="stroke1_745_1570" fill="white">
+<use xlink:href="#stroke0_745_1570"/>
+</mask>
+<path d="M111 36.225C111 56.2315 86.1518 72.45 55.5 72.45C24.8482 72.45 0 56.2315 0 36.225C0 16.2185 24.8482 0 55.5 0C86.1518 0 111 16.2185 111 36.225Z" stroke-width="27" stroke-linecap="round" stroke="#E2E0D9" mask="url(#stroke1_745_1570)"/>
+</g>
+<defs>
+<clipPath id="clip0_745_1570">
+<rect width="111" height="94.5001" fill="white"/>
+</clipPath>
+<path id="stroke0_745_1570" d="M111 36.225C111 56.2315 86.1518 72.45 55.5 72.45C24.8482 72.45 0 56.2315 0 36.225C0 16.2185 24.8482 0 55.5 0C86.1518 0 111 16.2185 111 36.225Z"/>
+</defs>
+</svg>

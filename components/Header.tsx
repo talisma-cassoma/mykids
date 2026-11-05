@@ -48,6 +48,9 @@ export interface GameHeaderProps {
         current?: number;
         total?: number;
     };
+    validate?: {
+        isActive: boolean;
+    };    
 }
 
 export function GameHeader({
@@ -61,7 +64,8 @@ export function GameHeader({
     settingsRoute,
     timer,
     score,
-    playAndPauseButton
+    playAndPauseButton,
+    validate,
 }: GameHeaderProps) {
     const { mode } = useGameControls()
      const { speak } = useSpeech();
@@ -169,6 +173,7 @@ export function GameHeader({
                     <Score score={score.current} total={score.total} />
                 )}
                 
+                { validate?.isActive ??(
                 <Button style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 12, backgroundColor: "#000000", borderRadius: 18 }}
                     onPress={() => {
                         //as for square of a radon numaber between 1 and 10
@@ -179,6 +184,7 @@ export function GameHeader({
                     <Button.Icon icon={IconCircleCheck} color="#FFFFFF" />
                     <Button.Title>Valider</Button.Title>
                 </Button>
+                )}
                 
 
             </View>

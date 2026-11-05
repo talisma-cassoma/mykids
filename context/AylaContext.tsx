@@ -27,10 +27,11 @@ interface AylaContextValue {
 }
 
 export const aylaStages: AylaGame[] = [
-  { name: "Apprendre à compter", href: "/games/ayla/game1" },
-  { name: "Compte et glisse le bon nombre", href: "/games/ayla/game2" },
-  { name: "Tracer les chiffres", href: "/games/ayla/game3" },
-  { name: "Écrire les chiffres", href: "/games/ayla/game4" },
+  { name: "Chante avec titounis", href: "/games/ayla/game1" },
+  { name: "Apprendre à compter", href: "/games/ayla/game2" },
+  { name: "Compte et glisse le bon nombre", href: "/games/ayla/game3" },
+  { name: "Tracer les chiffres", href: "/games/ayla/game4" },
+  { name: "Écrire les chiffres", href: "/games/ayla/game5" },
 ];
 
 const AylaContext = createContext<AylaContextValue | null>(null);

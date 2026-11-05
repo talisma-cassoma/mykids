@@ -1,443 +1,489 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { StyleSheet, View, Dimensions, Text, TouchableOpacity, ScrollView } from 'react-native';
 import {
-  View,
-  StyleSheet,
-  TouchableOpacity,
-  Text,
-  PanResponder,
-  GestureResponderEvent,
-  ScrollView,
-  Dimensions
-} from "react-native";
-import Svg, { Path } from "react-native-svg";
-import { IconVolume, IconArrowRight,  } from "@tabler/icons-react-native";
+    Canvas,
+    Path,
+    Circle,
+    Group,
+    Skia,
+} from '@shopify/react-native-skia';
+import {
+    Gesture,
+    GestureDetector,
+    GestureHandlerRootView,
+} from 'react-native-gesture-handler';
+import {
+    useSharedValue,
+    runOnJS,
+} from 'react-native-reanimated';
+import { useLocalSearchParams } from "expo-router";
+
+import { IconRotateClockwise, IconArrowNarrowRight, IconArrowNarrowDown } from "@tabler/icons-react-native";
 import { ThemedSafeAreaView } from "@/components/ThemedSafeAreaView";
 import { GameHeader } from "@/components/Header";
 import { useAyla } from "@/context/AylaContext";
-import { TimerConverter, useSpeech } from "@/utils/lessons";
-
+import { Colors } from "@/constants/Colors";
+import { TimerConverter } from "@/utils/lessons";
+import tracingData from "@/assets/tracingfiles/numbers.json";
+ 
 
 const { width } = Dimensions.get('window');
    
 const isTablet = width >= 768;
-const CANVAS_WIDTH = isTablet ? 280: 160;
-const CANVAS_HEIGHT = isTablet? 280: 180;
+const CANVAS_WIDTH = isTablet ? 220: 140;
+const CANVAS_HEIGHT = isTablet? 280: 200;
 
+interface Waypoint {
+    id: number;
+    x: number;
+    y: number;
+}
 
-type CountingQuestion = {
-  id: string;
-  targetCount: number;
+interface Stroke {
+    id: number;
+    waypoints: Waypoint[];
+}
+
+function getCenteredStrokes(strokes: Stroke[], targetWidth: number, targetHeight: number): Stroke[] {
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+
+    strokes.forEach(stroke => {
+        stroke.waypoints.forEach(wp => {
+            if (wp.x < minX) minX = wp.x;
+            if (wp.x > maxX) maxX = wp.x;
+            if (wp.y < minY) minY = wp.y;
+            if (wp.y > maxY) maxY = wp.y;
+        });
+    });
+
+    const letterWidth = maxX - minX;
+    const letterHeight = maxY - minY;
+    const scale = Math.min(
+        (targetWidth * 0.8) / letterWidth,
+        (targetHeight * 0.8) / letterHeight
+    );
+    const offsetX = (targetWidth - letterWidth * scale) / 2 - minX * scale;
+    const offsetY = (targetHeight - letterHeight * scale) / 2 - minY * scale;
+
+    return strokes.map(stroke => ({
+        ...stroke,
+        waypoints: stroke.waypoints.map(wp => ({
+            ...wp,
+            x: wp.x * scale + offsetX,
+            y: wp.y * scale + offsetY,
+        }))
+    }));
+}
+
+const WAYPOINT_THRESHOLD = 35;
+const START_THRESHOLD = 55;
+const GUIDE_STROKE_WIDTH = 30;
+const USER_STROKE_WIDTH = 25;
+
+type WaypointTracingAppProps = {
+    numberKey?: string;
 };
 
-// SVG stroke guide paths for numbers 0 to 9 scaled within a 200x260 viewbox
-const NUMBER_GUIDE_PATHS: Record<number, string[]> = {
-  0: ["M 100 40 C 50 40 50 220 100 220 C 150 220 150 40 100 40 Z"],
-  1: ["M 70 80 L 100 40 L 100 220", "M 60 220 L 140 220"],
-  2: [
-    "M 60 80 C 60 30 140 30 140 80 C 140 130 60 170 60 220",
-    "M 60 220 L 140 220",
-  ],
-  3: [
-    "M 60 50 L 140 50 L 100 110",
-    "M 100 110 C 150 110 150 210 60 210",
-  ],
-  4: ["M 130 40 L 60 150 L 150 150", "M 130 40 L 130 220"],
-  5: ["M 140 50 L 80 50 L 70 120", "M 70 120 C 140 100 150 210 70 210"],
-  6: ["M 130 60 C 60 60 50 220 100 220 C 140 220 140 140 70 140"],
-  7: ["M 60 50 L 140 50 L 80 220"],
-  8: [
-    "M 100 40 C 60 40 60 120 100 130 C 140 140 140 220 100 220 C 60 220 60 140 100 130 C 140 120 140 40 100 40 Z",
-  ],
-  9: ["M 130 120 C 60 120 60 40 100 40 C 140 40 140 200 70 220"],
-  10: [
-    "M 45 80 L 65 40 L 65 220",
-    "M 35 220 L 95 220",
-    "M 145 40 C 110 40 110 220 145 220 C 180 220 180 40 145 40 Z",
-  ],
-};
+type NumberKey = keyof typeof tracingData;
 
-const MIN_NUMBER = 0;
-const MAX_NUMBER = 10;
-const TOTAL_QUESTIONS = MAX_NUMBER - MIN_NUMBER + 1;
-const ROUND_TIME_MS = 25000;
+const NUMBER_KEYS = Object.keys(tracingData) as NumberKey[];
 
-type Point = { x: number; y: number };
-type PathSegment = Point[];
+export default function WaypointTracingApp({ numberKey: numberKeyProp }: WaypointTracingAppProps) {
+    const { nextStage, setGameScore } = useAyla();
+    const { numberKey: routeNumberKey } = useLocalSearchParams<{ numberKey?: string }>();
+    
+    const initialKey = numberKeyProp ?? routeNumberKey;
+    const initialIndex = initialKey && NUMBER_KEYS.includes(initialKey as NumberKey)
+        ? NUMBER_KEYS.indexOf(initialKey as NumberKey)
+        : 0;
 
-export default function NumberTracingGameScreen() {
-  const { nextStage, setGameScore } = useAyla();
-  const { speak } = useSpeech();
+    const [currentIndex, setCurrentIndex] = useState<number>(initialIndex);
+    const [completedNumbers, setCompletedNumbers] = useState<string[]>([]);
+    const [isDrawing, setIsDrawing] = useState<boolean>(false);
+    
+    const numberKey = NUMBER_KEYS[currentIndex] ?? NUMBER_KEYS[0];
+    const numberConfig = tracingData[numberKey];
 
-  const [currentNumber, setCurrentNumber] = useState(MIN_NUMBER);
-  const [score, setScore] = useState(0);
-  const [wrongAnswers, setWrongAnswers] = useState(0);
-  const [question, setQuestion] = useState<CountingQuestion | null>(null);
-  const [timeLeft, setTimeLeft] = useState(ROUND_TIME_MS);
-  const [isPaused, setIsPaused] = useState(false);
-  const [hasFinished, setHasFinished] = useState(false);
-  const [statusText, setStatusText] = useState<string>("Trace le chiffre!");
-  const [answerLocked, setAnswerLocked] = useState(false);
+    const strokes = useMemo(
+        () => getCenteredStrokes(numberConfig.strokes, CANVAS_WIDTH, CANVAS_HEIGHT),
+        [numberConfig]
+    );
 
-  // User drawn paths
-  const [drawnPaths, setDrawnPaths] = useState<PathSegment[]>([]);
-  const [currentPath, setCurrentPath] = useState<PathSegment>([]);
+    const [currentStrokeIndex, setCurrentStrokeIndex] = useState(0);
+    const [currentWaypointIndex, setCurrentWaypointIndex] = useState(0);
+    const [completed, setCompleted] = useState(false);
+    const scrollViewRef = useRef<ScrollView | null>(null);
+    const [time, setTime] = useState(0);
+    const [isPaused, setIsPaused] = useState(false);
+    const hasSavedScoreRef = useRef(false);
+    const gameTitle = numberConfig.title;
 
-  // State to toggle ScrollView capability while drawing
-  const [isDrawing, setIsDrawing] = useState(false);
+    const currentStroke = useSharedValue(0);
+    const currentWaypoint = useSharedValue(0);
+    const isTracing = useSharedValue(false);
+    const isCompleted = useSharedValue(false);
+    const isPausedShared = useSharedValue(false);
+    const userPath = useSharedValue(Skia.Path.Make());
 
-  const startTimeRef = useRef<number | null>(null);
-  const boardLayoutRef = useRef<{ x: number; y: number; width: number; height: number }>({
-    x: 0,
-    y: 0,
-    width: 300,
-    height: 380,
-  });
+    const resetTrace = () => {
+        currentStroke.value = 0;
+        currentWaypoint.value = 0;
+        isTracing.value = false;
+        isCompleted.value = false;
+        isPausedShared.value = false;
+        userPath.value = Skia.Path.Make();
 
-  const gameTitle = useMemo(() => `Écriture des chiffres: ${MIN_NUMBER} à ${MAX_NUMBER}`, []);
+        setCurrentStrokeIndex(0);
+        setCurrentWaypointIndex(0);
+        setCompleted(false);
+        setIsPaused(false);
+        setTime(0);
+        setIsDrawing(false);
+        hasSavedScoreRef.current = false;
+    };
 
-  const resetTimer = useCallback(() => {
-    startTimeRef.current = Date.now();
-    setTimeLeft(ROUND_TIME_MS);
-  }, []);
+    const handleReset = () => resetTrace();
+    const handleScroll = () => scrollViewRef.current?.scrollToEnd({ animated: true });
 
-  const speakCurrentNumber = useCallback(async (num: number) => {
-    if (num === 8) {
-      await speak("huit", "fr-FR");
-    } else {
-      await speak(`${num}`, "fr-FR");
-    }
-  }, [speak]);
+    useEffect(() => {
+        if (isPaused || completed) return;
 
-  const clearCanvas = () => {
-    setDrawnPaths([]);
-    setCurrentPath([]);
-  };
+        const interval = setInterval(() => {
+            setTime((elapsed) => elapsed + 1);
+        }, 1000);
 
-  const loadQuestionForNumber = useCallback(
-    async (num: number) => {
-      if (num > MAX_NUMBER) return;
+        return () => clearInterval(interval);
+    }, [completed, isPaused, currentIndex]);
 
-      setQuestion({ id: `trace-${num}`, targetCount: num });
-      setStatusText("Trace le chiffre!");
-      setAnswerLocked(false);
-      clearCanvas();
-      resetTimer();
+    const handleTogglePause = () => {
+        const nextPaused = !isPaused;
+        isPausedShared.value = nextPaused;
+        setIsPaused(nextPaused);
+    };
 
-      await speakCurrentNumber(num);
-    },
-    [resetTimer, speakCurrentNumber]
-  );
+    const handleAdvance = () => {
+        if (!hasSavedScoreRef.current) {
+            hasSavedScoreRef.current = true;
+            setGameScore((scores) => [
+                ...scores,
+                {
+                    score: "1/1",
+                    name: gameTitle,
+                    duration: TimerConverter(Math.max(1, time)),
+                },
+            ]);
+            setCompletedNumbers((numbers) =>
+                numbers.includes(numberKey) ? numbers : [...numbers, numberKey]
+            );
+        }
 
-  useEffect(() => {
-    if (!question || isPaused || hasFinished) return;
+        if (currentIndex < NUMBER_KEYS.length - 1) {
+            scrollViewRef.current?.scrollTo({ y: 0, animated: true });
+            setCurrentIndex((prev) => prev + 1);
+            resetTrace();
+        } else {
+            nextStage();
+        }
+    };
 
-    const interval = setInterval(() => {
-      if (!startTimeRef.current) {
-        startTimeRef.current = Date.now();
-      }
-      const elapsed = Date.now() - startTimeRef.current;
-      const remaining = Math.max(0, ROUND_TIME_MS - elapsed);
-      setTimeLeft(remaining);
+    const panGesture = Gesture.Pan()
+        .onStart((e) => {
+            'worklet';
 
-      if (remaining <= 0) {
-        clearInterval(interval);
-        handleTimeout();
-      }
-    }, 50);
+            if (isCompleted.value || isPausedShared.value) return;
 
-    return () => clearInterval(interval);
-  }, [question, isPaused, hasFinished]);
+            const strokeIndex = currentStroke.value;
+            const waypointIndex = currentWaypoint.value;
+            const stroke = strokes[strokeIndex];
 
-  useEffect(() => {
-    if (!question) {
-      loadQuestionForNumber(MIN_NUMBER);
-    }
-  }, [loadQuestionForNumber, question]);
+            if (!stroke) return;
+            const target = stroke.waypoints[waypointIndex];
+            if (!target) return;
 
-  const finishGame = useCallback(
-    (finalScore: number) => {
-      if (hasFinished) return;
+            const distance = Math.hypot(e.x - target.x, e.y - target.y);
 
-      setHasFinished(true);
-      setGameScore((prev) => [
-        ...prev,
-        {
-          score: `${finalScore}/${TOTAL_QUESTIONS} · erreurs: ${wrongAnswers}`,
-          name: gameTitle,
-          duration: TimerConverter(Math.max(1, Math.round(finalScore * 4))),
-        },
-      ]);
-      nextStage();
-    },
-    [gameTitle, hasFinished, nextStage, setGameScore, wrongAnswers]
-  );
-
-  const handleValidate = useCallback(async () => {
-    if (!question || answerLocked || hasFinished) return;
-
-    const totalPoints = drawnPaths.reduce((acc, p) => acc + p.length, 0) + currentPath.length;
-
-    if (totalPoints < 12) {
-      setStatusText("Remplis le tracé!");
-      await speak("Essaie encore d'écrire le chiffre", "fr-FR");
-      return;
-    }
-
-    setAnswerLocked(true);
-    const nextScore = score + 1;
-    const nextNum = currentNumber + 1;
-
-    setStatusText("Bravo!");
-    await speak("Très bien!", "fr-FR");
-    setScore(nextScore);
-
-    if (nextNum > MAX_NUMBER) {
-      finishGame(nextScore);
-      return;
-    }
-
-    setCurrentNumber(nextNum);
-    setTimeout(() => {
-      loadQuestionForNumber(nextNum);
-    }, 1000);
-  }, [answerLocked, currentNumber, currentPath, drawnPaths, finishGame, hasFinished, loadQuestionForNumber, question, score, speak]);
-
-  const handleTimeout = useCallback(async () => {
-    if (!question || answerLocked || hasFinished) return;
-
-    setAnswerLocked(true);
-    setStatusText("Temps écoulé!");
-    setWrongAnswers((prev) => prev + 1);
-    await speak("Oupsi", "fr-FR");
-
-    setTimeout(() => {
-      loadQuestionForNumber(currentNumber);
-    }, 1000);
-  }, [answerLocked, currentNumber, hasFinished, loadQuestionForNumber, question, speak]);
-
-  // Touch tracking with scroll locking during draw
-  const panResponder = useMemo(
-    () =>
-      PanResponder.create({
-        onStartShouldSetPanResponder: () => !answerLocked,
-        onMoveShouldSetPanResponder: () => !answerLocked,
-        onPanResponderGrant: (evt: GestureResponderEvent) => {
-          setIsDrawing(true);
-          const { locationX, locationY } = evt.nativeEvent;
-          setCurrentPath([{ x: locationX, y: locationY }]);
-        },
-        onPanResponderMove: (evt: GestureResponderEvent) => {
-          const { locationX, locationY } = evt.nativeEvent;
-          setCurrentPath((prev) => [...prev, { x: locationX, y: locationY }]);
-        },
-        onPanResponderRelease: () => {
-          setIsDrawing(false);
-          setCurrentPath((latestCurrent) => {
-            if (latestCurrent.length > 0) {
-              setDrawnPaths((prev) => [...prev, latestCurrent]);
+            if (distance <= START_THRESHOLD) {
+                isTracing.value = true;
+                runOnJS(setIsDrawing)(true);
+                userPath.modify((path) => {
+                    path.moveTo(target.x, target.y);
+                    return path;
+                });
             }
-            return [];
-          });
-        },
-        onPanResponderTerminate: () => {
-          setIsDrawing(false);
-        },
-      }),
-    [answerLocked]
-  );
+        })
+        .onUpdate((e) => {
+            'worklet';
 
-  const convertPointsToSvgPath = (points: Point[]) => {
-    if (points.length === 0) return "";
-    return points.reduce(
-      (acc, pt, index) => (index === 0 ? `M ${pt.x} ${pt.y}` : `${acc} L ${pt.x} ${pt.y}`),
-      ""
-    );
-  };
+            if (!isTracing.value || isCompleted.value || isPausedShared.value) return;
 
-  const handleToggle = () => {
-    setIsPaused((prev) => !prev);
-    if (isPaused) {
-      resetTimer();
-    }
-  };
+            const strokeIndex = currentStroke.value;
+            const waypointIndex = currentWaypoint.value;
+            const stroke = strokes[strokeIndex];
 
-  const commonHeader = (
-    <GameHeader
-      gameDescription={gameTitle}
-      trophiesCount={12}
-      coinsCount={45}
-      settingsRoute="/games/ayla/settings/SettingsScreen"
-      currentProfile={{
-        name: "Ayla",
-        avatarSvgName: "PrincessProfileAvatarSvg",
-        startScreenRoute: "/games/ayla/StartScreen",
-      }}
-      otherProfile={{
-        name: "Dino",
-        avatarSvgName: "DinoProfileAvatarSvg",
-        startScreenRoute: "/games/yachane/StartScreen",
-      }}
-    />
-  );
+            if (!stroke) return;
+            const target = stroke.waypoints[waypointIndex];
+            if (!target) return;
 
-  if (!question) {
+            userPath.modify((path) => {
+                path.lineTo(e.x, e.y);
+                return path;
+            });
+
+            const distance = Math.hypot(e.x - target.x, e.y - target.y);
+
+            if (distance > WAYPOINT_THRESHOLD) return;
+
+            const nextWaypoint = waypointIndex + 1;
+
+            if (nextWaypoint < stroke.waypoints.length) {
+                currentWaypoint.value = nextWaypoint;
+                runOnJS(setCurrentWaypointIndex)(nextWaypoint);
+                return;
+            }
+
+            const nextStroke = strokeIndex + 1;
+
+            if (nextStroke < strokes.length) {
+                currentStroke.value = nextStroke;
+                currentWaypoint.value = 0;
+                isTracing.value = false;
+                runOnJS(setIsDrawing)(false);
+
+                runOnJS(setCurrentStrokeIndex)(nextStroke);
+                runOnJS(setCurrentWaypointIndex)(0);
+                return;
+            }
+
+            isCompleted.value = true;
+            isTracing.value = false;
+            runOnJS(setIsDrawing)(false);
+            runOnJS(setCompleted)(true);
+        })
+        .onEnd(() => {
+            'worklet';
+            isTracing.value = false;
+            runOnJS(setIsDrawing)(false);
+        })
+        .onFinalize(() => {
+            'worklet';
+            isTracing.value = false;
+            runOnJS(setIsDrawing)(false);
+        });
+
     return (
-      <ThemedSafeAreaView>
-        {commonHeader}
-      </ThemedSafeAreaView>
-    );
-  }
+        <ThemedSafeAreaView style={{ flex: 1 }}>
+            <GameHeader
+                gameDescription={gameTitle}
+                playAndPauseButton={{
+                    isActive: true,
+                    resumeStatus: isPaused ? "paused" : "playing",
+                    onToggle: handleTogglePause,
+                }}
+                // timer={{
+                //     isActive: true,
+                //     mode: "increasing",
+                //     time,
+                // }}
+                // score={{
+                //     isActive: true,
+                //     current: currentIndex + (completed ? 1 : 0),
+                //     total: NUMBER_KEYS.length,
+                // }}
+                trophiesCount={12}
+                coinsCount={45}
+                settingsRoute="/games/ayla/settings/SettingsScreen"
+                currentProfile={{
+                    name: "Ayla",
+                    avatarSvgName: "PrincessProfileAvatarSvg",
+                    startScreenRoute: "/games/ayla/StartScreen",
+                }}
+                otherProfile={{
+                    name: "Dino",
+                    avatarSvgName: "DinoProfileAvatarSvg",
+                    startScreenRoute: "/games/yachane/StartScreen",
+                }}
+            />
 
-  const guidePaths = NUMBER_GUIDE_PATHS[question.targetCount] || NUMBER_GUIDE_PATHS[0];
-
-  return (
-    <ThemedSafeAreaView style={styles.container}>
-      {commonHeader}
-      <ScrollView
-        scrollEnabled={!isDrawing} // Prevents parent scroll clash while tracing
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={true}
-      >
-        {/* <View style={styles.topActionsContainer}>
-          <TouchableOpacity
-            style={styles.volumeButton}
-            onPress={() => speakCurrentNumber(question.targetCount)}
-          >
-            <IconVolume size={28} color="#FFFFFF" />
-          </TouchableOpacity>
-        </View> */}
-        <View style={styles.board}>
-          <View
-            style={styles.canvasContainer}
-            {...panResponder.panHandlers}
-            onLayout={(event) => {
-              boardLayoutRef.current = event.nativeEvent.layout;
-            }}
-          >
-            {/* Guide Template SVG */}
-            <Svg
-              style={StyleSheet.absoluteFill}
-              viewBox="0 0 200 260"
-              preserveAspectRatio="xMidYMid meet"
+            <ScrollView
+                ref={scrollViewRef}
+                scrollEnabled={!isDrawing}
+                contentContainerStyle={styles.scrollContent}
+                showsVerticalScrollIndicator={true}
             >
-              {guidePaths.map((pathD, idx) => (
-                <React.Fragment key={idx}>
-                  <Path
-                    d={pathD}
-                    stroke="#e0e0e0"
-                    strokeWidth="24"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    fill="none"
-                  />
-                  <Path
-                    d={pathD}
-                    stroke="#FFFFFF"
-                    strokeWidth="3"
-                    strokeDasharray="6 6"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    fill="none"
-                  />
-                </React.Fragment>
-              ))}
-            </Svg>
+                <TouchableOpacity style={styles.continueButton} onPress={handleScroll}>
+                    <Text style={styles.continueText}>Descendre</Text>
+                    <IconArrowNarrowDown size={20} color="#FFFFFF" />
+                </TouchableOpacity>
 
-            {/* Touch Tracing Overlay SVG */}
-            <Svg style={StyleSheet.absoluteFill}>
-              {drawnPaths.map((pathPts, idx) => (
-                <Path
-                  key={`path-${idx}`}
-                  d={convertPointsToSvgPath(pathPts)}
-                  stroke="#4CAF50"
-                  strokeWidth="16"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  fill="none"
-                />
-              ))}
-              {currentPath.length > 0 && (
-                <Path
-                  d={convertPointsToSvgPath(currentPath)}
-                  stroke="#4CAF50"
-                  strokeWidth="16"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  fill="none"
-                />
-              )}
-            </Svg>
-          </View>
+                <GestureHandlerRootView style={styles.container}>
+                    <GestureDetector gesture={panGesture}>
+                        <View style={styles.canvasContainer}>
+                            <Canvas style={{ width: CANVAS_WIDTH, height: CANVAS_HEIGHT }}>
+                                {strokes.map((stroke) => (
+                                    <Path
+                                        key={`guide-${stroke.id}`}
+                                        path={createStrokePath(stroke)}
+                                        color="#e0e0e0"
+                                        style="stroke"
+                                        strokeWidth={GUIDE_STROKE_WIDTH}
+                                        strokeCap="round"
+                                        strokeJoin="round"
+                                    />
+                                ))}
 
-          <TouchableOpacity style={styles.continueButton} onPress={handleValidate}>
-            <Text style={styles.continueText}>Continuer</Text>
-            <IconArrowRight size={20} color="#FFFFFF" />
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-    </ThemedSafeAreaView>
-  );
+                                <Path
+                                    path={userPath}
+                                    color={completed ? '#4CAF50' : '#2196F3'}
+                                    style="stroke"
+                                    strokeWidth={USER_STROKE_WIDTH}
+                                    strokeCap="round"
+                                    strokeJoin="round"
+                                />
+
+                                {strokes.map((stroke, strokeIndex) =>
+                                    stroke.waypoints.map((wp, waypointIndex) => {
+                                        if (
+                                            strokeIndex < currentStrokeIndex ||
+                                            (strokeIndex === currentStrokeIndex && waypointIndex < currentWaypointIndex)
+                                        ) {
+                                            return null;
+                                        }
+
+                                        const isActive =
+                                            strokeIndex === currentStrokeIndex &&
+                                            waypointIndex === currentWaypointIndex;
+
+                                        return (
+                                            <Group key={`waypoint-${wp.id}`}>
+                                                <Circle
+                                                    cx={wp.x}
+                                                    cy={wp.y}
+                                                    r={isActive ? 25 : 14}
+                                                    color={isActive ? 'rgba(33, 150, 243, 0.25)' : 'rgba(180, 180, 180, 0.35)'}
+                                                />
+                                                <Circle
+                                                    cx={wp.x}
+                                                    cy={wp.y}
+                                                    r={isActive ? 9 : 7}
+                                                    color={isActive ? '#2196F3' : '#aaaaaa'}
+                                                />
+                                            </Group>
+                                        );
+                                    })
+                                )}
+                            </Canvas>
+                        </View>
+                    </GestureDetector>
+                </GestureHandlerRootView>
+
+                <View style={styles.headerContainer}>
+            
+                    {completed && (
+                        <TouchableOpacity style={{
+                            flexDirection: "row",
+                            alignItems: "center",
+                            backgroundColor: "#000000",
+                            paddingVertical: 8,
+                            paddingHorizontal: 16,
+                            borderRadius: 20,
+                            gap: 6,
+                        }} onPress={handleAdvance}>
+                            <Text style={{
+                                color: "#FFFFFF",
+                                fontSize: 14,
+                                fontWeight: "600",
+                            }}>continuer</Text>
+                            <IconArrowNarrowRight size={20} color="#FFFFFF" />
+                        </TouchableOpacity>
+                    )}
+
+                    <TouchableOpacity style={styles.resetButton} onPress={handleReset}>
+                        <IconRotateClockwise size={22} color="#555" />
+                    </TouchableOpacity>
+                </View>
+            </ScrollView>
+        </ThemedSafeAreaView>
+    );
+}
+
+function createStrokePath(stroke: Stroke) {
+    const path = Skia.Path.Make();
+    if (stroke.waypoints.length === 0) return path;
+
+    const first = stroke.waypoints[0];
+    path.moveTo(first.x, first.y);
+
+    for (let i = 1; i < stroke.waypoints.length; i++) {
+        const point = stroke.waypoints[i];
+        path.lineTo(point.x, point.y);
+    }
+
+    return path;
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    flexDirection: "column",
-    paddingBottom: 30,
-  },
-  board: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 20,
-    marginTop: 10,
-  },
-  topActionsContainer: {
-    width: "100%",
-    paddingHorizontal: 24,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginTop: 10,
-  },
-  volumeButton: {
-    padding: 10,
-    borderRadius: 50,
-    backgroundColor: "rgba(255,255,255,0.15)",
-  },
-  statusText: {
-    textAlign: "center",
-    marginTop: 12,
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#FFFFFF",
-  },
-  canvasContainer: {
-    position: "relative",
-    width: CANVAS_WIDTH,
-    height: CANVAS_HEIGHT,
-    backgroundColor: "transparent",
-    borderRadius: 24,
-    justifyContent: "center",
-    alignItems: "center",
-    marginVertical: 10,
-  },
-  continueButton: {
-    marginTop: 15,
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#000000",
-    paddingVertical: 12,
-    paddingHorizontal: 28,
-    borderRadius: 25,
-    gap: 8,
-  },
-  continueText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "600",
-  },
+    scrollContent: {
+        flexGrow: 1,
+        flexDirection: "column",
+        paddingBottom: 30,
+    },
+    continueButton: {
+        alignSelf: "flex-end",
+        marginTop: 10,
+        marginRight: 20,
+        flexDirection: "row",
+        alignItems: "center",
+        backgroundColor: "#000000",
+        paddingVertical: 8,
+        paddingHorizontal: 16,
+        borderRadius: 20,
+        gap: 6,
+    },
+    continueText: {
+        color: "#FFFFFF",
+        fontSize: 14,
+        fontWeight: "600",
+    },
+    container: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    headerContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingHorizontal: 20,
+        paddingVertical: 15,
+        flexWrap: "wrap",
+        gap: 12
+    },
+    title: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: '#333',
+    },
+    subtitle: {
+        marginTop: 2,
+        fontSize: 14,
+        color: '#777',
+    },
+    resetButton: {
+        backgroundColor: '#f0f0f0',
+        padding: 10,
+        borderRadius: 50,
+        justifyContent: 'center',
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.2,
+        shadowRadius: 1.41,
+        elevation: 2,
+    },
+    canvasContainer: {
+        height: CANVAS_HEIGHT,
+        width: CANVAS_WIDTH,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
 });

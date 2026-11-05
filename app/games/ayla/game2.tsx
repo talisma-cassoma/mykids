@@ -1,373 +1,391 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { StyleSheet, View } from "react-native";
-import { IconRefresh, IconVolume } from "@tabler/icons-react-native";
-import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { DropProvider, Draggable, Droppable } from "react-native-reanimated-dnd";
-
-import { Button } from "@/components/Button";
-import { GameHeader } from "@/components/Header";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { View, StyleSheet, TouchableOpacity, Text } from "react-native";
+import { IconVolume } from "@tabler/icons-react-native";
 import { ThemedSafeAreaView } from "@/components/ThemedSafeAreaView";
-import { ThemedText } from "@/components/ThemedText";
-import { ThemedView } from "@/components/ThemedView";
+import { GameHeader } from "@/components/Header";
 import { useAyla } from "@/context/AylaContext";
+import { Colors } from "@/constants/Colors";
 import { TimerConverter, useSpeech } from "@/utils/lessons";
 
-const MIN_NUMBER = 1;
+type CountingQuestion = {
+    id: string;
+    targetCount: number;
+};
+
+// Dynamic counting parameters
+const MIN_NUMBER = 0;
 const MAX_NUMBER = 10;
-const TOTAL_NUMBERS = MAX_NUMBER - MIN_NUMBER + 1;
+const TOTAL_QUESTIONS = MAX_NUMBER - MIN_NUMBER + 1;
+const ROUND_TIME_MS = 10000; // Increased timer for kids learning
 
 function shuffle<T>(items: T[]): T[] {
-  const copy = [...items];
-  for (let index = copy.length - 1; index > 0; index -= 1) {
-    const swapIndex = Math.floor(Math.random() * (index + 1));
-    [copy[index], copy[swapIndex]] = [copy[swapIndex], copy[index]];
-  }
-  return copy;
+    const copy = [...items];
+    for (let index = copy.length - 1; index > 0; index -= 1) {
+        const swapIndex = Math.floor(Math.random() * (index + 1));
+        [copy[index], copy[swapIndex]] = [copy[swapIndex], copy[index]];
+    }
+    return copy;
 }
 
-function createFullPool(): number[] {
-  return shuffle(
-    Array.from({ length: TOTAL_NUMBERS }, (_, index) => MIN_NUMBER + index)
-  );
-}
+// Generate options containing the correct number + 3 reasonable distractors
+function createOptions(correctAnswer: number, min: number, max: number) {
+    const optionSet = new Set<number>([correctAnswer]);
 
-export default function CountingDragGameScreen() {
-  const { nextStage, setGameScore, mode } = useAyla();
-  const { speak } = useSpeech();
+    while (optionSet.size < 4) {
+        // Distractors close to target answer
+        const adjustment = Math.floor(Math.random() * 3) + 1;
+        const direction = Math.random() < 0.5 ? -1 : 1;
+        const candidate = correctAnswer + direction * adjustment;
 
-  const [dragPool, setDragPool] = useState<number[]>(() => createFullPool());
-  const [placedNumbers, setPlacedNumbers] = useState<number[]>([]);
-  const [mistakeCount, setMistakeCount] = useState<number>(0);
-  const [statusText, setStatusText] = useState<string>("Glisse les nombres dans l'ordre de 1 à 10");
-  const [time, setTime] = useState<number>(0);
-  const [isPaused, setIsPaused] = useState(false);
-  const [hasFinished, setHasFinished] = useState<boolean>(false);
-
-  const gameTitle = useMemo(() => "Compte et glisse le bon nombre", []);
-  const currentExpectedNumber = MIN_NUMBER + placedNumbers.length;
-
-  const finishGame = useCallback(
-    (finalMistakes: number) => {
-      if (hasFinished) return;
-
-      setHasFinished(true);
-      setGameScore((prev) => [
-        ...prev,
-        {
-          score: `${TOTAL_NUMBERS}/${TOTAL_NUMBERS} · erreurs: ${finalMistakes}`,
-          name: gameTitle,
-          duration: TimerConverter(Math.max(1, time)),
-        },
-      ]);
-      nextStage();
-    },
-    [gameTitle, hasFinished, nextStage, setGameScore, time]
-  );
-
-  const resetGameSession = useCallback(() => {
-    setDragPool(createFullPool());
-    setPlacedNumbers([]);
-    setMistakeCount(0);
-    setTime(0);
-    setIsPaused(false);
-    setHasFinished(false);
-    setStatusText("Glisse les nombres dans l'ordre de 1 à 10");
-    void speak(`${MIN_NUMBER}`, "fr-FR");
-  }, [speak]);
-
-  useEffect(() => {
-    void speak(`${MIN_NUMBER}`, "fr-FR");
-  }, [speak]);
-
-  useEffect(() => {
-    if (isPaused || hasFinished) {
-      return;
-    }
-
-    const interval = setInterval(() => {
-      setTime((prev) => prev + 1);
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [hasFinished, isPaused]);
-
-  const replayNumber = useCallback(() => {
-    if (!isPaused && currentExpectedNumber <= MAX_NUMBER) {
-      if (currentExpectedNumber == 8) {
-        void speak('huite', "fr-FR");
-      } else {
-        void speak(`${currentExpectedNumber}`, "fr-FR");
-      }
-    }
-  }, [currentExpectedNumber, isPaused, speak]);
-
-  const togglePause = useCallback(() => {
-    setIsPaused((paused) => !paused);
-  }, []);
-
-  const handleDrop = useCallback(
-    (draggedValue: number) => {
-      if (isPaused || hasFinished || currentExpectedNumber > MAX_NUMBER) return;
-
-      const isCorrect = draggedValue === currentExpectedNumber;
-
-      if (isCorrect) {
-        setStatusText("Bravo !");
-        void speak("Bravo", "fr-FR");
-
-        const updatedPlaced = [...placedNumbers, draggedValue];
-        setPlacedNumbers(updatedPlaced);
-
-        // Atualização do pool mantendo a integridade da animação da biblioteca
-        setDragPool((prev) => prev.filter((val) => val !== draggedValue));
-
-        if (updatedPlaced.length >= TOTAL_NUMBERS) {
-          finishGame(mistakeCount);
-          return;
+        if (candidate >= min && candidate <= max + 3 && candidate !== correctAnswer) {
+            optionSet.add(candidate);
+            continue;
         }
 
-        const nextNumber = currentExpectedNumber + 1;
+        const fallback = Math.floor(Math.random() * (max + 3 - min)) + min;
+        if (fallback !== correctAnswer && fallback >= 0) {
+            optionSet.add(fallback);
+        }
+    }
+
+    return shuffle(Array.from(optionSet));
+}
+
+export default function CountingGameScreen() {
+    const { nextStage, setGameScore, mode } = useAyla();
+    const { speak } = useSpeech();
+
+    const [currentNumber, setCurrentNumber] = useState(MIN_NUMBER);
+    const [score, setScore] = useState(0);
+    const [wrongAnswers, setWrongAnswers] = useState(0);
+    const [question, setQuestion] = useState<CountingQuestion | null>(null);
+    const [options, setOptions] = useState<number[]>([]);
+    const [timeLeft, setTimeLeft] = useState(ROUND_TIME_MS);
+    const [isPaused, setIsPaused] = useState(false);
+    const [hasFinished, setHasFinished] = useState(false);
+    const [statusText, setStatusText] = useState<string>("Ready?");
+    const [answerLocked, setAnswerLocked] = useState(false);
+    const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
+    const [revealAnswer, setRevealAnswer] = useState(false);
+
+    const startTimeRef = useRef<number | null>(null);
+
+    const gameTitle = useMemo(() => `Apprendre à compter: ${MIN_NUMBER} à ${MAX_NUMBER}`, []);
+
+    const resetTimer = useCallback(() => {
+        startTimeRef.current = Date.now();
+        setTimeLeft(ROUND_TIME_MS);
+    }, []);
+
+    const speakCurrentNumber = useCallback(async (num: number) => {
+        if (num == 8) {
+            await speak('huite', "fr-FR");
+        } else {
+            await speak(`${num}`, "fr-FR");
+        }
+    }, [speak]);
+
+    const loadQuestionForNumber = useCallback(async (num: number) => {
+        if (num > MAX_NUMBER) {
+            return;
+        }
+
+        const nextQuestion: CountingQuestion = {
+            id: `count-${num}`,
+            targetCount: num,
+        };
+
+        setQuestion(nextQuestion);
+        setOptions(createOptions(num, MIN_NUMBER, MAX_NUMBER));
+        setStatusText("Combien?");
+        setAnswerLocked(false);
+        setSelectedAnswer(null);
+        setRevealAnswer(false);
+        resetTimer();
+
+        await speakCurrentNumber(num);
+    }, [resetTimer, speakCurrentNumber]);
+
+    useEffect(() => {
+        if (!question || isPaused || hasFinished) {
+            return;
+        }
+
+        const interval = setInterval(() => {
+            if (!startTimeRef.current) {
+                startTimeRef.current = Date.now();
+            }
+
+            const elapsed = Date.now() - startTimeRef.current;
+            const remaining = Math.max(0, ROUND_TIME_MS - elapsed);
+            setTimeLeft(remaining);
+
+            if (remaining <= 0) {
+                clearInterval(interval);
+                handleTimeout();
+            }
+        }, 50);
+
+        return () => clearInterval(interval);
+    }, [question, isPaused, hasFinished]);
+
+    useEffect(() => {
+        if (!question) {
+            loadQuestionForNumber(MIN_NUMBER);
+        }
+    }, [loadQuestionForNumber, question]);
+
+    const finishGame = useCallback((finalScore: number) => {
+        if (hasFinished) {
+            return;
+        }
+
+        setHasFinished(true);
+        setGameScore((prev) => [
+            ...prev,
+            {
+                score: `${finalScore}/${TOTAL_QUESTIONS} · erreurs: ${wrongAnswers}`,
+                name: gameTitle,
+                duration: TimerConverter(Math.max(1, Math.round(finalScore * 4))),
+            },
+        ]);
+        nextStage();
+    }, [gameTitle, hasFinished, nextStage, setGameScore, wrongAnswers]);
+
+    const handleAnswer = useCallback(async (value: number) => {
+        if (!question || answerLocked || hasFinished) {
+            return;
+        }
+
+        setAnswerLocked(true);
+        setSelectedAnswer(value);
+        setRevealAnswer(true);
+
+        const isCorrect = value === question.targetCount;
+
+        if (isCorrect) {
+            const nextScore = score + 1;
+            const nextNum = currentNumber + 1;
+
+            setStatusText("Bravo!");
+            await speak("Bravo!", "fr-FR");
+            setScore(nextScore);
+
+            if (nextNum > MAX_NUMBER) {
+                finishGame(nextScore);
+                return;
+            }
+
+            setCurrentNumber(nextNum);
+            setTimeout(() => {
+                setStatusText("Suivant!");
+                loadQuestionForNumber(nextNum);
+            }, 800);
+            return;
+        }
+
+        setStatusText("Essaie encore!");
+        setWrongAnswers((prev) => prev + 1);
+        await speak("Faux", "fr-FR");
+
+        // Repeat the same number on mistake so the child masters sequence
         setTimeout(() => {
-          setStatusText(`Écoute et glisse le nombre ${nextNumber}`);
-          if (nextNumber == 8) {
-            void speak('huite', "fr-FR");
-          }else{
-            void speak(`${nextNumber}`, "fr-FR");
-          }
+            loadQuestionForNumber(currentNumber);
         }, 800);
-      } else {
-        setStatusText("Oups ! Ce n'est pas le bon ordre.");
-        void speak("Faux", "fr-FR");
-        setMistakeCount((prev) => prev + 1);
-      }
-    },
-    [
-      currentExpectedNumber,
-      finishGame,
-      hasFinished,
-      isPaused,
-      mistakeCount,
-      placedNumbers,
-      speak,
-    ]
-  );
+    }, [answerLocked, currentNumber, finishGame, hasFinished, loadQuestionForNumber, question, score, speak]);
 
-  return (
-    /* Requisito 1 da documentação: GestureHandlerRootView encapsulando a raiz */
-    <GestureHandlerRootView style={styles.rootView}>
-      <ThemedSafeAreaView style={styles.safeArea}>
-        <GameHeader
-          gameDescription={gameTitle}
-          playAndPauseButton={{
-            isActive: true,
-            resumeStatus: isPaused ? "paused" : "playing",
-            onToggle: togglePause,
-          }}
-          timer={{
-            isActive: true,
-            mode: "increasing",
-            time,
-          }}
-          score={{
-            isActive: true,
-            current: placedNumbers.length,
-            total: TOTAL_NUMBERS,
-          }}
+    const handleTimeout = useCallback(async () => {
+        if (!question || answerLocked || hasFinished) {
+            return;
+        }
 
-          trophiesCount={12}
-          coinsCount={45}
-          settingsRoute="/games/ayla/settings/SettingsScreen"
-          currentProfile={{
-            name: "Ayla",
-            avatarSvgName: "PrincessProfileAvatarSvg",
-            startScreenRoute: "/games/ayla/StartScreen",
-          }}
-          otherProfile={{
-            name: "Dino",
-            avatarSvgName: "DinoProfileAvatarSvg",
-            startScreenRoute: "/games/yachane/StartScreen",
-          }}
-        />
+        setAnswerLocked(true);
+        setSelectedAnswer(null);
+        setRevealAnswer(true);
+        setStatusText("Temps écoulé!");
+        setWrongAnswers((prev) => prev + 1);
+        await speak("Oupsi", "fr-FR");
 
-        <ThemedView style={styles.controlPanel} darkColor="#0F172A" lightColor="#F8FAFC">
-          <ThemedText style={styles.statusText}>{statusText}</ThemedText>
+        setTimeout(() => {
+            loadQuestionForNumber(currentNumber);
+        }, 350);
+    }, [answerLocked, currentNumber, hasFinished, loadQuestionForNumber, question, speak]);
 
-          <Button
-            onPress={replayNumber}
-            style={styles.replayButton}
-            disabled={isPaused || hasFinished}
-          >
-            <Button.Icon icon={IconVolume} />
-            <Button.Title>Réécouter ({currentExpectedNumber})</Button.Title>
-          </Button>
-        </ThemedView>
+    const handleToggle = () => {
+        setIsPaused((prev) => !prev);
+        if (isPaused) {
+            resetTimer();
+        }
+    };
 
-        {/* DropProvider envolvendo apenas a área de drag e drop */}
-        <DropProvider>
-          <ThemedView
-            style={styles.gameBody}
-            darkColor="#0F172A"
-            lightColor="#F8FAFC"
-            pointerEvents={isPaused ? "none" : "auto"}
-          >
-            <View style={styles.dragZoneGrid}>
-              {dragPool.map((value) => (
-                <Draggable 
-                  key={`draggable-${value}`} 
-                  data={value}
-                  collisionAlgorithm="center"
-                >
-                  <View
-                    style={[
-                      styles.optionCard,
-                      mode === "dark"
-                        ? { backgroundColor: "#1E293B" }
-                        : { backgroundColor: "#FFFFFF" },
-                    ]}
-                  >
-                    <ThemedText style={styles.numberText}>{value}</ThemedText>
-                  </View>
-                </Draggable>
-              ))}
+    if (!question) {
+        return (
+            <ThemedSafeAreaView>
+                <GameHeader
+                    gameDescription={gameTitle}
+                    trophiesCount={12}
+                    coinsCount={45}
+                    settingsRoute="/games/ayla/settings/SettingsScreen"
+                    currentProfile={{
+                        name: "Ayla",
+                        avatarSvgName: "PrincessProfileAvatarSvg",
+                        startScreenRoute: "/games/ayla/StartScreen",
+                    }}
+                    otherProfile={{
+                        name: "Dino",
+                        avatarSvgName: "DinoProfileAvatarSvg",
+                        startScreenRoute: "/games/yachane/StartScreen",
+                    }}
+
+                />
+            </ThemedSafeAreaView>
+        );
+    }
+
+    return (
+        <ThemedSafeAreaView>
+            <GameHeader
+                gameDescription={gameTitle}
+                trophiesCount={12}
+                coinsCount={45}
+                settingsRoute="/games/ayla/settings/SettingsScreen"
+                currentProfile={{
+                    name: "Ayla",
+                    avatarSvgName: "PrincessProfileAvatarSvg",
+                    startScreenRoute: "/games/ayla/StartScreen",
+                }}
+                otherProfile={{
+                    name: "Dino",
+                    avatarSvgName: "DinoProfileAvatarSvg",
+                    startScreenRoute: "/games/yachane/StartScreen",
+                }}
+            />
+
+            <View style={styles.board}>
+                <View style={styles.questionCard}>
+                    <View style={styles.promptContainer}>
+                        <Text style={[styles.prompt, { color: Colors[mode].text }]}>
+                            {/* {question.targetCount} */}
+                        </Text>
+                        <TouchableOpacity
+                            style={styles.volumeButton}
+                            activeOpacity={0.7}
+                            onPress={() => speakCurrentNumber(question.targetCount)}
+                        >
+                            <IconVolume size={36} color={Colors[mode].text} />
+                        </TouchableOpacity>
+                    </View>
+
+                    <Text style={[styles.statusText, { color: Colors[mode].text }]}>
+                        {statusText}
+                    </Text>
+                    <Text style={[styles.mistakeText, { color: Colors[mode].text }]}>
+                        Erreurs: {wrongAnswers}
+                    </Text>
+                </View>
+
+                <View style={styles.optionsGrid}>
+                    {options.map((value) => {
+                        const isCorrectOption = revealAnswer && value === question.targetCount;
+                        const isSelectedWrong = revealAnswer && selectedAnswer === value && !isCorrectOption;
+
+                        return (
+                            <TouchableOpacity
+                                key={`${question.id}-${value}`}
+                                activeOpacity={0.8}
+                                style={[
+                                    styles.optionButton,
+                                    {
+                                        backgroundColor: Colors[mode].background,
+                                        borderColor: isCorrectOption
+                                            ? "#22c55e"
+                                            : isSelectedWrong
+                                                ? "#ef4444"
+                                                : "#9ca3af",
+                                        borderWidth: isCorrectOption || isSelectedWrong ? 3 : 1,
+                                    },
+                                ]}
+                                onPress={() => handleAnswer(value)}
+                                disabled={answerLocked || isPaused || hasFinished}
+                            >
+                                <Text style={[styles.optionText, { color: Colors[mode].text }]}>
+                                    {value}
+                                </Text>
+                            </TouchableOpacity>
+                        );
+                    })}
+                </View>
             </View>
-
-            <Droppable 
-              onDrop={(dragged: number) => handleDrop(Number(dragged))}
-              dropAlignment="center"
-            >
-              <ThemedView
-                style={styles.dropZone}
-                darkColor="#111827"
-                lightColor="#E2E8F0"
-              >
-                {placedNumbers.length === 0 ? (
-                  <ThemedText style={styles.placeholderText}>
-                    Dépose le nombre {currentExpectedNumber} ici
-                  </ThemedText>
-                ) : (
-                  <View style={styles.sequenceGrid}>
-                    {placedNumbers.map((num, idx) => (
-                      <View key={`placed-${num}-${idx}`} style={styles.placedBadge}>
-                        <ThemedText style={styles.dropNumber}>{num}</ThemedText>
-                      </View>
-                    ))}
-                  </View>
-                )}
-              </ThemedView>
-            </Droppable>
-          </ThemedView>
-        </DropProvider>
-
-        <Button onPress={resetGameSession} style={styles.resetButton}>
-          <Button.Icon icon={IconRefresh} />
-          <Button.Title>Recommencer</Button.Title>
-        </Button>
-      </ThemedSafeAreaView>
-    </GestureHandlerRootView>
-  );
+        </ThemedSafeAreaView>
+    );
 }
 
 const styles = StyleSheet.create({
-  rootView: {
-    flex: 1,
-  },
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: 16,
-    paddingTop: 10,
-    justifyContent: "space-between",
-  },
-  controlPanel: {
-    borderRadius: 18,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    alignItems: "center",
-    gap: 10,
-  },
-  statusText: {
-    fontSize: 16,
-    fontWeight: "700",
-    textAlign: "center",
-  },
-  replayButton: {
-    flexDirection: "row",
-    gap: 8,
-    marginTop: 0,
-  },
-  gameBody: {
-    borderRadius: 24,
-    padding: 16,
-    gap: 20,
-    maxWidth: 600,
-    width: "100%",
-    alignSelf: "center",
-  },
-  dragZoneGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 12,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingVertical: 8,
-  },
-  optionCard: {
-    width: 60,
-    height: 60,
-    borderRadius: 16,
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#94A3B8",
-    elevation: 3,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-  },
-  numberText: {
-    fontSize: 24,
-    fontWeight: "800",
-  },
-  dropZone: {
-    minHeight: 120,
-    borderRadius: 20,
-    borderWidth: 2,
-    borderStyle: "dashed",
-    borderColor: "#94A3B8",
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 12,
-  },
-  sequenceGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: 10,
-  },
-  placedBadge: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
-    backgroundColor: "#22C55E",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  dropNumber: {
-    fontSize: 24,
-    fontWeight: "800",
-    color: "#FFFFFF",
-  },
-  placeholderText: {
-    fontSize: 15,
-    color: "#94A3B8",
-    fontWeight: "600",
-    textAlign: "center",
-  },
-  resetButton: {
-    flexDirection: "row",
-    gap: 8,
-    alignSelf: "center",
-    marginBottom: 10,
-  },
+    board: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        paddingHorizontal: 20,
+        paddingBottom: 20,
+    },
+    questionCard: {
+        width: "100%",
+        maxWidth: 520,
+        backgroundColor: "rgba(255,255,255,0.08)",
+        borderRadius: 20,
+        paddingVertical: 24,
+        paddingHorizontal: 20,
+        alignItems: "center",
+        marginBottom: 24,
+    },
+    promptContainer: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 16,
+    },
+    prompt: {
+        fontSize: 64,
+        fontWeight: "800",
+        textAlign: "center",
+    },
+    volumeButton: {
+        padding: 10,
+        borderRadius: 50,
+        backgroundColor: "rgba(255,255,255,0.12)",
+    },
+    statusText: {
+        marginTop: 12,
+        fontSize: 18,
+        fontWeight: "600",
+        opacity: 0.8,
+    },
+    mistakeText: {
+        marginTop: 8,
+        fontSize: 14,
+        fontWeight: "700",
+        opacity: 0.9,
+    },
+    optionsGrid: {
+        width: "100%",
+        maxWidth: 520,
+        flexDirection: "row",
+        flexWrap: "wrap",
+        justifyContent: "center",
+        gap: 12,
+    },
+    optionButton: {
+        width: "46%",
+        minHeight: 64,
+        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: "#ccc",
+        justifyContent: "center",
+        alignItems: "center",
+        padding: 12,
+    },
+    optionText: {
+        fontSize: 32,
+        fontWeight: "700",
+    },
 });

@@ -25,9 +25,6 @@ const PillarCylinderLgSvg = (pillarCylinderLgModule as any).default || pillarCyl
 const PillarCylinderSmSvg = (pillarCylinderSmModule as any).default || pillarCylinderSmModule
 
 
-
-
-
 export const Characters = {
     DinoPrincessSvg,
     DinoProfileAvatarSvg,

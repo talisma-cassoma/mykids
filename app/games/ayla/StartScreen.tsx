@@ -16,13 +16,14 @@ export default function StartScreen() {
   const [activePillar, setActivePillar] = useState<number | null>(null);
 
   const gradientColors = mode === "dark"
-    ? ['#111827', '#111827', '#34C759']
-    : ['#FFFFFF', '#FFFFFF', '#34C759'];
+    ? [Colors.dark.background, "#333", '#34C759']
+    : [Colors.light.background, Colors.light.background, '#34C759'];
 
-  const shadowColor = mode === "dark" ? '#111827' : '#FFFFFF';
+  const shadowColor = mode === "dark" ? Colors.dark.background : Colors.light.background;
 
   return (
-    <ThemedSafeAreaView style={styles.safeArea} lightColor='#FFFFFF'>
+    <ThemedSafeAreaView style={styles.safeArea} >
+      <View style={{width:"100%", paddingHorizontal:28,}}>
       <GameHeader
         trophiesCount={12}
         coinsCount={45}
@@ -39,6 +40,7 @@ export default function StartScreen() {
         }}
         validate={{ isActive: false }}
       />
+      </View>
       <TouchableOpacity
         onPress={() => {
           const firstGame = selectedGames[0];

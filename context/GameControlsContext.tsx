@@ -1,6 +1,8 @@
 import { createContext, useContext } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import type { Href } from "expo-router";
+import { classifyImage } from "@/utils/classifyImage";
+import type { ClassificationResult } from "@/utils/classifyImage";
 
 export interface GameRoute {
   name: string;
@@ -12,6 +14,7 @@ export interface GameControls {
   setMode: Dispatch<SetStateAction<"dark" | "light">>;
   selectedGames: GameRoute[];
   currentStage: number;
+  classifyImage: (imageUri: string) => Promise<ClassificationResult[]>;
 }
 
 export const GameControlsContext = createContext<GameControls | null>(null);

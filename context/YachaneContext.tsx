@@ -10,6 +10,7 @@ import { GameStage as VocabularyStage, GameText, WordPair } from "@/types";
 import { lessonRepository, initStorage } from "@/database/lessonRepository";
 import { store } from "@/database/tinybase";
 import { GameControlsContext } from "@/context/GameControlsContext";
+import { classifyImage } from "@/utils/classifyImage";
 
 interface LessonState {
   isDataInitialized: boolean;
@@ -228,7 +229,7 @@ export function YachaneProvider({ children }: Props) {
 
   return (
     <GameControlsContext.Provider
-      value={{ mode, setMode, selectedGames, currentStage }}
+      value={{ mode, setMode, selectedGames, currentStage, classifyImage }}
     >
       <YachaneContext.Provider
         value={{

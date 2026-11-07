@@ -93,6 +93,15 @@ export default function LearnTheNumbers() {
               width={PLAYER_WIDTH}
               play={playing}
               videoId={YOUTUBE_VIDEO_ID}
+              webViewProps={{
+                onShouldStartLoadWithRequest: ({ isTopFrame, url }: { isTopFrame?: boolean; url: string }) =>
+                  !isTopFrame ||
+                  url === "about:blank" ||
+                  url.startsWith(
+                    "https://lonelycpp.github.io/react-native-youtube-iframe/"
+                  ),
+                onOpenWindow: () => {},
+              }}
             />
           </View>
 

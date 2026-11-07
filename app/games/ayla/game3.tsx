@@ -198,7 +198,7 @@ export default function CountingDragGameScreen() {
             disabled={isPaused || hasFinished}
           >
             <Button.Icon icon={IconVolume} />
-            <Button.Title>Réécouter ({currentExpectedNumber})</Button.Title>
+            <Button.Title>Réécouter</Button.Title>
           </Button>
         </ThemedView>
 

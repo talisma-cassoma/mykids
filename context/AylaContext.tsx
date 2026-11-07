@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, type ReactNode } from "react";
 import { router, type Href } from "expo-router";
 import { GameControlsContext } from "@/context/GameControlsContext";
+import { classifyImage } from "@/utils/classifyImage";
 
 export interface AylaGame {
   name: string;
@@ -78,7 +79,7 @@ export function AylaProvider({ children }: { children: ReactNode }) {
   return (
     <AylaContext.Provider value={value}>
       <GameControlsContext.Provider
-        value={{ mode, setMode, selectedGames, currentStage }}
+        value={{ mode, setMode, selectedGames, currentStage, classifyImage }}
       >
         {children}
       </GameControlsContext.Provider>

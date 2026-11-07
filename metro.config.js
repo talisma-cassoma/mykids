@@ -8,6 +8,7 @@ config.transformer.babelTransformerPath = require.resolve(
 config.resolver.assetExts = config.resolver.assetExts.filter(
   (extension) => extension !== "svg"
 );
+config.resolver.assetExts.push("bin");
 config.resolver.sourceExts = [...config.resolver.sourceExts, "svg"];
 
 module.exports = config;

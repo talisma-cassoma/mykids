@@ -4,7 +4,6 @@ import {
     Modal,
     ScrollView,
     StyleSheet,
-    Text,
     TouchableOpacity,
     View,
     Pressable,
@@ -14,6 +13,8 @@ import { ThemedSafeAreaView } from '@/components/ThemedSafeAreaView';
 import Markdown from 'react-native-markdown-display';
 import { GameHeader } from "@/components/Header";
 import { Slider } from "@/components/Slider";
+import { Colors } from "@/constants/Colors";
+import { useGameControls } from "@/context/GameControlsContext";
 
 const imageBaseUrl =
     "https://rqbegbvangiegbnrgxrv.supabase.co/storage/v1/object/public/myKIDS";
@@ -86,27 +87,28 @@ interface BookLessonScreenModalProps {
     onClose: () => void;
 }
 
-const markdownStyles = StyleSheet.create({
-    body: {
-        color: "#44495D",
-        fontSize: 15,
-        lineHeight: 23,
-    },
-    strong: {
-        fontWeight: "700",
-        color: "#20243A",
-    },
-    paragraph: {
-        marginTop: 0,
-        marginBottom: 8,
-    },
-});
-
-
 function BookLessonScreenModal({
     section,
     onClose,
 }: BookLessonScreenModalProps) {
+    const { mode } = useGameControls();
+    const themeColors = Colors[mode];
+    const markdownStyles = {
+        body: {
+            color: themeColors.text,
+            fontSize: 15,
+            lineHeight: 23,
+        },
+        strong: {
+            fontWeight: "700" as const,
+            color: themeColors.text,
+        },
+        paragraph: {
+            marginTop: 0,
+            marginBottom: 8,
+        },
+    };
+
     return (
         <Modal
             visible={section !== null}
@@ -117,10 +119,36 @@ function BookLessonScreenModal({
             {/* Pressing the overlay backdrop closes the dialog, matching Radix UI behavior */}
             <Pressable style={styles.modalOverlay} onPress={onClose}>
                 {/* Stop propagation so clicking inside the dialog content doesn't close it */}
-                <Pressable style={styles.modalContainer} onPress={(e) => e.stopPropagation()}>
-                    <View style={styles.modalHeader}>
-                        <View style={styles.badgeContainer}>
-                            <ThemedText style={styles.badgeText}>{section?.id}</ThemedText>
+                <Pressable
+                    style={[
+                        styles.modalContainer,
+                        { backgroundColor: themeColors.card },
+                    ]}
+                    onPress={(e) => e.stopPropagation()}
+                >
+                    <View
+                        style={[
+                            styles.modalHeader,
+                            {
+                                borderBottomColor:
+                                    mode === "dark" ? "#555" : "#E4E7F0",
+                            },
+                        ]}
+                    >
+                        <View
+                            style={[
+                                styles.badgeContainer,
+                                { backgroundColor: themeColors.selectedBg },
+                            ]}
+                        >
+                            <ThemedText
+                                style={[
+                                    styles.badgeText,
+                                    { color: themeColors.selectedBorder },
+                                ]}
+                            >
+                                {section?.id}
+                            </ThemedText>
                         </View>
                         <ThemedText style={styles.modalTitle}>Explication de la leçon</ThemedText>
                         <TouchableOpacity
@@ -138,7 +166,12 @@ function BookLessonScreenModal({
                             contentContainerStyle={styles.modalContent}
                             showsVerticalScrollIndicator={false}
                         >
-                            <View style={styles.segmentedImageWrapper}>
+                            <View
+                                style={[
+                                    styles.segmentedImageWrapper,
+                                    { backgroundColor: themeColors.card },
+                                ]}
+                            >
                                 <Image
                                     source={segmentedImage}
                                     style={styles.segmentedImage}
@@ -148,11 +181,43 @@ function BookLessonScreenModal({
                             </View>
 
                             <ThemedText style={styles.sectionTitle}>{section.title}</ThemedText>
-                            <ThemedText style={styles.arabicText}>{section.arabicName}</ThemedText>
-                            <View style={styles.separator} />
-                            <Markdown style={markdownStyles}>Traduction</Markdown>
+                            <ThemedText
+                                style={[
+                                    styles.arabicText,
+                                    {
+                                        color: themeColors.text,
+                                        backgroundColor: themeColors.card,
+                                    },
+                                ]}
+                            >
+                                {section.arabicName}
+                            </ThemedText>
+                            <View
+                                style={[
+                                    styles.separator,
+                                    {
+                                        backgroundColor:
+                                            mode === "dark" ? "#555" : "#E4E7F0",
+                                    },
+                                ]}
+                            />
+                            <ThemedText
+                                style={[
+                                    styles.sectionHeading,
+                                    { color: themeColors.selectedBorder },
+                                ]}
+                            >
+                                Traduction
+                            </ThemedText>
                             <Markdown style={markdownStyles}>{section.translation}</Markdown>
-                            <Markdown style={markdownStyles}>Explication</Markdown>
+                            <ThemedText
+                                style={[
+                                    styles.sectionHeading,
+                                    { color: themeColors.selectedBorder },
+                                ]}
+                            >
+                                Explication
+                            </ThemedText>
                             <Markdown style={markdownStyles}>{section.explanation}</Markdown>
                         </ScrollView>
                     )}
@@ -165,6 +230,8 @@ function BookLessonScreenModal({
 export default function BookLessonScreen() {
     const [selectedSection, setSelectedSection] =
         useState<BookLessonSection | null>(null);
+    const { mode } = useGameControls();
+    const themeColors = Colors[mode];
 
     return (
         <ThemedSafeAreaView style={styles.screen}>
@@ -206,9 +273,26 @@ export default function BookLessonScreen() {
                             accessibilityRole="button"
                             accessibilityLabel={`Afficher l’explication : ${section.title}`}
                             onPress={() => setSelectedSection(section)}
-                            style={styles.sectionButton}
+                            style={[
+                                styles.sectionButton,
+                                {
+                                    backgroundColor: themeColors.card,
+                                    borderColor:
+                                        mode === "dark" ? "#555" : "#E4E7F0",
+                                },
+                            ]}
                         >
-                            <ThemedText style={styles.sectionNumber}>{section.id}</ThemedText>
+                            <ThemedText
+                                style={[
+                                    styles.sectionNumber,
+                                    {
+                                        color: themeColors.selectedBorder,
+                                        backgroundColor: themeColors.selectedBg,
+                                    },
+                                ]}
+                            >
+                                {section.id}
+                            </ThemedText>
                             <ThemedText style={styles.sectionButtonTitle}>{section.title}</ThemedText>
                         </TouchableOpacity>
                     ))}
@@ -265,8 +349,6 @@ const styles = StyleSheet.create({
     },
     sectionButton: {
         alignItems: "center",
-        backgroundColor: "#FFFFFF",
-        borderColor: "#E4E7F0",
         borderRadius: 14,
         borderWidth: 1,
         gap: 6,
@@ -277,9 +359,7 @@ const styles = StyleSheet.create({
     },
     sectionNumber: {
         alignItems: "center",
-        backgroundColor: "#E9EDFF",
         borderRadius: 16,
-        color: "#4659C7",
         fontSize: 16,
         fontWeight: "700",
         height: 32,
@@ -289,7 +369,6 @@ const styles = StyleSheet.create({
         width: 32,
     },
     sectionButtonTitle: {
-        color: "#353A50",
         fontSize: 13,
         fontWeight: "600",
         textAlign: "center",
@@ -303,7 +382,6 @@ const styles = StyleSheet.create({
         padding: 20,
     },
     modalContainer: {
-        backgroundColor: "#FFFFFF",
         borderRadius: 20,          // Even rounded corners all around like a popup dialog
         width: "100%",
         maxWidth: 500,             // Restrict width on larger screens/tablets like a dialog box
@@ -319,26 +397,22 @@ const styles = StyleSheet.create({
     },
     modalHeader: {
         alignItems: "center",
-        borderBottomColor: "#F0F0F0",
         borderBottomWidth: 1,
         flexDirection: "row",
         paddingVertical: 12,
     },
     badgeContainer: {
         alignItems: "center",
-        backgroundColor: "#E9EDFF",
         borderRadius: 18,
         height: 36,
         justifyContent: "center",
         width: 36,
     },
     badgeText: {
-        color: "#4659C7",
         fontSize: 16,
         fontWeight: "700",
     },
     modalTitle: {
-        color: "#20243A",
         flex: 1,
         fontSize: 18,
         fontWeight: "700",
@@ -351,7 +425,6 @@ const styles = StyleSheet.create({
         width: 36,
     },
     closeButtonText: {
-        color: "#555B70",
         fontSize: 30,
         lineHeight: 32,
     },
@@ -362,7 +435,6 @@ const styles = StyleSheet.create({
     },
     segmentedImageWrapper: {
         alignItems: "center",
-        backgroundColor: "#F7F8FC",
         borderRadius: 14,
         height: 180,
         justifyContent: "center",
@@ -374,14 +446,11 @@ const styles = StyleSheet.create({
         width: "100%",
     },
     sectionTitle: {
-        color: "#20243A",
         fontSize: 22,
         fontWeight: "700",
     },
     arabicText: {
-        backgroundColor: "#F7F8FC",
         borderRadius: 8,
-        color: "#33384A",
         fontSize: 20,
         lineHeight: 32,
         padding: 12,
@@ -389,18 +458,11 @@ const styles = StyleSheet.create({
         writingDirection: "rtl",
     },
     separator: {
-        backgroundColor: "#EAEAEA",
         height: 1,
         marginVertical: 4,
     },
     sectionHeading: {
-        color: "#4659C7",
         fontSize: 16,
         fontWeight: "700",
-    },
-    bodyText: {
-        color: "#44495D",
-        fontSize: 15,
-        lineHeight: 23,
     },
 });

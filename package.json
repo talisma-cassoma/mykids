@@ -62,6 +62,7 @@
     "react-native-fs": "^2.20.0",
     "react-native-gesture-handler": "~2.30.0",
     "react-native-linear-gradient": "^2.8.3",
+    "react-native-markdown-display": "^7.0.2",
     "react-native-reanimated": "4.2.1",
     "react-native-reanimated-dnd": "^2.0.0",
     "react-native-safe-area-context": "~5.6.2",

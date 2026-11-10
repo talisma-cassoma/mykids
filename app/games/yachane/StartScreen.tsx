@@ -49,16 +49,16 @@ export default function StartScreen() {
             style={{ alignSelf: "flex-start" }}
           />
         </TouchableOpacity>
-         <View style={{
-                            flexDirection: "row",
-                            width: "auto",
-                            gap: 10,
-                            marginLeft:'auto',
-                            alignSelf: "center",
-                        }}>
-                            <ThemeToggleButton />
-                            <Settings />
-                        </View>
+        <View style={{
+          flexDirection: "row",
+          width: "auto",
+          gap: 10,
+          marginLeft: 'auto',
+          alignSelf: "center",
+        }}>
+          <ThemeToggleButton />
+          <Settings />
+        </View>
       </View>
 
       <EmojiHero
@@ -86,6 +86,24 @@ export default function StartScreen() {
       >
         <Text style={{ color: "#fff" }}>commencer</Text>
       </TouchableOpacity>
+
+     <TouchableOpacity
+        onPress={() => {
+          router.replace( "/games/yachane/book"
+          );
+        }}
+        style={{
+          backgroundColor: "#4caf50",
+          padding: 10,
+          justifyContent: "center",
+          alignItems: "center",
+          width: 100,
+          borderRadius: 8,
+        }}
+      >
+        <Text style={{ color: "#fff" }}>lessons du livre</Text>
+      </TouchableOpacity>
+      
     </ThemedSafeAreaView>
   );
 }

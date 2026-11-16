@@ -60,7 +60,13 @@
       "expo-apple-authentication",
       "expo-font",
       "expo-web-browser",
-      "expo-sqlite"
+      "expo-sqlite",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Dê permissão para o aplicativo acessar a câmera para tirar fotos dos produtos."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

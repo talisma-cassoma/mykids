@@ -3,6 +3,7 @@ import { SelectedLessonsSettings } from "./tabs/SelectedLessonsSettings";
 import { LessonsSettings } from "./tabs/LessonsSettings";
 import { DatasetBackup } from "./tabs/DatasetBackup";
 import { SelectedGamesSettings } from "./tabs/SelectedGamesSettings";
+import {BookPagesUpload} from "./tabs/BookPagesUpload"
 
 export type SettingsTab = {
   id: string;
@@ -36,5 +37,11 @@ export const SETTINGS_TABS: SettingsTab[] = [
     icon: "backup",
     Component: DatasetBackup,
   },
+  {
+    id: "book",
+    label: "Livre",
+    icon: "book",
+    Component: BookPagesUpload,
 
+  }
 ];

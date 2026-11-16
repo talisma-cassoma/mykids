@@ -1,5 +1,5 @@
-import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from "react-native";
+import React, { useMemo, useState } from "react";
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Modal, TextInput } from "react-native";
 import { ThemedView } from "./ThemedView";
 import { ThemedText } from "./ThemedText";
 import { IconSettings, IconCircleCheck } from "@tabler/icons-react-native";
@@ -50,8 +50,19 @@ export interface GameHeaderProps {
     };
     validate?: {
         isActive: boolean;
+        onValidate?: (isValid: boolean) => void;
     };    
 }
+
+const buildValidationChallenge = () => {
+    const root = Math.floor(Math.random() * 18) + 7;
+    const target = root * root;
+
+    return {
+        prompt: `Trouve la racine carrée de ${target}`,
+        answer: root,
+    };
+};
 
 export function GameHeader({
     gameDescription,
@@ -69,6 +80,9 @@ export function GameHeader({
 }: GameHeaderProps) {
     const { mode } = useGameControls()
      const { speak } = useSpeech();
+     const [validationVisible, setValidationVisible] = useState(false);
+     const [validationInput, setValidationInput] = useState("");
+     const [validationChallenge, setValidationChallenge] = useState(() => buildValidationChallenge());
 
      const handleProfilePress = async(route: string) => {
         const warning = "vous voulez vraiment sortir?";
@@ -88,6 +102,22 @@ export function GameHeader({
             ]
         );
     };
+
+    const openValidationModal = () => {
+        setValidationInput("");
+        setValidationChallenge(buildValidationChallenge());
+        setValidationVisible(true);
+    };
+
+    const submitValidation = () => {
+        const parsedValue = Number(validationInput.replace(",", "."));
+        const isValid = Number.isFinite(parsedValue) && Math.abs(parsedValue - validationChallenge.answer) < 0.0001;
+
+        validate?.onValidate?.(isValid);
+        setValidationVisible(false);
+        setValidationInput("");
+    };
+
     return (
         <View style={s.container}>
             
@@ -173,21 +203,63 @@ export function GameHeader({
                     <Score score={score.current} total={score.total} />
                 )}
                 
-                { validate?.isActive ??(
-                <Button style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 12, backgroundColor: "#000000", borderRadius: 18 }}
-                    onPress={() => {
-                        //as for square of a radon numaber between 1 and 10
-                        const randomNum = Math.floor(Math.random() * 10) + 1;
-                        const square = randomNum * randomNum;
-                        Alert.alert(`Le carré de ${randomNum} est ${square}`);
-                    }}>
-                    <Button.Icon icon={IconCircleCheck} color="#FFFFFF" />
-                    <Button.Title>Valider</Button.Title>
-                </Button>
+                {validate?.isActive && (
+                    <Button
+                        style={{
+                            flexDirection: "row",
+                            alignItems: "center",
+                            gap: 8,
+                            paddingHorizontal: 12,
+                            backgroundColor: "#000000",
+                            borderRadius: 18,
+                        }}
+                        onPress={openValidationModal}
+                    >
+                        <Button.Icon icon={IconCircleCheck} color="#FFFFFF" />
+                        <Button.Title>Valider</Button.Title>
+                    </Button>
                 )}
                 
 
             </View>
+            <Modal
+                visible={validationVisible}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setValidationVisible(false)}
+            >
+                <View style={s.modalOverlay}>
+                    <View style={s.modalCard}>
+                        <ThemedText style={s.modalTitle}>Validation</ThemedText>
+                        <ThemedText style={s.modalPrompt}>{validationChallenge.prompt} ?</ThemedText>
+
+                        <TextInput
+                            value={validationInput}
+                            onChangeText={setValidationInput}
+                            placeholder="Réponse"
+                            keyboardType="numeric"
+                            autoFocus
+                            style={s.input}
+                        />
+
+                        <View style={s.modalActions}>
+                            <TouchableOpacity
+                                style={[s.modalButton, s.secondaryButton]}
+                                onPress={() => setValidationVisible(false)}
+                            >
+                                <Text style={s.secondaryButtonText}>Annuler</Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                                style={[s.modalButton, s.primaryButton]}
+                                onPress={submitValidation}
+                            >
+                                <Text style={s.primaryButtonText}>Vérifier</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
             {/* Optional Game Description */}
             {gameDescription && (
                 <ThemedText style={s.title}>{gameDescription}</ThemedText>
@@ -242,6 +314,68 @@ const s = StyleSheet.create({
         fontWeight: "bold",
         marginTop: 15,
         textAlign: "center",
+    },
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: "rgba(15, 23, 42, 0.6)",
+        justifyContent: "center",
+        alignItems: "center",
+        padding: 20,
+    },
+    modalCard: {
+        width: "100%",
+        maxWidth: 420,
+        backgroundColor: "#FFFFFF",
+        borderRadius: 24,
+        padding: 24,
+        gap: 18,
+    },
+    modalTitle: {
+        fontSize: 22,
+        fontWeight: "700",
+        textAlign: "center",
+        color: "#111827",
+    },
+    modalPrompt: {
+        fontSize: 18,
+        textAlign: "center",
+        color: "#374151",
+    },
+    input: {
+        borderWidth: 1,
+        borderColor: "#D1D5DB",
+        borderRadius: 12,
+        paddingHorizontal: 14,
+        paddingVertical: 12,
+        fontSize: 18,
+        backgroundColor: "#F9FAFB",
+        color: "#111827",
+    },
+    modalActions: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        gap: 12,
+    },
+    modalButton: {
+        flex: 1,
+        borderRadius: 12,
+        paddingVertical: 12,
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    secondaryButton: {
+        backgroundColor: "#E5E7EB",
+    },
+    secondaryButtonText: {
+        color: "#111827",
+        fontWeight: "600",
+    },
+    primaryButton: {
+        backgroundColor: "#111827",
+    },
+    primaryButtonText: {
+        color: "#FFFFFF",
+        fontWeight: "600",
     },
 });
 

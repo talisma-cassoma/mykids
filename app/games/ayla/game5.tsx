@@ -1,443 +1,1405 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+
 import {
-  View,
-  StyleSheet,
-  TouchableOpacity,
-  Text,
-  PanResponder,
-  GestureResponderEvent,
+  Dimensions,
   ScrollView,
-  Dimensions
-} from "react-native";
-import Svg, { Path } from "react-native-svg";
-import { IconVolume, IconArrowRight,  } from "@tabler/icons-react-native";
-import { ThemedSafeAreaView } from "@/components/ThemedSafeAreaView";
-import { GameHeader } from "@/components/Header";
-import { useAyla } from "@/context/AylaContext";
-import { TimerConverter, useSpeech } from "@/utils/lessons";
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { Colors } from "@/constants/Colors";
+import {
+  Canvas,
+  Path,
+  Skia,
+} from '@shopify/react-native-skia';
 
+import {
+  Gesture,
+  GestureDetector,
+  GestureHandlerRootView,
+} from 'react-native-gesture-handler';
 
-const { width } = Dimensions.get('window');
-   
-const isTablet = width >= 768;
-const CANVAS_WIDTH = isTablet ? 280: 160;
-const CANVAS_HEIGHT = isTablet? 280: 180;
+import {
+  runOnJS,
+  useSharedValue,
+} from 'react-native-reanimated';
 
+import { useLocalSearchParams } from 'expo-router';
 
-type CountingQuestion = {
-  id: string;
-  targetCount: number;
+import {
+  IconRotateClockwise,
+  IconArrowNarrowRight,
+  IconCheck,
+  IconTrash,
+  IconVolume
+} from '@tabler/icons-react-native';
+
+import { ThemedSafeAreaView } from '@/components/ThemedSafeAreaView';
+import { GameHeader } from '@/components/Header';
+import { useAyla } from '@/context/AylaContext';
+
+import tracingData from '@/assets/tracingfiles/numbers.json';
+
+import { TimerConverter, useSpeech } from '@/utils/lessons';
+
+// ---------------------------------------------------------
+// CONFIGURATION
+// ---------------------------------------------------------
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
+const IS_TABLET = SCREEN_WIDTH >= 768;
+
+const CANVAS_WIDTH = IS_TABLET ? 280 : 260;
+const CANVAS_HEIGHT = IS_TABLET ? 320 : 300;
+
+const DRAWING_COLOR = '#2196F3';
+const DRAWING_WIDTH = 13;
+
+// Geometric validation settings
+const NORMALIZED_SIZE = 100;
+const COMPARISON_SAMPLE_COUNT = 64;
+
+const MIN_STROKE_POINTS = 3;
+const MIN_DRAWING_SIZE = 25;
+const MIN_STROKE_LENGTH = 8;
+
+// Maximum average geometric deviation
+const MAX_GEOMETRIC_DISTANCE = 25;
+
+// Length ratio between corresponding reference/user strokes
+const MIN_LENGTH_RATIO = 0.35;
+const MAX_LENGTH_RATIO = 2.8;
+
+// ---------------------------------------------------------
+// TYPES
+// ---------------------------------------------------------
+
+interface Point {
+  x: number;
+  y: number;
+}
+
+interface Waypoint extends Point {
+  id: number;
+}
+
+type Segment =
+  | {
+    type: 'line';
+    from: number;
+    to: number;
+  }
+  | {
+    type: 'quadratic';
+    from: number;
+    to: number;
+    control: Point;
+  }
+  | {
+    type: 'cubic';
+    from: number;
+    to: number;
+    control1: Point;
+    control2: Point;
+  };
+
+interface Stroke {
+  id: number;
+  waypoints: Waypoint[];
+  segments: Segment[];
+}
+
+interface NumberConfig {
+  title: string;
+  strokes: Stroke[];
+}
+
+type NumberKey = keyof typeof tracingData;
+
+interface ValidationResult {
+  accepted: boolean;
+  distance: number;
+  reason?: string;
+}
+
+type NumberWritingAppProps = {
+  numberKey?: string;
 };
 
-// SVG stroke guide paths for numbers 0 to 9 scaled within a 200x260 viewbox
-const NUMBER_GUIDE_PATHS: Record<number, string[]> = {
-  0: ["M 100 40 C 50 40 50 220 100 220 C 150 220 150 40 100 40 Z"],
-  1: ["M 70 80 L 100 40 L 100 220", "M 60 220 L 140 220"],
-  2: [
-    "M 60 80 C 60 30 140 30 140 80 C 140 130 60 170 60 220",
-    "M 60 220 L 140 220",
-  ],
-  3: [
-    "M 60 50 L 140 50 L 100 110",
-    "M 100 110 C 150 110 150 210 60 210",
-  ],
-  4: ["M 130 40 L 60 150 L 150 150", "M 130 40 L 130 220"],
-  5: ["M 140 50 L 80 50 L 70 120", "M 70 120 C 140 100 150 210 70 210"],
-  6: ["M 130 60 C 60 60 50 220 100 220 C 140 220 140 140 70 140"],
-  7: ["M 60 50 L 140 50 L 80 220"],
-  8: [
-    "M 100 40 C 60 40 60 120 100 130 C 140 140 140 220 100 220 C 60 220 60 140 100 130 C 140 120 140 40 100 40 Z",
-  ],
-  9: ["M 130 120 C 60 120 60 40 100 40 C 140 40 140 200 70 220"],
-  10: [
-    "M 45 80 L 65 40 L 65 220",
-    "M 35 220 L 95 220",
-    "M 145 40 C 110 40 110 220 145 220 C 180 220 180 40 145 40 Z",
-  ],
-};
+// ---------------------------------------------------------
+// NUMBER DATA
+// ---------------------------------------------------------
 
-const MIN_NUMBER = 0;
-const MAX_NUMBER = 10;
-const TOTAL_QUESTIONS = MAX_NUMBER - MIN_NUMBER + 1;
-const ROUND_TIME_MS = 25000;
+const NUMBER_KEYS = (Object.keys(tracingData) as NumberKey[]).sort(
+  (a, b) => Number(a) - Number(b)
+);
 
-type Point = { x: number; y: number };
-type PathSegment = Point[];
+// ---------------------------------------------------------
+// GEOMETRIC UTILITIES
+// ---------------------------------------------------------
 
-export default function NumberTracingGameScreen() {
-  const { nextStage, setGameScore } = useAyla();
-  const { speak } = useSpeech();
+function distance(a: Point, b: Point): number {
+  return Math.hypot(
+    a.x - b.x,
+    a.y - b.y
+  );
+}
 
-  const [currentNumber, setCurrentNumber] = useState(MIN_NUMBER);
-  const [score, setScore] = useState(0);
-  const [wrongAnswers, setWrongAnswers] = useState(0);
-  const [question, setQuestion] = useState<CountingQuestion | null>(null);
-  const [timeLeft, setTimeLeft] = useState(ROUND_TIME_MS);
-  const [isPaused, setIsPaused] = useState(false);
-  const [hasFinished, setHasFinished] = useState(false);
-  const [statusText, setStatusText] = useState<string>("Trace le chiffre!");
-  const [answerLocked, setAnswerLocked] = useState(false);
+function getPolylineLength(points: Point[]): number {
+  let length = 0;
 
-  // User drawn paths
-  const [drawnPaths, setDrawnPaths] = useState<PathSegment[]>([]);
-  const [currentPath, setCurrentPath] = useState<PathSegment>([]);
+  for (let i = 1; i < points.length; i++) {
+    length += distance(points[i - 1], points[i]);
+  }
 
-  // State to toggle ScrollView capability while drawing
-  const [isDrawing, setIsDrawing] = useState(false);
+  return length;
+}
 
-  const startTimeRef = useRef<number | null>(null);
-  const boardLayoutRef = useRef<{ x: number; y: number; width: number; height: number }>({
-    x: 0,
-    y: 0,
-    width: 300,
-    height: 380,
-  });
+// ---------------------------------------------------------
+// REFERENCE GEOMETRY
+// Convert line/quadratic/cubic segments into points.
+// ---------------------------------------------------------
 
-  const gameTitle = useMemo(() => `Écriture des chiffres: ${MIN_NUMBER} à ${MAX_NUMBER}`, []);
+function sampleStrokeTrajectory(
+  stroke: Stroke,
+  samplesPerSegment = 32
+): Point[] {
+  if (!stroke.segments.length) {
+    return [];
+  }
 
-  const resetTimer = useCallback(() => {
-    startTimeRef.current = Date.now();
-    setTimeLeft(ROUND_TIME_MS);
-  }, []);
-
-  const speakCurrentNumber = useCallback(async (num: number) => {
-    if (num === 8) {
-      await speak("huit", "fr-FR");
-    } else {
-      await speak(`${num}`, "fr-FR");
-    }
-  }, [speak]);
-
-  const clearCanvas = () => {
-    setDrawnPaths([]);
-    setCurrentPath([]);
-  };
-
-  const loadQuestionForNumber = useCallback(
-    async (num: number) => {
-      if (num > MAX_NUMBER) return;
-
-      setQuestion({ id: `trace-${num}`, targetCount: num });
-      setStatusText("Trace le chiffre!");
-      setAnswerLocked(false);
-      clearCanvas();
-      resetTimer();
-
-      await speakCurrentNumber(num);
-    },
-    [resetTimer, speakCurrentNumber]
+  const waypointMap = new Map<number, Waypoint>(
+    stroke.waypoints.map((point) => [point.id, point])
   );
 
-  useEffect(() => {
-    if (!question || isPaused || hasFinished) return;
+  const trajectory: Point[] = [];
 
-    const interval = setInterval(() => {
-      if (!startTimeRef.current) {
-        startTimeRef.current = Date.now();
+  for (const segment of stroke.segments) {
+    const from = waypointMap.get(segment.from);
+    const to = waypointMap.get(segment.to);
+
+    if (!from || !to) {
+      throw new Error(
+        `Invalid reference segment: ${segment.from} -> ${segment.to}`
+      );
+    }
+
+    if (
+      trajectory.length > 0 &&
+      distance(trajectory[trajectory.length - 1], from) > 0.01
+    ) {
+      throw new Error(
+        `Disconnected segments in stroke ${stroke.id}`
+      );
+    }
+
+    const firstSample = trajectory.length === 0 ? 0 : 1;
+
+    for (let i = firstSample; i <= samplesPerSegment; i++) {
+      const t = i / samplesPerSegment;
+      const mt = 1 - t;
+
+      let point: Point;
+
+      if (segment.type === 'line') {
+        point = {
+          x: from.x + (to.x - from.x) * t,
+          y: from.y + (to.y - from.y) * t,
+        };
+      } else if (segment.type === 'quadratic') {
+        point = {
+          x:
+            mt * mt * from.x +
+            2 * mt * t * segment.control.x +
+            t * t * to.x,
+
+          y:
+            mt * mt * from.y +
+            2 * mt * t * segment.control.y +
+            t * t * to.y,
+        };
+      } else {
+        point = {
+          x:
+            mt ** 3 * from.x +
+            3 * mt ** 2 * t * segment.control1.x +
+            3 * mt * t ** 2 * segment.control2.x +
+            t ** 3 * to.x,
+
+          y:
+            mt ** 3 * from.y +
+            3 * mt ** 2 * t * segment.control1.y +
+            3 * mt * t ** 2 * segment.control2.y +
+            t ** 3 * to.y,
+        };
       }
-      const elapsed = Date.now() - startTimeRef.current;
-      const remaining = Math.max(0, ROUND_TIME_MS - elapsed);
-      setTimeLeft(remaining);
 
-      if (remaining <= 0) {
-        clearInterval(interval);
-        handleTimeout();
-      }
-    }, 50);
-
-    return () => clearInterval(interval);
-  }, [question, isPaused, hasFinished]);
-
-  useEffect(() => {
-    if (!question) {
-      loadQuestionForNumber(MIN_NUMBER);
+      trajectory.push(point);
     }
-  }, [loadQuestionForNumber, question]);
+  }
 
-  const finishGame = useCallback(
-    (finalScore: number) => {
-      if (hasFinished) return;
+  return trajectory;
+}
 
-      setHasFinished(true);
-      setGameScore((prev) => [
-        ...prev,
-        {
-          score: `${finalScore}/${TOTAL_QUESTIONS} · erreurs: ${wrongAnswers}`,
-          name: gameTitle,
-          duration: TimerConverter(Math.max(1, Math.round(finalScore * 4))),
-        },
-      ]);
-      nextStage();
-    },
-    [gameTitle, hasFinished, nextStage, setGameScore, wrongAnswers]
+// ---------------------------------------------------------
+// GLOBAL NORMALIZATION
+//
+// Removes differences in:
+// - Position
+// - Scale
+//
+// Preserves:
+// - Aspect ratio
+// - Relative position of strokes
+// - Geometric proportions
+// ---------------------------------------------------------
+
+function normalizeStrokeSet(
+  strokes: Point[][]
+): Point[][] {
+  const allPoints = strokes.flat();
+
+  if (!allPoints.length) {
+    return [];
+  }
+
+  const minX = Math.min(...allPoints.map(p => p.x));
+  const maxX = Math.max(...allPoints.map(p => p.x));
+
+  const minY = Math.min(...allPoints.map(p => p.y));
+  const maxY = Math.max(...allPoints.map(p => p.y));
+
+  const width = maxX - minX;
+  const height = maxY - minY;
+
+  const maxDimension = Math.max(width, height);
+
+  if (maxDimension <= 0) {
+    return [];
+  }
+
+  // Uniform scale: never distort the number.
+  const scale = NORMALIZED_SIZE / maxDimension;
+
+  const offsetX =
+    (NORMALIZED_SIZE - width * scale) / 2;
+
+  const offsetY =
+    (NORMALIZED_SIZE - height * scale) / 2;
+
+  return strokes.map(stroke =>
+    stroke.map(point => ({
+      x: (point.x - minX) * scale + offsetX,
+      y: (point.y - minY) * scale + offsetY,
+    }))
   );
+}
 
-  const handleValidate = useCallback(async () => {
-    if (!question || answerLocked || hasFinished) return;
+// ---------------------------------------------------------
+// ARC LENGTH RESAMPLING
+//
+// Makes comparison independent of touch-event frequency.
+// ---------------------------------------------------------
 
-    const totalPoints = drawnPaths.reduce((acc, p) => acc + p.length, 0) + currentPath.length;
+function resamplePolyline(
+  points: Point[],
+  count = COMPARISON_SAMPLE_COUNT
+): Point[] {
+  if (points.length < 2) {
+    return [];
+  }
 
-    if (totalPoints < 12) {
-      setStatusText("Remplis le tracé!");
-      await speak("Essaie encore d'écrire le chiffre", "fr-FR");
-      return;
-    }
+  const cumulativeDistances = [0];
 
-    setAnswerLocked(true);
-    const nextScore = score + 1;
-    const nextNum = currentNumber + 1;
-
-    setStatusText("Bravo!");
-    await speak("Très bien!", "fr-FR");
-    setScore(nextScore);
-
-    if (nextNum > MAX_NUMBER) {
-      finishGame(nextScore);
-      return;
-    }
-
-    setCurrentNumber(nextNum);
-    setTimeout(() => {
-      loadQuestionForNumber(nextNum);
-    }, 1000);
-  }, [answerLocked, currentNumber, currentPath, drawnPaths, finishGame, hasFinished, loadQuestionForNumber, question, score, speak]);
-
-  const handleTimeout = useCallback(async () => {
-    if (!question || answerLocked || hasFinished) return;
-
-    setAnswerLocked(true);
-    setStatusText("Temps écoulé!");
-    setWrongAnswers((prev) => prev + 1);
-    await speak("Oupsi", "fr-FR");
-
-    setTimeout(() => {
-      loadQuestionForNumber(currentNumber);
-    }, 1000);
-  }, [answerLocked, currentNumber, hasFinished, loadQuestionForNumber, question, speak]);
-
-  // Touch tracking with scroll locking during draw
-  const panResponder = useMemo(
-    () =>
-      PanResponder.create({
-        onStartShouldSetPanResponder: () => !answerLocked,
-        onMoveShouldSetPanResponder: () => !answerLocked,
-        onPanResponderGrant: (evt: GestureResponderEvent) => {
-          setIsDrawing(true);
-          const { locationX, locationY } = evt.nativeEvent;
-          setCurrentPath([{ x: locationX, y: locationY }]);
-        },
-        onPanResponderMove: (evt: GestureResponderEvent) => {
-          const { locationX, locationY } = evt.nativeEvent;
-          setCurrentPath((prev) => [...prev, { x: locationX, y: locationY }]);
-        },
-        onPanResponderRelease: () => {
-          setIsDrawing(false);
-          setCurrentPath((latestCurrent) => {
-            if (latestCurrent.length > 0) {
-              setDrawnPaths((prev) => [...prev, latestCurrent]);
-            }
-            return [];
-          });
-        },
-        onPanResponderTerminate: () => {
-          setIsDrawing(false);
-        },
-      }),
-    [answerLocked]
-  );
-
-  const convertPointsToSvgPath = (points: Point[]) => {
-    if (points.length === 0) return "";
-    return points.reduce(
-      (acc, pt, index) => (index === 0 ? `M ${pt.x} ${pt.y}` : `${acc} L ${pt.x} ${pt.y}`),
-      ""
-    );
-  };
-
-  const handleToggle = () => {
-    setIsPaused((prev) => !prev);
-    if (isPaused) {
-      resetTimer();
-    }
-  };
-
-  const commonHeader = (
-    <GameHeader
-      gameDescription={gameTitle}
-      trophiesCount={12}
-      coinsCount={45}
-      settingsRoute="/games/ayla/settings/SettingsScreen"
-      currentProfile={{
-        name: "Ayla",
-        avatarSvgName: "PrincessProfileAvatarSvg",
-        startScreenRoute: "/games/ayla/StartScreen",
-      }}
-      otherProfile={{
-        name: "Dino",
-        avatarSvgName: "DinoProfileAvatarSvg",
-        startScreenRoute: "/games/yachane/StartScreen",
-      }}
-    />
-  );
-
-  if (!question) {
-    return (
-      <ThemedSafeAreaView>
-        {commonHeader}
-      </ThemedSafeAreaView>
+  for (let i = 1; i < points.length; i++) {
+    cumulativeDistances.push(
+      cumulativeDistances[i - 1] +
+      distance(points[i - 1], points[i])
     );
   }
 
-  const guidePaths = NUMBER_GUIDE_PATHS[question.targetCount] || NUMBER_GUIDE_PATHS[0];
+  const totalLength =
+    cumulativeDistances[cumulativeDistances.length - 1];
+
+  if (totalLength <= 0) {
+    return [];
+  }
+
+  const result: Point[] = [];
+
+  let segmentIndex = 0;
+
+  for (let i = 0; i < count; i++) {
+    const targetDistance =
+      (i / (count - 1)) * totalLength;
+
+    while (
+      segmentIndex < cumulativeDistances.length - 2 &&
+      cumulativeDistances[segmentIndex + 1] < targetDistance
+    ) {
+      segmentIndex++;
+    }
+
+    const startDistance = cumulativeDistances[segmentIndex];
+    const endDistance = cumulativeDistances[segmentIndex + 1];
+
+    const segmentLength = endDistance - startDistance;
+
+    const t =
+      segmentLength <= 0
+        ? 0
+        : (targetDistance - startDistance) / segmentLength;
+
+    const a = points[segmentIndex];
+    const b = points[segmentIndex + 1];
+
+    result.push({
+      x: a.x + (b.x - a.x) * t,
+      y: a.y + (b.y - a.y) * t,
+    });
+  }
+
+  return result;
+}
+
+// ---------------------------------------------------------
+// DISCRETE FRECHET DISTANCE
+//
+// Measures the geometric similarity of two trajectories.
+// ---------------------------------------------------------
+
+function discreteFrechetDistance(
+  a: Point[],
+  b: Point[]
+): number {
+  if (!a.length || !b.length) {
+    return Infinity;
+  }
+
+  let previous = new Float64Array(b.length);
+  let current = new Float64Array(b.length);
+
+  previous.fill(Infinity);
+  current.fill(Infinity);
+
+  for (let i = 0; i < a.length; i++) {
+    current.fill(Infinity);
+
+    for (let j = 0; j < b.length; j++) {
+      const pointDistance = distance(a[i], b[j]);
+
+      if (i === 0 && j === 0) {
+        current[j] = pointDistance;
+        continue;
+      }
+
+      const predecessor = Math.min(
+        i > 0 ? previous[j] : Infinity,
+        j > 0 ? current[j - 1] : Infinity,
+        i > 0 && j > 0 ? previous[j - 1] : Infinity
+      );
+
+      current[j] = Math.max(
+        pointDistance,
+        predecessor
+      );
+    }
+
+    [previous, current] = [current, previous];
+  }
+
+  return previous[b.length - 1];
+}
+
+// ---------------------------------------------------------
+// STROKE COMPARISON
+//
+// Allows drawing in either direction.
+// ---------------------------------------------------------
+
+function compareStrokes(
+  userStroke: Point[],
+  referenceStroke: Point[]
+): number {
+  const user = resamplePolyline(userStroke);
+  const reference = resamplePolyline(referenceStroke);
+
+  if (!user.length || !reference.length) {
+    return Infinity;
+  }
+
+  const forward = discreteFrechetDistance(
+    reference,
+    user
+  );
+
+  const reversed = discreteFrechetDistance(
+    reference,
+    [...user].reverse()
+  );
+
+  return Math.min(forward, reversed);
+}
+
+// ---------------------------------------------------------
+// STROKE ASSIGNMENT
+//
+// Finds the best correspondence between strokes,
+// even if the user drew them in a different order.
+//
+// Uses dynamic programming with bitmasks.
+// ---------------------------------------------------------
+
+function minimumAssignmentCost(
+  matrix: number[][]
+): number {
+  const count = matrix.length;
+
+  if (
+    count === 0 ||
+    matrix.some(row => row.length !== count) ||
+    count > 15
+  ) {
+    return Infinity;
+  }
+
+  const memo = new Map<string, number>();
+
+  function solve(
+    userIndex: number,
+    mask: number
+  ): number {
+    if (userIndex === count) {
+      return 0;
+    }
+
+    const key = `${userIndex}-${mask}`;
+
+    if (memo.has(key)) {
+      return memo.get(key)!;
+    }
+
+    let best = Infinity;
+
+    for (let referenceIndex = 0; referenceIndex < count; referenceIndex++) {
+      const bit = 1 << referenceIndex;
+
+      if (mask & bit) {
+        continue;
+      }
+
+      const cost = matrix[userIndex][referenceIndex];
+
+      if (!Number.isFinite(cost)) {
+        continue;
+      }
+
+      const remaining = solve(
+        userIndex + 1,
+        mask | bit
+      );
+
+      best = Math.min(
+        best,
+        cost + remaining
+      );
+    }
+
+    memo.set(key, best);
+
+    return best;
+  }
+
+  return solve(0, 0);
+}
+
+// ---------------------------------------------------------
+// COMPLETE NUMBER VALIDATION
+// ---------------------------------------------------------
+
+function validateNumberDrawing(
+  userStrokes: Point[][],
+  referenceStrokes: Point[][]
+): ValidationResult {
+
+  if (
+    !userStrokes.length ||
+    userStrokes.length !== referenceStrokes.length
+  ) {
+    return {
+      accepted: false,
+      distance: Infinity,
+      reason: 'stroke-count',
+    };
+  }
+
+  // Check individual strokes.
+  for (const stroke of userStrokes) {
+    if (stroke.length < MIN_STROKE_POINTS) {
+      return {
+        accepted: false,
+        distance: Infinity,
+        reason: 'insufficient-points',
+      };
+    }
+
+    if (getPolylineLength(stroke) < MIN_STROKE_LENGTH) {
+      return {
+        accepted: false,
+        distance: Infinity,
+        reason: 'insufficient-length',
+      };
+    }
+  }
+
+  // Prevent extremely small drawings.
+  const allPoints = userStrokes.flat();
+
+  const width =
+    Math.max(...allPoints.map(p => p.x)) -
+    Math.min(...allPoints.map(p => p.x));
+
+  const height =
+    Math.max(...allPoints.map(p => p.y)) -
+    Math.min(...allPoints.map(p => p.y));
+
+  if (
+    Math.max(width, height) < MIN_DRAWING_SIZE
+  ) {
+    return {
+      accepted: false,
+      distance: Infinity,
+      reason: 'drawing-too-small',
+    };
+  }
+
+  // Normalize both drawings using their global bounding boxes.
+  const normalizedUser = normalizeStrokeSet(userStrokes);
+  const normalizedReference = normalizeStrokeSet(referenceStrokes);
+
+  if (
+    !normalizedUser.length ||
+    !normalizedReference.length
+  ) {
+    return {
+      accepted: false,
+      distance: Infinity,
+      reason: 'invalid-geometry',
+    };
+  }
+
+  // Build the stroke similarity matrix.
+  const matrix = normalizedUser.map(userStroke =>
+    normalizedReference.map(referenceStroke => {
+      const userLength = getPolylineLength(userStroke);
+      const referenceLength = getPolylineLength(referenceStroke);
+
+      const ratio = userLength / referenceLength;
+
+      // Prevent extremely incomplete or exaggerated strokes.
+      if (
+        ratio < MIN_LENGTH_RATIO ||
+        ratio > MAX_LENGTH_RATIO
+      ) {
+        return Infinity;
+      }
+
+      const geometricDistance = compareStrokes(
+        userStroke,
+        referenceStroke
+      );
+
+      // Small penalty for substantially different lengths.
+      const lengthPenalty =
+        Math.abs(Math.log(ratio)) * 3;
+
+      return geometricDistance + lengthPenalty;
+    })
+  );
+
+  const totalCost = minimumAssignmentCost(matrix);
+
+  const averageDistance =
+    totalCost / userStrokes.length;
+
+  const accepted =
+    Number.isFinite(averageDistance) &&
+    averageDistance <= MAX_GEOMETRIC_DISTANCE;
+
+  return {
+    accepted,
+    distance: averageDistance,
+    reason: accepted ? undefined : 'geometry-mismatch',
+  };
+}
+
+// ---------------------------------------------------------
+// CANVAS PATH
+// ---------------------------------------------------------
+
+function createPolylinePath(points: Point[]) {
+  const path = Skia.Path.Make();
+
+  if (!points.length) {
+    return path;
+  }
+
+  path.moveTo(points[0].x, points[0].y);
+
+  for (let i = 1; i < points.length; i++) {
+    path.lineTo(points[i].x, points[i].y);
+  }
+
+  return path;
+}
+
+// ---------------------------------------------------------
+// FEEDBACK
+// ---------------------------------------------------------
+
+function getFeedback(reason?: string): string {
+  switch (reason) {
+    case 'stroke-count':
+      return 'Vérifie le nombre de traits et essaie encore.';
+
+    case 'insufficient-points':
+    case 'insufficient-length':
+      return 'Continue à écrire le chiffre.';
+
+    case 'drawing-too-small':
+      return 'Écris le chiffre un peu plus grand.';
+
+    case 'geometry-mismatch':
+      return 'Ce chiffre ne correspond pas. Essaie encore !';
+
+    default:
+      return 'Réessaie tranquillement.';
+  }
+}
+
+// ---------------------------------------------------------
+// MAIN COMPONENT
+// ---------------------------------------------------------
+
+export default function NumberWritingApp({
+  numberKey: numberKeyProp,
+}: NumberWritingAppProps) {
+
+  const { nextStage, setGameScore, mode } = useAyla();
+  const { speak } = useSpeech();
+
+  const { numberKey: routeNumberKey } = useLocalSearchParams<{
+    numberKey?: string;
+  }>();
+
+  const initialKey = numberKeyProp ?? routeNumberKey;
+
+  const initialIndex =
+    initialKey && NUMBER_KEYS.includes(initialKey as NumberKey)
+      ? NUMBER_KEYS.indexOf(initialKey as NumberKey)
+      : 0;
+
+  const [currentIndex, setCurrentIndex] = useState(initialIndex);
+
+  const [completed, setCompleted] = useState(false);
+  const [isDrawing, setIsDrawing] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+
+  const [time, setTime] = useState(0);
+
+  const [feedback, setFeedback] = useState('');
+
+  // Each gesture represents one user stroke.
+  const [userStrokes, setUserStrokes] = useState<Point[][]>([]);
+
+  const scrollViewRef = useRef<ScrollView | null>(null);
+  const hasSavedScoreRef = useRef(false);
+
+  // Current number
+  const numberKey = NUMBER_KEYS[currentIndex] ?? NUMBER_KEYS[0];
+
+  const numberConfig = tracingData[numberKey] as NumberConfig;
+
+  const gameTitle = numberConfig.title;
+
+  const currentNumber = String(Number(numberKey));
+
+  // -----------------------------------------------------
+  // SPEECH
+  // -----------------------------------------------------
+
+  useEffect(() => {
+    speak(currentNumber, 'fr-FR');
+  }, [currentNumber, speak]);
+
+  // -----------------------------------------------------
+  // REFERENCE GEOMETRY
+  //
+  // These paths are NEVER rendered on the canvas.
+  // They exist exclusively for geometric validation.
+  // -----------------------------------------------------
+
+  const referenceTrajectories = useMemo(
+    () =>
+      numberConfig.strokes
+        .map(stroke => sampleStrokeTrajectory(stroke))
+        .filter(points => points.length >= 2),
+
+    [numberConfig]
+  );
+
+  // -----------------------------------------------------
+  // DRAWING STATE
+  // -----------------------------------------------------
+
+  const activePath = useSharedValue(Skia.Path.Make());
+
+  const activePoints = useSharedValue<Point[]>([]);
+
+  const isTracing = useSharedValue(false);
+
+  const isPausedShared = useSharedValue(false);
+
+  const isCompletedShared = useSharedValue(false);
+
+  const drawnPaths = useMemo(
+    () => userStrokes.map(createPolylinePath),
+    [userStrokes]
+  );
+
+  // -----------------------------------------------------
+  // RESET
+  // -----------------------------------------------------
+
+  const resetDrawing = () => {
+    activePath.value = Skia.Path.Make();
+    activePoints.value = [];
+
+    isTracing.value = false;
+    isCompletedShared.value = false;
+
+    setUserStrokes([]);
+
+    setCompleted(false);
+    setIsDrawing(false);
+
+    setFeedback('');
+    setTime(0);
+
+    hasSavedScoreRef.current = false;
+  };
+
+  // -----------------------------------------------------
+  // TIMER
+  // -----------------------------------------------------
+
+  useEffect(() => {
+    if (completed || isPaused) {
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setTime(previous => previous + 1);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [completed, isPaused, currentIndex]);
+
+  // -----------------------------------------------------
+  // PAUSE
+  // -----------------------------------------------------
+
+  const handleTogglePause = () => {
+    const nextPaused = !isPaused;
+
+    isPausedShared.value = nextPaused;
+
+    setIsPaused(nextPaused);
+
+    if (nextPaused) {
+      setFeedback('En pause.');
+      speak('En pause !', 'fr-FR');
+    } else {
+      setFeedback('');
+      speak(currentNumber, 'fr-FR');
+    }
+  };
+
+  // -----------------------------------------------------
+  // STORE A COMPLETED GESTURE
+  // -----------------------------------------------------
+
+  const handleStrokeEnd = (points: Point[]) => {
+    setIsDrawing(false);
+
+    if (completed || isPaused || points.length < 2) {
+      activePath.value = Skia.Path.Make();
+      activePoints.value = [];
+      return;
+    }
+
+    setUserStrokes(previous => [
+      ...previous,
+      points.map(point => ({ ...point })),
+    ]);
+
+    activePath.value = Skia.Path.Make();
+    activePoints.value = [];
+
+    setFeedback('');
+  };
+
+  // -----------------------------------------------------
+  // PAN GESTURE
+  //
+  // No start waypoint or reference position is required.
+  // The child can start anywhere on the canvas.
+  // -----------------------------------------------------
+
+  const panGesture = useMemo(
+    () =>
+      Gesture.Pan()
+        .minDistance(0)
+
+        .onStart(event => {
+          'worklet';
+
+          if (
+            isCompletedShared.value ||
+            isPausedShared.value
+          ) {
+            return;
+          }
+
+          isTracing.value = true;
+
+          const firstPoint = {
+            x: event.x,
+            y: event.y,
+          };
+
+          activePoints.value = [firstPoint];
+
+          activePath.value = Skia.Path.Make();
+
+          activePath.value.moveTo(
+            firstPoint.x,
+            firstPoint.y
+          );
+
+          runOnJS(setIsDrawing)(true);
+          runOnJS(setFeedback)('');
+        })
+
+        .onUpdate(event => {
+          'worklet';
+
+          if (
+            !isTracing.value ||
+            isCompletedShared.value ||
+            isPausedShared.value
+          ) {
+            return;
+          }
+
+          const nextPoint = {
+            x: event.x,
+            y: event.y,
+          };
+
+          const points = activePoints.value;
+
+          const lastPoint = points[points.length - 1];
+
+          if (
+            lastPoint &&
+            Math.hypot(
+              nextPoint.x - lastPoint.x,
+              nextPoint.y - lastPoint.y
+            ) < 1.5
+          ) {
+            return;
+          }
+
+          activePoints.value = [
+            ...points,
+            nextPoint,
+          ];
+
+          activePath.modify(path => {
+            path.lineTo(nextPoint.x, nextPoint.y);
+            return path;
+          });
+        })
+
+        .onEnd(() => {
+          'worklet';
+
+          if (!isTracing.value) {
+            return;
+          }
+
+          const points = activePoints.value;
+
+          isTracing.value = false;
+
+          runOnJS(handleStrokeEnd)(points);
+        })
+
+        .onFinalize(() => {
+          'worklet';
+
+          isTracing.value = false;
+
+          runOnJS(setIsDrawing)(false);
+        }),
+
+    [
+      activePath,
+      activePoints,
+      isTracing,
+      isCompletedShared,
+      isPausedShared,
+      handleStrokeEnd,
+    ]
+  );
+
+  // -----------------------------------------------------
+  // VALIDATE COMPLETE NUMBER
+  // -----------------------------------------------------
+
+  const handleValidate = () => {
+    if (completed || isPaused) {
+      return;
+    }
+
+    if (!userStrokes.length) {
+      const message = 'Écris le chiffre avant de vérifier.';
+
+      setFeedback(message);
+      speak(message, 'fr-FR');
+
+      return;
+    }
+
+    const result = validateNumberDrawing(
+      userStrokes,
+      referenceTrajectories
+    );
+
+    if (!result.accepted) {
+      const message = getFeedback(result.reason);
+
+      setFeedback(message);
+      speak(message, 'fr-FR');
+
+      return;
+    }
+
+    // Success
+    isCompletedShared.value = true;
+
+    setCompleted(true);
+
+    setFeedback('Bravo ! Très bien !');
+
+    speak('Bravo ! Très bien !', 'fr-FR');
+  };
+
+  // -----------------------------------------------------
+  // ADVANCE TO NEXT NUMBER
+  // -----------------------------------------------------
+
+  const handleAdvance = () => {
+    if (!hasSavedScoreRef.current) {
+      hasSavedScoreRef.current = true;
+
+      setGameScore(scores => [
+        ...scores,
+        {
+          score: '1/1',
+          name: gameTitle,
+          duration: TimerConverter(Math.max(1, time)),
+        },
+      ]);
+    }
+
+    if (currentIndex < NUMBER_KEYS.length - 1) {
+      scrollViewRef.current?.scrollTo({
+        y: 0,
+        animated: true,
+      });
+
+      resetDrawing();
+
+      setCurrentIndex(previous => previous + 1);
+    } else {
+      nextStage();
+    }
+  };
+
+  // -----------------------------------------------------
+  // RENDER
+  // -----------------------------------------------------
 
   return (
-    <ThemedSafeAreaView style={styles.container}>
-      {commonHeader}
+    <ThemedSafeAreaView style={{ flex: 1 }}>
+
+      <GameHeader
+        gameDescription="Écoute et écris le chiffre"
+
+        playAndPauseButton={{
+          isActive: true,
+          resumeStatus: isPaused ? 'paused' : 'playing',
+          onToggle: handleTogglePause,
+        }}
+
+        trophiesCount={12}
+        coinsCount={45}
+
+        settingsRoute="/games/ayla/settings/SettingsScreen"
+
+        currentProfile={{
+          name: 'Ayla',
+          avatarSvgName: 'PrincessProfileAvatarSvg',
+          startScreenRoute: '/games/ayla/StartScreen',
+        }}
+
+        otherProfile={{
+          name: 'Dino',
+          avatarSvgName: 'DinoProfileAvatarSvg',
+          startScreenRoute: '/games/yachane/StartScreen',
+        }}
+
+        validate={{
+          isActive: true,
+          onValidate: isValid => {
+            if (!isValid) {
+              return;
+            }
+
+            // Alternate validation path only: it does not replace the
+            // drawing-based validation logic already used by handleValidate.
+            handleAdvance();
+          },
+        }}
+      />
+      <View style={{flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 16,}}>
+        <TouchableOpacity
+          style={styles.volumeButton}
+          activeOpacity={0.7}
+          onPress={async () => await speak(currentNumber, "fr-FR")}
+        >
+          <IconVolume size={36} color={Colors[mode].text} />
+        </TouchableOpacity>
+      </View>
       <ScrollView
-        scrollEnabled={!isDrawing} // Prevents parent scroll clash while tracing
+        ref={scrollViewRef}
+        scrollEnabled={!isDrawing}
         contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={true}
+        showsVerticalScrollIndicator={false}
       >
-        {/* <View style={styles.topActionsContainer}>
-          <TouchableOpacity
-            style={styles.volumeButton}
-            onPress={() => speakCurrentNumber(question.targetCount)}
+
+        {/* -----------------------------------------
+                    EMPTY DRAWING CANVAS
+
+                    No reference paths.
+                    No waypoints.
+                    No markers.
+                    Only user drawings.
+                ----------------------------------------- */}
+
+        <GestureHandlerRootView style={styles.gestureContainer}>
+
+          <GestureDetector gesture={panGesture}>
+
+            <View style={[styles.canvasContainer, {
+              backgroundColor: mode === "dark" ? "#555" : "#E4E7F0",
+              }]}>
+
+              <Canvas
+                style={{
+                  width: CANVAS_WIDTH,
+                  height: CANVAS_HEIGHT,
+                }}
+              >
+
+                {/* Previously drawn user strokes */}
+
+                {drawnPaths.map((path, index) => (
+                  <Path
+                    key={`user-stroke-${index}`}
+                    path={path}
+                    color={DRAWING_COLOR}
+                    style="stroke"
+                    strokeWidth={DRAWING_WIDTH}
+                    strokeCap="round"
+                    strokeJoin="round"
+                  />
+                ))}
+
+                {/* Current active user stroke */}
+
+                <Path
+                  path={activePath}
+                  color={DRAWING_COLOR}
+                  style="stroke"
+                  strokeWidth={DRAWING_WIDTH}
+                  strokeCap="round"
+                  strokeJoin="round"
+                />
+
+              </Canvas>
+
+            </View>
+
+          </GestureDetector>
+
+        </GestureHandlerRootView>
+
+        {!!feedback && (
+          <Text
+            style={[
+              styles.feedbackText,
+              completed && styles.successText,
+            ]}
           >
-            <IconVolume size={28} color="#FFFFFF" />
+            {feedback}
+          </Text>
+        )}
+
+        {/* -----------------------------------------
+                    ACTIONS
+                ----------------------------------------- */}
+
+        <View style={styles.actionsContainer}>
+
+          <TouchableOpacity
+            style={styles.resetButton}
+            onPress={resetDrawing}
+            disabled={completed}
+          >
+            <IconRotateClockwise
+              size={22}
+              color="#555555"
+            />
           </TouchableOpacity>
-        </View> */}
-        <View style={styles.board}>
-          <View
-            style={styles.canvasContainer}
-            {...panResponder.panHandlers}
-            onLayout={(event) => {
-              boardLayoutRef.current = event.nativeEvent.layout;
+
+          {!completed ? (
+            <TouchableOpacity
+              style={[
+                styles.validateButton,
+                (isPaused || isDrawing) &&
+                styles.disabledButton,
+              ]}
+              onPress={handleValidate}
+              disabled={isPaused || isDrawing}
+            >
+              <IconCheck
+                size={21}
+                color="#FFFFFF"
+              />
+
+              <Text style={styles.buttonText}>
+                Vérifier
+              </Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
+              style={styles.continueButton}
+              onPress={handleAdvance}
+            >
+              <Text style={styles.buttonText}>
+                Continuer
+              </Text>
+
+              <IconArrowNarrowRight
+                size={21}
+                color="#FFFFFF"
+              />
+            </TouchableOpacity>
+          )}
+
+        </View>
+
+        {/* -----------------------------------------
+                    OPTIONAL: CLEAR DRAWING
+                ----------------------------------------- */}
+
+        {userStrokes.length > 0 && !completed && (
+          <TouchableOpacity
+            style={styles.clearButton}
+            onPress={() => {
+              setUserStrokes([]);
+              setFeedback('');
             }}
           >
-            {/* Guide Template SVG */}
-            <Svg
-              style={StyleSheet.absoluteFill}
-              viewBox="0 0 200 260"
-              preserveAspectRatio="xMidYMid meet"
-            >
-              {guidePaths.map((pathD, idx) => (
-                <React.Fragment key={idx}>
-                  <Path
-                    d={pathD}
-                    stroke="#e0e0e0"
-                    strokeWidth="24"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    fill="none"
-                  />
-                  <Path
-                    d={pathD}
-                    stroke="#FFFFFF"
-                    strokeWidth="3"
-                    strokeDasharray="6 6"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    fill="none"
-                  />
-                </React.Fragment>
-              ))}
-            </Svg>
+            <IconTrash size={17} color="#777777" />
 
-            {/* Touch Tracing Overlay SVG */}
-            <Svg style={StyleSheet.absoluteFill}>
-              {drawnPaths.map((pathPts, idx) => (
-                <Path
-                  key={`path-${idx}`}
-                  d={convertPointsToSvgPath(pathPts)}
-                  stroke="#4CAF50"
-                  strokeWidth="16"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  fill="none"
-                />
-              ))}
-              {currentPath.length > 0 && (
-                <Path
-                  d={convertPointsToSvgPath(currentPath)}
-                  stroke="#4CAF50"
-                  strokeWidth="16"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  fill="none"
-                />
-              )}
-            </Svg>
-          </View>
-
-          <TouchableOpacity style={styles.continueButton} onPress={handleValidate}>
-            <Text style={styles.continueText}>Continuer</Text>
-            <IconArrowRight size={20} color="#FFFFFF" />
+            <Text style={styles.clearText}>
+              Effacer le dessin
+            </Text>
           </TouchableOpacity>
-        </View>
+        )}
       </ScrollView>
+
     </ThemedSafeAreaView>
   );
 }
 
+// ---------------------------------------------------------
+// STYLES
+// ---------------------------------------------------------
+
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
+
   scrollContent: {
     flexGrow: 1,
-    flexDirection: "column",
-    paddingBottom: 30,
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingBottom: 32,
   },
-  board: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 20,
-    marginTop: 10,
+
+  gestureContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    paddingVertical: 20,
   },
-  topActionsContainer: {
-    width: "100%",
-    paddingHorizontal: 24,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginTop: 10,
-  },
-  volumeButton: {
-    padding: 10,
-    borderRadius: 50,
-    backgroundColor: "rgba(255,255,255,0.15)",
-  },
-  statusText: {
-    textAlign: "center",
-    marginTop: 12,
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#FFFFFF",
-  },
+
   canvasContainer: {
-    position: "relative",
     width: CANVAS_WIDTH,
     height: CANVAS_HEIGHT,
-    backgroundColor: "transparent",
+
+    alignItems: 'center',
+    justifyContent: 'center',
+
+    overflow: 'hidden',
+
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+
+  feedbackText: {
+    marginTop: 14,
+    paddingHorizontal: 16,
+
+    textAlign: 'center',
+
+    color: '#B45309',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+
+  successText: {
+    color: '#16A34A',
+  },
+
+  actionsContainer: {
+    width: '100%',
+
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+
+    marginTop: 22,
+    gap: 12,
+  },
+
+  resetButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+
+    padding: 12,
+
     borderRadius: 24,
-    justifyContent: "center",
-    alignItems: "center",
-    marginVertical: 10,
+    backgroundColor: '#EEEEEE',
   },
-  continueButton: {
-    marginTop: 15,
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#000000",
-    paddingVertical: 12,
-    paddingHorizontal: 28,
-    borderRadius: 25,
+
+  validateButton: {
+
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+
     gap: 8,
+
+    backgroundColor: Colors.dark.button,
+
+    paddingVertical: 13,
+    paddingHorizontal: 20,
+
+    borderRadius: 24,
   },
-  continueText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "600",
+
+  disabledButton: {
+    opacity: 0.45,
   },
+
+  continueButton: {
+    flex: 1,
+
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+
+    gap: 8,
+
+    backgroundColor: '#16A34A',
+
+    paddingVertical: 13,
+    paddingHorizontal: 20,
+
+    borderRadius: 24,
+  },
+
+  buttonText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '700',
+  },
+
+  clearButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+
+    gap: 6,
+
+    marginTop: 16,
+    padding: 8,
+  },
+
+  clearText: {
+    color: '#777777',
+    fontSize: 13,
+  },
+
+  debugContainer: {
+    marginTop: 20,
+    padding: 10,
+
+    backgroundColor: '#F3F4F6',
+    borderRadius: 8,
+
+    width: '100%',
+  },
+
+  debugText: {
+    fontSize: 11,
+    color: '#777777',
+  },
+  volumeButton: {
+        padding: 10,
+        borderRadius: 50,
+        backgroundColor: "rgba(255,255,255,0.12)",
+    }
 });

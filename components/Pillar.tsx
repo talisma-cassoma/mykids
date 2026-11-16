@@ -299,14 +299,14 @@ function PillarComponent({
                 {status === "idle" ? (
                     <SvgAsset
                         name={pillar}
-                        width={60}
-                        height={isLarge ? 75.5 : 55.5}
+                        width={100}
+                        height={isLarge ? 100 : 55.5}
                     />
                 ) : (
                     <SvgXml
                         xml={getColoredPillarXml(pillar, status)}
-                        width={60}
-                        height={isLarge ? 75.5 : 55.5}
+                        width={100}
+                        height={isLarge ? 104 : 55.5}
                     />
                 )}
             </Animated.View>

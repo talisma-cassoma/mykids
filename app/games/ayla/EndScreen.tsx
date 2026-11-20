@@ -18,7 +18,7 @@ export default function EndScreen() {
         <ThemedText style={styles.title}>C'est fini 🎮</ThemedText>
 
         {gameScore.length === 0 ? (
-          <ThemedText style={styles.empty}>Nenhum score ainda</ThemedText>
+          <ThemedText style={styles.empty}>Aucun point pour l'instant</ThemedText>
         ) : (
           gameScore.map((item, index) => (
             <ThemedView key={index} darkColor="#333" lightColor="#f5f5f5" style={styles.card}>

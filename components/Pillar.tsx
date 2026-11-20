@@ -1,112 +1,25 @@
 
-import React, { useState, useRef, type ReactNode } from 'react';
+import React, { useEffect, useState, useRef, type ReactNode } from 'react';
 import {
     TouchableOpacity,
     View,
     StyleSheet,
-    LayoutChangeEvent,
     Animated,
     Easing,
+    Text,
+    type GestureResponderEvent,
+    type ViewStyle,
 } from "react-native";
 import { SvgXml } from "react-native-svg";
-
-import { useGame } from "@/context/YachaneContext";
+import { router, type Href } from "expo-router";
+ import { TimerConverter, useSpeech } from "@/utils/lessons";
 import { SvgAsset } from '@/components/SvgAssets';
 import {
     PillarCollectible,
     type CollectibleName,
     type PillarCollectibleProps,
 } from '@/components/PillarCollectible';
-import { ThemedText } from '@/components/ThemedText';
 import { Canvas, Path, Skia } from "@shopify/react-native-skia";
-
-interface SpeechBubbleProps {
-    message: string;
-}
-
-export function InvertedSpeechBubble({ message }: SpeechBubbleProps) {
-    const { mode } = useGame();
-    const [size, setSize] = useState({ width: 0, height: 0 });
-
-    const onLayout = (event: LayoutChangeEvent) => {
-        const { width, height } = event.nativeEvent.layout;
-        setSize({ width, height });
-    };
-
-    const backgroundColor = mode === "dark" ? "#1F2937" : "#FFFFFF";
-    const textColor = mode === "dark" ? "#FFFFFF" : "#111827";
-
-    const pointerHeight = 6;
-    const cornerRadius = 8;
-    const pointerWidth = 12;
-
-    const w = size.width;
-    const h = size.height;
-    const boxHeight = h - pointerHeight;
-    const cx = w / 2;
-
-    const getBubblePath = () => {
-        if (w <= 0 || h <= 0) return null;
-
-        const svgPath = `
-            M ${cornerRadius} 0
-            H ${w - cornerRadius}
-            A ${cornerRadius} ${cornerRadius} 0 0 1 ${w} ${cornerRadius}
-            V ${boxHeight - cornerRadius}
-            A ${cornerRadius} ${cornerRadius} 0 0 1 ${w - cornerRadius} ${boxHeight}
-            H ${cx + pointerWidth / 2}
-            L ${cx} ${h}
-            L ${cx - pointerWidth / 2} ${boxHeight}
-            H ${cornerRadius}
-            A ${cornerRadius} ${cornerRadius} 0 0 1 0 ${boxHeight - cornerRadius}
-            V ${cornerRadius}
-            A ${cornerRadius} ${cornerRadius} 0 0 1 ${cornerRadius} 0
-            Z
-        `;
-
-        return Skia.Path.MakeFromSVGString(svgPath);
-    };
-
-    const path = getBubblePath();
-
-    return (
-        <View
-            style={{
-                alignSelf: 'center',
-                marginBottom: 6,
-                zIndex: 3,
-            }}
-            onLayout={onLayout}
-        >
-            {w > 0 && h > 0 && (
-                <Canvas
-                    style={[
-                        StyleSheet.absoluteFillObject,
-                        { width: w, height: h }
-                    ]}
-                >
-                    {path && <Path path={path} color={backgroundColor} />}
-                </Canvas>
-            )}
-
-            <View style={{
-                paddingHorizontal: 12,
-                paddingVertical: 6,
-            }}>
-                <ThemedText
-                    style={{
-                        fontSize: 12,
-                        textAlign: 'center',
-                        fontWeight: '600',
-                        color: textColor,
-                    }}
-                >
-                    {message}
-                </ThemedText>
-            </View>
-        </View>
-    );
-}
 
 export interface PillarsProps {
     collectibles?: CollectibleName
@@ -117,6 +30,9 @@ export interface PillarsProps {
         | "PillarCylinderSmSvg";
     status?: PillarStatus;
     message: string;
+    link?: Href;
+    onEnter?: () => void;
+    onClose?: () => void;
     onPress?: () => void;
     children?: ReactNode;
 }
@@ -208,15 +124,22 @@ function PillarComponent({
     pillar,
     collectibles,
     status = "idle",
+    link,
+    onEnter,
+    onClose,
     onPress,
     children,
 }: PillarsProps) {
-    const { mode } = useGame();
+    const [speechDismissed, setSpeechDismissed] = useState(false);
+    const [displayedMessage, setDisplayedMessage] = useState("");
+     const { speak } = useSpeech();
 
     // One animation value shared by the entire pillar.
     const bounceAnim = useRef(new Animated.Value(0)).current;
 
     const handlePress = () => {
+        setSpeechDismissed(false);
+
         // Restart the animation on every click.
         bounceAnim.stopAnimation();
         bounceAnim.setValue(0);
@@ -244,28 +167,107 @@ function PillarComponent({
     const isLarge =
         pillar === "PillarCubeLgSvg" ||
         pillar === "PillarCylinderLgSvg";
+    const showSpeech = status === "clicked" && !speechDismissed;
+    const collectiblePosition: ViewStyle = { bottom: isLarge ? "76%" : "55%" };
+
+    useEffect(() => {
+        if (status !== "clicked") {
+            setSpeechDismissed(false);
+        }
+    }, [status]);
+
+    useEffect(() => {
+        if (!showSpeech || !message) return;
+        
+        speak(message, "fr-FR")
+
+        let currentIndex = 0;
+        setDisplayedMessage("");
+        const interval = setInterval(() => {
+            if (currentIndex <= message.length) {
+                setDisplayedMessage(message.substring(0, currentIndex));
+                currentIndex++;
+            } else {
+                clearInterval(interval);
+            }
+        }, 40);
+
+        return () => clearInterval(interval);
+    }, [message, showSpeech]);
+
+    const handleSpeechClose = (event: GestureResponderEvent) => {
+        event.stopPropagation();
+        setSpeechDismissed(true);
+        onClose?.();
+    };
+    const handleSpeechEnter = (event: GestureResponderEvent) => {
+        event.stopPropagation();
+        if (onEnter) {
+            onEnter();
+        } else if (link) {
+            router.push(link);
+        }
+    };
+
+    const makeSpeechBalloon = () => {
+        const trianglePath = Skia.Path.Make();
+        trianglePath.moveTo(0, 0);
+        trianglePath.lineTo(16, 0);
+        trianglePath.lineTo(8, 10);
+        trianglePath.close();
+
+        return (
+            <View style={styles.balloonContainer}>
+                <View style={styles.balloonBox}>
+                    <Text style={styles.balloonText}>{displayedMessage}</Text>
+                    <View style={styles.balloonActions}>
+                        <TouchableOpacity onPress={handleSpeechClose} style={styles.actionButtonClose}>
+                            <Text style={styles.actionTextClose}>fermer</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={handleSpeechEnter} style={styles.actionButtonEnter}>
+                            <Text style={styles.actionTextEnter}>Entrer</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+                <Canvas style={{ width: 16, height: 10, alignSelf: "center" }}>
+                    <Path path={trianglePath} color="black" />
+                </Canvas>
+            </View>
+        );
+    };
+
+    const renderCollectibleChildren = () => children != null
+        ? React.Children.map(children, child => {
+            if (
+                React.isValidElement<PillarCollectibleProps>(child) &&
+                child.type === PillarCollectible
+            ) {
+                return (
+                    <View style={[styles.collectibleAnchor, { bottom: isLarge ? "105%" : "95%" }]}>
+                        {React.cloneElement(child)}
+                        {showSpeech ? makeSpeechBalloon() : null}
+                    </View>
+                );
+            }
+
+            return child;
+        })
+        : (
+            <View style={[styles.collectibleAnchor, collectiblePosition]}>
+                <PillarCollectible collectibles={collectibles} />
+                {showSpeech ? makeSpeechBalloon() : null}
+            </View>
+        );
 
     return (
         <TouchableOpacity
             activeOpacity={0.9}
             onPress={handlePress}
-            style={styles.pillarWrapper}
+            style={[
+                styles.pillarWrapper,
+                status === "clicked" && styles.activePillarWrapper,
+            ]}
         >
-            {/* Animated message */}
-            <Animated.View
-                style={[
-                    styles.messageContainer,
-                    animatedStyle,
-                    mode === "dark"
-                        ? { borderBottomColor: "#fff" }
-                        : { borderBottomColor: "#000" }
-                ]}
-            >
-                {message ? (
-                    <InvertedSpeechBubble message={message} />
-                ) : null}
-            </Animated.View>
-
             {/* Animated pillar and collectible */}
             <Animated.View
                 style={[
@@ -273,28 +275,7 @@ function PillarComponent({
                     animatedStyle,
                 ]}
             >
-                {children != null
-                    ? React.Children.map(children, child => {
-                        if (
-                            React.isValidElement<PillarCollectibleProps>(child) &&
-                            child.type === PillarCollectible
-                        ) {
-                            return React.cloneElement(child, {
-                                style: [
-                                    { bottom: isLarge ? '75%' : '55%' },
-                                    child.props.style,
-                                ],
-                            });
-                        }
-
-                        return child;
-                    })
-                    : (
-                        <PillarCollectible
-                            collectibles={collectibles}
-                            style={{ bottom: isLarge ? '85%' : '55%' }}
-                        />
-                    )}
+                {renderCollectibleChildren()}
 
                 {status === "idle" ? (
                     <SvgAsset
@@ -323,12 +304,69 @@ const styles = StyleSheet.create({
         alignItems: "center",
         marginVertical: -8,
     },
-    messageContainer: {
+    activePillarWrapper: {
+        zIndex: 10,
+        elevation: 10,
+    },
+    collectibleAnchor: {
+        position: "absolute",
+        zIndex: 2,
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    balloonContainer: {
+        position: "absolute",
+        bottom: "100%",
+        marginBottom: 8,
+        alignItems: "center",
+        width: 220,
+        zIndex: 10,
+        elevation: 10,
+    },
+    balloonBox: {
+        backgroundColor: "black",
+        borderRadius: 12,
+        padding: 12,
+        width: "100%",
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 4,
+        elevation: 6,
+    },
+    balloonText: {
+        color: "white",
+        fontSize: 13,
+        textAlign: "center",
+        marginBottom: 8,
+        lineHeight: 18,
+    },
+    balloonActions: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        borderTopWidth: 0.5,
+        borderTopColor: "#333",
+        paddingTop: 8,
+    },
+    actionButtonClose: {
+        paddingVertical: 4,
+        paddingHorizontal: 8,
+    },
+    actionTextClose: {
+        color: "#aaa",
+        fontSize: 12,
+        fontWeight: "600",
+    },
+    actionButtonEnter: {
+        backgroundColor: "#fff",
+        paddingVertical: 4,
         paddingHorizontal: 12,
-        paddingVertical: 6,
-        marginBottom: 4,
-        borderBottomWidth: 0,
-        zIndex: 3,
+        borderRadius: 6,
+    },
+    actionTextEnter: {
+        color: "#000",
+        fontSize: 12,
+        fontWeight: "bold",
     },
     isometricContainer: {
         alignItems: 'center',

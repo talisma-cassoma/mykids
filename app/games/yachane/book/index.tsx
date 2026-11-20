@@ -17,11 +17,11 @@ import { Colors } from "@/constants/Colors";
 import { useGameControls } from "@/context/GameControlsContext";
 
 const imageBaseUrl =
-    "https://rqbegbvangiegbnrgxrv.supabase.co/storage/v1/object/public/myKIDS";
+    "https://vtooiywgqiptmmlxlzxv.supabase.co/storage/v1/object/public/book";
 
-const beforeImage = { uri: `${imageBaseUrl}/original.jpg` };
-const afterImage = { uri: `${imageBaseUrl}/translated.jpg` };
-const segmentedImage = { uri: `${imageBaseUrl}/part1.png` };
+const beforeImage = { uri: `${imageBaseUrl}/arabic/page-12.jpg` };
+const afterImage = { uri: `${imageBaseUrl}/french/page-12/translated.jpg` };
+const segmentedImage = { uri: `${imageBaseUrl}/french/page-12/extract-1.png` };
 
 interface BookLessonSection {
     id: number;

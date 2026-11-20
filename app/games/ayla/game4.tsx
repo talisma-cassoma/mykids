@@ -28,6 +28,7 @@ import { useLocalSearchParams } from 'expo-router';
 import {
     IconRotateClockwise,
     IconArrowNarrowRight,
+    IconTransform,
     IconArrowNarrowDown,
 } from '@tabler/icons-react-native';
 
@@ -43,15 +44,16 @@ const isTablet = SCREEN_WIDTH >= 768;
 const CANVAS_WIDTH = isTablet ? 220 : 140;
 const CANVAS_HEIGHT = isTablet ? 280 : 200;
 
-const GUIDE_STROKE_WIDTH = 30;
+const GUIDE_STROKE_WIDTH = 40;
 const USER_STROKE_WIDTH = 25;
+const GUIDANCE_LEAD_SAMPLES = 8;
 
 // A criança pode começar perto do primeiro ponto, mas a validação final
 // continua a verificar a distância real ao início da trajetória.
 const START_THRESHOLD = 32;
 
 // Tolerância geométrica em pixels do canvas.
-const TRAJECTORY_TOLERANCE = 18;
+const TRAJECTORY_TOLERANCE = 20;
 
 const REFERENCE_SAMPLES_PER_SEGMENT = 32;
 const COMPARISON_SAMPLE_COUNT = 64;
@@ -959,9 +961,36 @@ export default function WaypointTracingApp({
         ]
     );
 
+    const currentReferenceTrajectory =
+        referenceTrajectories[currentStrokeIndex] ?? [];
+    const guidanceEndIndex =
+        currentReferenceTrajectory.length > 0
+            ? Math.min(
+                  guidanceIndex +
+                      (isDrawing ? GUIDANCE_LEAD_SAMPLES : 0),
+                  currentReferenceTrajectory.length - 1
+              )
+            : 0;
     const currentGuidancePoint =
-        referenceTrajectories[currentStrokeIndex]?.[guidanceIndex] ??
-        referenceTrajectories[currentStrokeIndex]?.[0];
+        currentReferenceTrajectory[guidanceEndIndex] ??
+        currentReferenceTrajectory[0];
+    const upcomingGuidancePath = useMemo(() => {
+        if (!isDrawing || guidanceEndIndex <= guidanceIndex) {
+            return null;
+        }
+
+        return createPolylinePath(
+            currentReferenceTrajectory.slice(
+                guidanceIndex,
+                guidanceEndIndex + 1
+            )
+        );
+    }, [
+        currentReferenceTrajectory,
+        guidanceEndIndex,
+        guidanceIndex,
+        isDrawing,
+    ]);
 
     return (
         <ThemedSafeAreaView style={{ flex: 1 }}>
@@ -1022,6 +1051,17 @@ export default function WaypointTracingApp({
                                         strokeJoin="round"
                                     />
                                 ))}
+
+                                {upcomingGuidancePath && (
+                                    <Path
+                                        path={upcomingGuidancePath}
+                                        color="#64B5F6"
+                                        style="stroke"
+                                        strokeWidth={14}
+                                        strokeCap="round"
+                                        strokeJoin="round"
+                                    />
+                                )}
 
                                 {/* Strokes déjà validés */}
                                 {acceptedPaths.map((path, index) => (
@@ -1152,12 +1192,21 @@ export default function WaypointTracingApp({
                         </TouchableOpacity>
                     )}
 
+                    <View style={{flexDirection:"column", gap:12}}>
+                    {/* <TouchableOpacity
+                        style={styles.resetButton}
+                        // onPress={desactivateReferenceTrajectoryValidation}
+                    >
+                        <IconTransform size={22} color="#555555" />
+                    </TouchableOpacity> */}
+
                     <TouchableOpacity
                         style={styles.resetButton}
                         onPress={handleReset}
                     >
                         <IconRotateClockwise size={22} color="#555555" />
                     </TouchableOpacity>
+                    </View>
                 </View>
             </ScrollView>
         </ThemedSafeAreaView>

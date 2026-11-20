@@ -8,7 +8,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import { useGame } from "@/context/YachaneContext";
 import { Pillar } from "@/components/Pillar"
 import { ThemedText } from '@/components/ThemedText';
-import { IconSearch, IconPencilMinus, IconEdit } from "@tabler/icons-react-native"
+import { IconSearch, IconBlocks, IconBrandYoutubeKids, IconEdit, IconHandMove } from "@tabler/icons-react-native"
 import { Colors } from "@/constants/Colors";
 
 export default function StartScreen() {
@@ -41,7 +41,7 @@ export default function StartScreen() {
         validate={{ isActive: false }}
       />
       </View>
-      <TouchableOpacity
+      {/* <TouchableOpacity
         onPress={() => {
           const firstGame = selectedGames[0];
           router.replace(
@@ -51,7 +51,7 @@ export default function StartScreen() {
         style={styles.button}
       >
         <Text style={{ color: "#fff" }}>commencer</Text>
-      </TouchableOpacity>
+      </TouchableOpacity> */}
       <View style={styles.wrapper}>
         <LinearGradient
           key={mode}
@@ -67,64 +67,70 @@ export default function StartScreen() {
             <View style={[styles.innerShadowOverlay, { shadowColor }]}>
 
               {/* Trilha Isométrica em zigue-zague usando offsets horizontais */}
-              <View style={{ transform: [{ translateX: 40 }] }}>
+             <View style={[styles.pillarWrapper,{ transform: [{ translateX: 40 }], zIndex: activePillar === 0 ? 10 : 1 }]}>
                 <Pillar
-                  message=""
+                  message="aprendre a compter avec les titounis"
+                  link= "/games/ayla/game1"
                   pillar="PillarCubeSmSvg"
                   status={activePillar === 0 ? "clicked" : "idle"}
                   onPress={() => setActivePillar(0)}
                 >
                   <Pillar.Collectible style={{ flexDirection: "row" }}>
-                    <ThemedText darkColor='#333'>123</ThemedText>
+                    <ThemedText darkColor="#FFFFFF" >123</ThemedText>
+                    <IconBrandYoutubeKids size={20} color={mode === "dark" ? "#FFFFFF": "#333"}  />
                   </Pillar.Collectible>
                 </Pillar>
               </View>
 
-              <View style={{ transform: [{ translateX: -30 }] }}>
+              <View style={[styles.pillarWrapper,{ transform: [{ translateX: -30 }] , zIndex: activePillar === 1 ? 10 : 1 }]}>
                 <Pillar
-                  message=""
+                  message="trouvez le chiffre"
+                  link= "/games/ayla/game2"
                   pillar="PillarCylinderSmSvg"
                   status={activePillar === 1 ? "clicked" : "idle"}
                   onPress={() => setActivePillar(1)}
                 >
                   <Pillar.Collectible style={{ flexDirection: "row" }}>
-                    <ThemedText darkColor='#333'>123</ThemedText>
-                    <IconSearch size={20} color="#333" />
+                   <ThemedText darkColor="#FFFFFF" >123</ThemedText>
+                    <IconSearch size={20} color={mode === "dark" ? "#FFFFFF": "#333"}  />
                   </Pillar.Collectible>
                 </Pillar>
               </View>
 
-              <View style={{ transform: [{ translateX: 20 }] }}>
+              <View style={[{ transform: [{ translateX: 20 }] , zIndex: activePillar === 2 ? 10 : 1 }]}>
                 <Pillar
-                  message=""
+                  message="organizez les chiffres"
+                  link= "/games/ayla/game3"
                   pillar="PillarCylinderSmSvg"
                   status={activePillar === 2 ? "clicked" : "idle"}
                   onPress={() => setActivePillar(2)}
                 >
                   <Pillar.Collectible style={{ flexDirection: "row" }}>
-                    <ThemedText darkColor='#333'>123</ThemedText>
-                    <IconPencilMinus size={20} color="#333" />
+                    <IconBlocks size={20} color={mode === "dark" ? "#FFFFFF": "#333"}   />
+                    <IconHandMove size={20} color={mode === "dark" ? "#FFFFFF": "#333"}  />
                   </Pillar.Collectible>
                 </Pillar>
               </View>
 
-              <View style={{ transform: [{ translateX: -40 }] }}>
+              <View style={[styles.pillarWrapper,{ transform: [{ translateX: -40 }] , zIndex: activePillar === 3 ? 10 : 1 }]}>
                 <Pillar
-                  message=""
+                  message="Ecrivons les chiffres"
+                  link= "/games/ayla/game4"
                   pillar="PillarCylinderSmSvg"
                   status={activePillar === 3 ? "clicked" : "idle"}
                   onPress={() => setActivePillar(3)}
                 >
                   <Pillar.Collectible style={{ flexDirection: "row" }}>
-                    <ThemedText darkColor='#333'>123</ThemedText>
-                    <IconEdit size={20} color="#333" />
+                    <ThemedText darkColor="#FFFFFF"  >123</ThemedText>
+                    <IconEdit size={20} color={mode === "dark" ? "#FFFFFF": "#333"}   />
                   </Pillar.Collectible>
                 </Pillar>
               </View>
 
-              <View style={{ transform: [{ translateX: 10 }] }}>
+              <View style={[styles.pillarWrapper,{ transform: [{ translateX: 10 }], zIndex: activePillar === 4 ? 10 : 1 }]}>
                 <Pillar
-                  message=""
+                  message="C'est l'heure du test!"
+                    link= "/games/ayla/game5"
                   pillar="PillarCubeLgSvg"
                   collectibles='TestSvg'
                   status={activePillar === 4 ? "clicked" : "idle"}
@@ -132,9 +138,10 @@ export default function StartScreen() {
                 />
               </View>
 
-              <View style={{ transform: [{ translateX: -20 }] }}>
+              <View style={[styles.pillarWrapper,{ transform: [{ translateX: -20 }] , zIndex: activePillar === 5 ? 10 : 1 }]}>
                 <Pillar
-                  message=""
+                  message="verifions les points"
+                  link= "/games/ayla/EndScreen"
                   pillar="PillarCylinderLgSvg"
                   collectibles='TrophySvg'
                   status={activePillar === 5 ? "clicked" : "idle"}
@@ -178,6 +185,7 @@ const styles = StyleSheet.create({
     width: '100%',
     alignItems: 'center',
     flexDirection: "column-reverse",
+    paddingTop: 150,
     gap: 10,
     shadowOffset: { width: 0, height: 416 },
     shadowOpacity: 1,
@@ -192,4 +200,7 @@ const styles = StyleSheet.create({
     width: 100,
     borderRadius: 8,
   },
+  pillarWrapper:{
+    paddingVertical: 16,
+  }
 });

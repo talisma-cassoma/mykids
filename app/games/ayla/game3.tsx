@@ -32,7 +32,7 @@ import { TimerConverter, useSpeech } from "@/utils/lessons";
 const MIN_NUMBER = 1;
 const MAX_NUMBER = 10;
 const TOTAL_NUMBERS = MAX_NUMBER - MIN_NUMBER + 1;
-const NUMBER_COLOR = "#64748B";
+const NUMBER_COLOR = "#4caf50";
 
 const FLIP_SPRING = {
   damping: 18,
@@ -927,9 +927,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   frontCover: {
-    backgroundColor: "#2B3A4A",
+    backgroundColor: "#4caf50",
     borderLeftWidth: 7,
-    borderLeftColor: "#1E2936",
+    borderLeftColor: "#4aa74e",
   },
   coverTitle: {
     color: "#F5E6C4",
@@ -952,7 +952,7 @@ const styles = StyleSheet.create({
     borderRightColor: "#1E2936",
   },
   backCoverText: {
-    color: "#8E9EAD",
+    color: "#4caf50",
     fontSize: 11,
     letterSpacing: 1.5,
   },
@@ -981,7 +981,7 @@ const styles = StyleSheet.create({
   dropHintText: {
     fontSize: 12,
     fontWeight: "700",
-    color: "#334155",
+    color: "#4caf50",
     marginBottom: 6,
   },
   dropHintTextTablet: {

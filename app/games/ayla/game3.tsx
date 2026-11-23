@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { StyleSheet, View, useWindowDimensions } from "react-native";
-import { IconRefresh, IconVolume } from "@tabler/icons-react-native";
+import { Pressable, StyleSheet, View, useWindowDimensions, TouchableOpacity } from "react-native";
+import { IconVolume } from "@tabler/icons-react-native";
+import { SvgAsset } from '@/components/SvgAssets';
 import {
   Gesture,
   GestureDetector,
@@ -31,6 +32,7 @@ import { TimerConverter, useSpeech } from "@/utils/lessons";
 const MIN_NUMBER = 1;
 const MAX_NUMBER = 10;
 const TOTAL_NUMBERS = MAX_NUMBER - MIN_NUMBER + 1;
+const NUMBER_COLOR = "#64748B";
 
 const FLIP_SPRING = {
   damping: 18,
@@ -55,10 +57,10 @@ function useBookMetrics(): BookMetrics {
     const minSide = Math.min(width, height);
     const isTablet = minSide >= 600;
 
-    const maxSpreadWidth = width * (isTablet ? 0.78 : 0.9);
+    const maxSpreadWidth = width * (isTablet ? 0.86 : 0.94);
     const targetPageWidth = isTablet
-      ? Math.min(width * 0.32, 310)
-      : Math.min(width * 0.43, 175);
+      ? Math.min(width * 0.4, 360)
+      : Math.min(width * 0.48, 205);
 
     const pageWidth = Math.min(targetPageWidth, maxSpreadWidth / 2);
     const pageHeight = pageWidth * 1.32;
@@ -124,12 +126,6 @@ const NotebookPaper = ({
         style={[
           styles.verticalMarginLine,
           { left: marginLeftPrimary, width: isTablet ? 1.5 : 1 },
-        ]}
-      />
-      <View
-        style={[
-          styles.verticalMarginLine,
-          { left: marginLeftSecondary, width: isTablet ? 1.5 : 1 },
         ]}
       />
 
@@ -246,24 +242,23 @@ const BookLeaf = ({
 };
 
 /**
- * Each number has its own fixed row target. The rows use the same vertical
- * rhythm as the notebook rules, so a drop can never be accepted elsewhere
- * on the page.
+ * Each number has a fixed target in the notebook grid, so drops are only
+ * accepted in a numbered cell.
  */
 const NumberDropSlots = ({
-  metrics,
   placedNumbers,
   currentExpectedNumber,
   onDrop,
+  onSpeakCurrentNumber,
   isTablet,
 }: {
-  metrics: BookMetrics;
   placedNumbers: number[];
   currentExpectedNumber: number;
   onDrop: (draggedValue: number, targetSlot: number) => void;
+  onSpeakCurrentNumber: () => void;
   isTablet: boolean;
 }) => {
-  const { lineHeight } = metrics;
+  const slotSize = isTablet ? 54 : 42;
 
   return (
     <View style={styles.slotsContainer}>
@@ -280,7 +275,7 @@ const NumberDropSlots = ({
               capacity={1}
               dropDisabled={isPlaced}
               dropAlignment="center"
-              style={[styles.numberDropSlotWrapper, { height: lineHeight }]}
+              style={[styles.numberDropSlotWrapper, { height: slotSize }]}
               activeStyle={{
                 backgroundColor: "rgba(59, 130, 246, 0.16)",
                 borderColor: "#3B82F6",
@@ -289,33 +284,25 @@ const NumberDropSlots = ({
               }}
               onDrop={(dragged: number) => onDrop(Number(dragged), slotNumber)}
             >
-              <View
+              <Pressable
+                onPress={onSpeakCurrentNumber}
                 style={[
                   styles.numberDropSlot,
-                  { height: lineHeight },
+                  { height: slotSize },
                   isCurrent && styles.numberDropSlotActive,
                   isPlaced && styles.numberDropSlotPlaced,
                 ]}
               >
                 <ThemedText
                   style={[
-                    styles.slotNumber,
-                    isTablet && styles.slotNumberTablet,
-                    isPlaced && styles.slotNumberPlaced,
-                    isCurrent && styles.slotNumberActive,
+                    styles.numberGlyph,
+                    isTablet && styles.numberGlyphTablet,
+                    styles.numberGlyphColor,
                   ]}
                 >
-                  {isPlaced ? slotNumber : isCurrent ? "" : ""}
-                  <Button
-                  //onPress={replayNumber}
-                  //disabled={!isNotebookOpen || isPaused || hasFinished}
-                  style={{backgroundColor:'transparent'}}
-                  >
-                    <Button.Icon icon={IconVolume} />
-                    <Button.Title>Réécouter</Button.Title>
-                  </Button>
+                  {isPlaced ? slotNumber : ""}
                 </ThemedText>
-              </View>
+              </Pressable>
             </Droppable>
           );
         })}
@@ -332,20 +319,20 @@ const PoppingNumberToken = ({
   popIndex,
   popSignal,
   isDraggingNumber,
-  isDark,
   isTablet,
   isNotebookOpen,
   dragBoundsRef,
+  popDistance,
   onDragStateChange,
 }: {
   value: number;
   popIndex: number;
   popSignal: SharedValue<number>;
   isDraggingNumber: SharedValue<boolean>;
-  isDark: boolean;
   isTablet: boolean;
   isNotebookOpen: boolean;
   dragBoundsRef: React.RefObject<View | Animated.View | null>;
+  popDistance: number;
   onDragStateChange: (dragging: boolean) => void;
 }) => {
   const popAnimStyle = useAnimatedStyle(() => {
@@ -353,7 +340,7 @@ const PoppingNumberToken = ({
     return {
       opacity: active
         ? withDelay(popIndex * 45, withTiming(1, { duration: 220 }))
-        : withTiming(0, { duration: 120 }),
+        : withTiming(0, { duration: 0 }),
       transform: [
         {
           translateY: active
@@ -361,7 +348,7 @@ const PoppingNumberToken = ({
               popIndex * 45,
               withSpring(0, { damping: 14, stiffness: 160 })
             )
-            : withTiming(110, { duration: 150 }),
+            : withTiming(popDistance, { duration: 0 }),
         },
         {
           scale: active
@@ -373,7 +360,7 @@ const PoppingNumberToken = ({
         },
       ],
     };
-  }, [popIndex]);
+  }, [popDistance, popIndex]);
 
   return (
     <Animated.View style={popAnimStyle}>
@@ -403,7 +390,7 @@ const PoppingNumberToken = ({
             style={[
               styles.numberGlyph,
               isTablet && styles.numberGlyphTablet,
-              { color: isDark ? "#F8FAFC" : "#1E293B" },
+              styles.numberGlyphColor,
             ]}
           >
             {value}
@@ -415,12 +402,11 @@ const PoppingNumberToken = ({
 };
 
 export default function CountingFlipbookGameScreen() {
-  const { nextStage, setGameScore, mode } = useAyla();
+  const { nextStage, setGameScore } = useAyla();
   const { speak } = useSpeech();
   const { width: screenWidth } = useWindowDimensions();
   const metrics = useBookMetrics();
   const { pageWidth, pageHeight, isTablet } = metrics;
-  const isDark = mode === "dark";
 
   const TOTAL_LEAVES = 3; // 0: Front Cover, 1: Notebook Sheet, 2: Back Cover
 
@@ -445,6 +431,7 @@ export default function CountingFlipbookGameScreen() {
   const isPoppingShared = useSharedValue(false);
   const popSignal = useSharedValue(0);
   const dragBoundsRef = useAnimatedRef<View>();
+  const popDistance = 52 + pageHeight / 2;
 
   const gameTitle = useMemo(() => "Compte et glisse le bon nombre", []);
   const currentExpectedNumber = MIN_NUMBER + placedNumbers.length;
@@ -656,8 +643,6 @@ export default function CountingFlipbookGameScreen() {
         <DropProvider>
           <ThemedView
             style={styles.gameBody}
-            darkColor="#0F172A"
-            lightColor="#F1F5F9"
             pointerEvents={isPaused ? "none" : "auto"}
           >
             <View
@@ -674,10 +659,10 @@ export default function CountingFlipbookGameScreen() {
                     popIndex={idx}
                     popSignal={popSignal}
                     isDraggingNumber={isDraggingNumber}
-                    isDark={isDark}
                     isTablet={isTablet}
                     isNotebookOpen={isNotebookOpen}
                     dragBoundsRef={dragBoundsRef}
+                    popDistance={popDistance}
                     onDragStateChange={setIsAnyDragging}
                   />
                 ))}
@@ -690,7 +675,7 @@ export default function CountingFlipbookGameScreen() {
                     styles.bookStage,
                     {
                       width: screenWidth - 32,
-                      height: pageHeight + (isTablet ? 44 : 28),
+                      height: pageHeight + 8,
                     },
                   ]}
                 >
@@ -711,8 +696,35 @@ export default function CountingFlipbookGameScreen() {
                       frontFace={
                         <View style={[styles.cover, styles.frontCover]}>
                           <ThemedText style={styles.coverTitle}>
-                            CAHIER 1-10
+                            CAHIER DE DEVOIR{'\n'}
+                            DE AYLA
                           </ThemedText>
+                          {/* Avatar 1 */}
+                          <View
+                            style={{ alignItems: "center", justifyContent: "center" }}
+
+                          >
+                            <View style={{
+                              backgroundColor: "#FFDFB9",
+                              borderColor: 'white',
+                              borderRadius: 9999,
+                              shadowColor: "#000",
+                              shadowOffset: { width: 0, height: 2 },
+                              shadowOpacity: 0.25,
+                              shadowRadius: 3.84,
+                              elevation: 5,
+                              alignItems: "center",
+                              justifyContent: "center",
+                              borderWidth: 20
+                            }}>
+                              <SvgAsset
+                                name="PrincessProfileAvatarSvg"
+                                width={100}
+                                height={100}
+                                style={{ aspectRatio: 1 / 1 }}
+                              />
+                            </View>
+                          </View>
                         </View>
                       }
                       backFace={
@@ -734,10 +746,10 @@ export default function CountingFlipbookGameScreen() {
                       frontFace={
                         <NotebookPaper metrics={metrics}>
                           <NumberDropSlots
-                            metrics={metrics}
                             placedNumbers={placedNumbers}
                             currentExpectedNumber={currentExpectedNumber}
                             onDrop={handleDrop}
+                            onSpeakCurrentNumber={replayNumber}
                             isTablet={isTablet}
                           />
                         </NotebookPaper>
@@ -828,17 +840,18 @@ const styles = StyleSheet.create({
   gameBody: {
     flex: 1,
     borderRadius: 24,
-    paddingVertical: 12,
+    paddingVertical: 6,
     paddingHorizontal: 10,
-    justifyContent: "space-between",
+    justifyContent: "flex-start",
     alignItems: "center",
-    marginVertical: 8,
+    marginVertical: 4,
   },
   dragBounds: {
     flex: 1,
     width: "100%",
-    justifyContent: "space-between",
+    justifyContent: "flex-start",
     alignItems: "center",
+    gap: 4,
   },
   popTray: {
     flexDirection: "row",
@@ -865,13 +878,18 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: "800",
     lineHeight: 34,
+    textAlign: "center",
   },
   numberGlyphTablet: {
     fontSize: 36,
     lineHeight: 42,
   },
+  numberGlyphColor: {
+    color: NUMBER_COLOR,
+  },
   bookStage: {
-    justifyContent: "center",
+    alignSelf: "center",
+    justifyContent: "flex-start",
     alignItems: "center",
   },
   bookSpineAnchor: {
@@ -918,6 +936,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "700",
     letterSpacing: 1.5,
+    textAlign: 'center'
   },
   insideCover: {
     backgroundColor: "#F4EFE6",
@@ -984,6 +1003,7 @@ const styles = StyleSheet.create({
   },
   numberDropSlot: {
     width: "100%",
+    padding: 0,
     justifyContent: "center",
     alignItems: "center",
     borderRadius: 5,
@@ -997,24 +1017,6 @@ const styles = StyleSheet.create({
   },
   numberDropSlotPlaced: {
     backgroundColor: "rgba(22, 163, 74, 0.06)",
-  },
-  slotNumber: {
-    minWidth: 26,
-    textAlign: "center",
-    fontSize: 17,
-    lineHeight: 21,
-    fontWeight: "800",
-    color: "#94A3B8",
-  },
-  slotNumberTablet: {
-    fontSize: 22,
-    lineHeight: 26,
-  },
-  slotNumberPlaced: {
-    color: "#16A34A",
-  },
-  slotNumberActive: {
-    color: "#2563EB",
   },
   placedRow: {
     flexDirection: "row",

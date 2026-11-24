@@ -1,268 +1,148 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Pressable, StyleSheet, View, useWindowDimensions, TouchableOpacity } from "react-native";
-import { IconVolume } from "@tabler/icons-react-native";
-import { SvgAsset } from '@/components/SvgAssets';
 import {
-  Gesture,
-  GestureDetector,
-  GestureHandlerRootView,
-} from "react-native-gesture-handler";
+  Pressable,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+  useWindowDimensions,
+} from "react-native";
+import { IconCheck, IconPlayerPause, IconPlayerPlay } from "@tabler/icons-react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import Animated, {
-  Extrapolation,
-  interpolate,
-  runOnJS,
   useAnimatedRef,
-  useAnimatedStyle,
   useSharedValue,
-  withDelay,
-  withSpring,
-  withTiming,
   type SharedValue,
 } from "react-native-reanimated";
 import { DropProvider, Draggable, Droppable } from "react-native-reanimated-dnd";
 
-import { Button } from "@/components/Button";
 import { GameHeader } from "@/components/Header";
 import { ThemedSafeAreaView } from "@/components/ThemedSafeAreaView";
 import { ThemedText } from "@/components/ThemedText";
-import { ThemedView } from "@/components/ThemedView";
+//import { ThemedView } from "@/components/ThemedView";
 import { useAyla } from "@/context/AylaContext";
 import { TimerConverter, useSpeech } from "@/utils/lessons";
 
 const MIN_NUMBER = 1;
-const MAX_NUMBER = 10;
+const MAX_NUMBER = 9; // Matches 1–9 in the reference UI (change to 10 if needed)
 const TOTAL_NUMBERS = MAX_NUMBER - MIN_NUMBER + 1;
-const NUMBER_COLOR = "#4caf50";
 
-const FLIP_SPRING = {
-  damping: 18,
-  stiffness: 120,
-  mass: 0.8,
+/**
+ * Editable relative coordinates (0 to 1) inside the drag zone.
+ * You can freely adjust `x` and `y` for each number to reposition it anywhere in the drag area.
+ */
+const DRAG_ZONE_POSITIONS: Record<number, { x: number; y: number }> = {
+  1: { x: 0.49, y: 0.08 },
+  2: { x: 0.48, y: 0.28 },
+  3: { x: 0.52, y: 0.28 },
+  4: { x: 0.42, y: 0.34 },
+  5: { x: 0.48, y: 0.54 },
+  6: { x: 0.52, y: 0.54 },
+  7: { x: 0.39, y: 0.60 },
+  8: { x: 0.61, y: 0.60 },
+  9: { x: 0.51, y: 0.80 },
 };
 
-interface BookMetrics {
-  pageWidth: number;
-  pageHeight: number;
-  lineHeight: number;
-  headerHeight: number;
-  marginLeftPrimary: number;
-  marginLeftSecondary: number;
+const NOTEBOOK_LINE_COUNT = 10;
+
+interface NotebookMetrics {
+  sheetWidth: number;
+  lineSpacing: number;
+  marginLeft: number;
   isTablet: boolean;
 }
 
-function useBookMetrics(): BookMetrics {
+function useNotebookMetrics(): NotebookMetrics {
   const { width, height } = useWindowDimensions();
 
   return useMemo(() => {
     const minSide = Math.min(width, height);
     const isTablet = minSide >= 600;
 
-    const maxSpreadWidth = width * (isTablet ? 0.86 : 0.94);
-    const targetPageWidth = isTablet
-      ? Math.min(width * 0.4, 360)
-      : Math.min(width * 0.48, 205);
-
-    const pageWidth = Math.min(targetPageWidth, maxSpreadWidth / 2);
-    const pageHeight = pageWidth * 1.32;
-
-    const lineHeight = isTablet ? 22 : 17;
-    const headerHeight = isTablet ? 34 : 24;
-    const marginLeftPrimary = isTablet ? 32 : 20;
-    const marginLeftSecondary = marginLeftPrimary + (isTablet ? 5 : 4);
+    const sheetWidth = isTablet ? Math.min(width * 0.6, 520) : width * 0.88;
+    const lineSpacing = isTablet ? 44 : 20;
+    const marginLeft = Math.round(sheetWidth * 0.1);
 
     return {
-      pageWidth,
-      pageHeight,
-      lineHeight,
-      headerHeight,
-      marginLeftPrimary,
-      marginLeftSecondary,
+      sheetWidth,
+      lineSpacing,
+      marginLeft,
       isTablet,
     };
   }, [width, height]);
 }
 
-function shuffle<T>(items: T[]): T[] {
-  const copy = [...items];
-  for (let index = copy.length - 1; index > 0; index -= 1) {
-    const swapIndex = Math.floor(Math.random() * (index + 1));
-    [copy[index], copy[swapIndex]] = [copy[swapIndex], copy[index]];
-  }
-  return copy;
-}
-
-function createFullPool(): number[] {
-  return shuffle(
-    Array.from({ length: TOTAL_NUMBERS }, (_, index) => MIN_NUMBER + index)
-  );
+function formatCentisecondTimer(seconds: number): string {
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}0`;
 }
 
 /**
- * Lined Notebook Page:
- * Horizontal blue lines (#88B8CC) + double vertical margin lines (#F395BC)
+ * Minimalist ruled notebook built strictly with 1px-thick Views
+ * so droppable slots sit cleanly between the ruled horizontal lines.
  */
-const NotebookPaper = ({
+const RuledNotebookSheet = ({
   metrics,
-  children,
+  placedNumbers,
+  currentExpectedNumber,
+  onDrop,
+  onSpeakCurrentNumber,
 }: {
-  metrics: BookMetrics;
-  children?: React.ReactNode;
+  metrics: NotebookMetrics;
+  placedNumbers: number[];
+  currentExpectedNumber: number;
+  onDrop: (draggedValue: number, targetSlot: number) => void;
+  onSpeakCurrentNumber: () => void;
 }) => {
-  const {
-    pageHeight,
-    lineHeight,
-    headerHeight,
-    marginLeftPrimary,
-    marginLeftSecondary,
-    isTablet,
-  } = metrics;
-
-  const usableHeight = Math.max(0, pageHeight - headerHeight - 8);
-  const lineCount = Math.floor(usableHeight / lineHeight);
+  const { sheetWidth, lineSpacing, marginLeft, isTablet } = metrics;
+  const totalHeight = NOTEBOOK_LINE_COUNT * lineSpacing;
+  // Each slot occupies one inter-line gap instead of a ruled line.
+  const slotHeight = lineSpacing;
 
   return (
-    <View style={styles.paperBase}>
+    <View
+      style={[
+        styles.notebookSheet,
+        { width: sheetWidth, height: totalHeight },
+      ]}
+    >
+      {/* Vertical pink margin line (width = 1) */}
       <View
+        pointerEvents="none"
         style={[
           styles.verticalMarginLine,
-          { left: marginLeftPrimary, width: isTablet ? 1.5 : 1 },
+          {
+            left: marginLeft,
+            height: totalHeight + 22,
+            top: -22,
+          },
         ]}
       />
 
-      <View style={{ height: headerHeight }} />
-
-      <View style={styles.linesContainer}>
-        {Array.from({ length: lineCount }).map((_, idx) => (
+      {/* Horizontal blue ruled lines (height = 1) */}
+      <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+        {Array.from({ length: NOTEBOOK_LINE_COUNT }).map((_, index) => (
           <View
-            key={idx}
+            key={`rule-${index}`}
             style={[
-              styles.horizontalLine,
-              {
-                height: lineHeight,
-                borderBottomWidth: isTablet ? 1.25 : 1,
-              },
+              styles.horizontalRuleLine,
+              { top: (index + 1) * lineSpacing },
             ]}
           />
         ))}
       </View>
 
+      {/* Droppable slots aligned right between the horizontal notebook lines */}
       <View
         style={[
-          styles.paperContent,
+          styles.slotsOverlay,
           {
-            paddingTop: headerHeight + 2,
-            paddingLeft: marginLeftSecondary + (isTablet ? 12 : 7),
-            paddingRight: isTablet ? 14 : 8,
+            paddingTop: lineSpacing,
+            paddingLeft: marginLeft + (isTablet ? 24 : 16),
+            paddingRight: isTablet ? 24 : 16,
           },
         ]}
       >
-        {children}
-      </View>
-    </View>
-  );
-};
-
-interface LeafProps {
-  index: number;
-  totalLeaves: number;
-  pageWidth: number;
-  pageHeight: number;
-  progress: SharedValue<number>;
-  frontFace: React.ReactNode;
-  backFace: React.ReactNode;
-}
-
-const BookLeaf = ({
-  index,
-  totalLeaves,
-  pageWidth,
-  pageHeight,
-  progress,
-  frontFace,
-  backFace,
-}: LeafProps) => {
-  const containerAnimatedStyle = useAnimatedStyle(() => {
-    const leafProgress = interpolate(
-      progress.value,
-      [index, index + 1],
-      [0, 1],
-      Extrapolation.CLAMP
-    );
-
-    const rotateY = interpolate(leafProgress, [0, 1], [0, -180]);
-    const zIndex = leafProgress < 0.5 ? totalLeaves - index : index + 1;
-
-    return {
-      zIndex,
-      transform: [
-        { perspective: 1400 },
-        { translateX: -pageWidth / 2 },
-        { rotateY: `${rotateY}deg` },
-        { translateX: pageWidth / 2 },
-      ],
-    };
-  }, [index, totalLeaves, pageWidth]);
-
-  const frontOpacityStyle = useAnimatedStyle(() => {
-    const leafProgress = interpolate(
-      progress.value,
-      [index, index + 1],
-      [0, 1],
-      Extrapolation.CLAMP
-    );
-    return { opacity: leafProgress < 0.5 ? 1 : 0 };
-  }, [index]);
-
-  const backOpacityStyle = useAnimatedStyle(() => {
-    const leafProgress = interpolate(
-      progress.value,
-      [index, index + 1],
-      [0, 1],
-      Extrapolation.CLAMP
-    );
-    return { opacity: leafProgress >= 0.5 ? 1 : 0 };
-  }, [index]);
-
-  return (
-    <Animated.View
-      style={[
-        styles.leafContainer,
-        { width: pageWidth, height: pageHeight },
-        containerAnimatedStyle,
-      ]}
-    >
-      <Animated.View style={[styles.face, frontOpacityStyle]}>
-        {frontFace}
-      </Animated.View>
-      <Animated.View style={[styles.face, styles.backFace, backOpacityStyle]}>
-        {backFace}
-      </Animated.View>
-    </Animated.View>
-  );
-};
-
-/**
- * Each number has a fixed target in the notebook grid, so drops are only
- * accepted in a numbered cell.
- */
-const NumberDropSlots = ({
-  placedNumbers,
-  currentExpectedNumber,
-  onDrop,
-  onSpeakCurrentNumber,
-  isTablet,
-}: {
-  placedNumbers: number[];
-  currentExpectedNumber: number;
-  onDrop: (draggedValue: number, targetSlot: number) => void;
-  onSpeakCurrentNumber: () => void;
-  isTablet: boolean;
-}) => {
-  const slotSize = isTablet ? 54 : 42;
-
-  return (
-    <View style={styles.slotsContainer}>
-      <View style={styles.numberSlotsList}>
         {Array.from({ length: TOTAL_NUMBERS }, (_, index) => {
           const slotNumber = MIN_NUMBER + index;
           const isPlaced = placedNumbers.includes(slotNumber);
@@ -275,29 +155,22 @@ const NumberDropSlots = ({
               capacity={1}
               dropDisabled={isPlaced}
               dropAlignment="center"
-              style={[styles.numberDropSlotWrapper, { height: slotSize }]}
-              activeStyle={{
-                backgroundColor: "rgba(59, 130, 246, 0.16)",
-                borderColor: "#3B82F6",
-                borderWidth: 1,
-                borderStyle: "dashed",
-              }}
+              style={[styles.numberDropSlotWrapper, { height: slotHeight }]}
+              activeStyle={styles.numberDropSlotHover}
               onDrop={(dragged: number) => onDrop(Number(dragged), slotNumber)}
             >
               <Pressable
                 onPress={onSpeakCurrentNumber}
                 style={[
                   styles.numberDropSlot,
-                  { height: slotSize },
+                  { height: slotHeight - 2 },
                   isCurrent && styles.numberDropSlotActive,
-                  isPlaced && styles.numberDropSlotPlaced,
                 ]}
               >
                 <ThemedText
                   style={[
                     styles.numberGlyph,
                     isTablet && styles.numberGlyphTablet,
-                    styles.numberGlyphColor,
                   ]}
                 >
                   {isPlaced ? slotNumber : ""}
@@ -312,64 +185,59 @@ const NumberDropSlots = ({
 };
 
 /**
- * Number token that pops up out of the notebook page into the top tray
+ * Draggable number positioned using the coordinates in DRAG_ZONE_POSITIONS
  */
-const PoppingNumberToken = ({
+const ScatteredNumberToken = ({
   value,
-  popIndex,
-  popSignal,
-  isDraggingNumber,
+  position,
+  zoneSize,
   isTablet,
-  isNotebookOpen,
+  isDraggingNumber,
   dragBoundsRef,
-  popDistance,
   onDragStateChange,
 }: {
   value: number;
-  popIndex: number;
-  popSignal: SharedValue<number>;
-  isDraggingNumber: SharedValue<boolean>;
+  position: { x: number; y: number };
+  zoneSize: { width: number; height: number };
   isTablet: boolean;
-  isNotebookOpen: boolean;
+  isDraggingNumber: SharedValue<boolean>;
   dragBoundsRef: React.RefObject<View | Animated.View | null>;
-  popDistance: number;
   onDragStateChange: (dragging: boolean) => void;
 }) => {
-  const popAnimStyle = useAnimatedStyle(() => {
-    const active = popSignal.value === 1;
-    return {
-      opacity: active
-        ? withDelay(popIndex * 45, withTiming(1, { duration: 220 }))
-        : withTiming(0, { duration: 0 }),
-      transform: [
-        {
-          translateY: active
-            ? withDelay(
-              popIndex * 45,
-              withSpring(0, { damping: 14, stiffness: 160 })
-            )
-            : withTiming(popDistance, { duration: 0 }),
-        },
-        {
-          scale: active
-            ? withDelay(
-              popIndex * 45,
-              withSpring(1, { damping: 13, stiffness: 180 })
-            )
-            : withTiming(0.5, { duration: 150 }),
-        },
-      ],
-    };
-  }, [popDistance, popIndex]);
+  const tokenBoxSize = isTablet ? 44 : 36;
+
+  if (zoneSize.width === 0 || zoneSize.height === 0) return null;
+
+  const left = Math.max(
+    0,
+    Math.min(
+      zoneSize.width - tokenBoxSize,
+      position.x * zoneSize.width - tokenBoxSize / 2
+    )
+  );
+  const top = Math.max(
+    0,
+    Math.min(
+      zoneSize.height - tokenBoxSize,
+      position.y * zoneSize.height - tokenBoxSize / 2
+    )
+  );
 
   return (
-    <Animated.View style={popAnimStyle}>
+    <View
+      style={[
+        styles.scatteredTokenAnchor,
+        {
+          left,
+          top,
+          width: tokenBoxSize,
+          height: tokenBoxSize,
+        },
+      ]}
+    >
       <Draggable
         data={value}
-        dragBoundsRef={
-          dragBoundsRef as React.RefObject<View | Animated.View>
-        }
-        dragDisabled={!isNotebookOpen}
+        dragBoundsRef={dragBoundsRef as React.RefObject<View | Animated.View>}
         collisionAlgorithm="center"
         onDragStart={() => {
           isDraggingNumber.value = true;
@@ -380,90 +248,62 @@ const PoppingNumberToken = ({
           onDragStateChange(false);
         }}
       >
-        <View
-          style={[
-            styles.plainNumberItem,
-            isTablet && styles.plainNumberItemTablet,
-          ]}
-        >
+        <View style={styles.plainNumberItem}>
           <ThemedText
-            style={[
-              styles.numberGlyph,
-              isTablet && styles.numberGlyphTablet,
-              styles.numberGlyphColor,
-            ]}
+            style={[styles.numberGlyph, isTablet && styles.numberGlyphTablet]}
           >
             {value}
           </ThemedText>
         </View>
       </Draggable>
-    </Animated.View>
+    </View>
   );
 };
 
-export default function CountingFlipbookGameScreen() {
+export default function CountingNotebookGameScreen() {
   const { nextStage, setGameScore } = useAyla();
   const { speak } = useSpeech();
-  const { width: screenWidth } = useWindowDimensions();
-  const metrics = useBookMetrics();
-  const { pageWidth, pageHeight, isTablet } = metrics;
+  const metrics = useNotebookMetrics();
+  const { isTablet } = metrics;
 
-  const TOTAL_LEAVES = 3; // 0: Front Cover, 1: Notebook Sheet, 2: Back Cover
-
-  const [dragPool, setDragPool] = useState<number[]>(() => createFullPool());
+  const [dragPool, setDragPool] = useState<number[]>(() =>
+    Array.from({ length: TOTAL_NUMBERS }, (_, i) => MIN_NUMBER + i)
+  );
   const [placedNumbers, setPlacedNumbers] = useState<number[]>([]);
   const [dragResetVersions, setDragResetVersions] = useState<
     Record<number, number>
   >({});
   const [mistakeCount, setMistakeCount] = useState<number>(0);
-  const [statusText, setStatusText] = useState<string>(
-    "Ouvre le cahier pour commencer"
-  );
   const [time, setTime] = useState<number>(0);
-  const [isPaused, setIsPaused] = useState(false);
+  const [isPaused, setIsPaused] = useState<boolean>(false);
   const [hasFinished, setHasFinished] = useState<boolean>(false);
-  const [isAnyDragging, setIsAnyDragging] = useState<boolean>(false);
-  const [isNotebookOpen, setIsNotebookOpen] = useState(false);
+  const [dragZoneSize, setDragZoneSize] = useState({ width: 0, height: 0 });
 
-  const flipProgress = useSharedValue(0);
-  const startFlipProgress = useSharedValue(0);
   const isDraggingNumber = useSharedValue(false);
-  const isPoppingShared = useSharedValue(false);
-  const popSignal = useSharedValue(0);
   const dragBoundsRef = useAnimatedRef<View>();
-  const popDistance = 52 + pageHeight / 2;
 
   const gameTitle = useMemo(() => "Compte et glisse le bon nombre", []);
   const currentExpectedNumber = MIN_NUMBER + placedNumbers.length;
 
-  const triggerPopOutFromBook = useCallback(() => {
-    isPoppingShared.value = true;
-    popSignal.value = 0;
-
-    requestAnimationFrame(() => {
-      popSignal.value = 1;
-    });
-
-    const lockTimer = setTimeout(() => {
-      isPoppingShared.value = false;
-    }, 650);
-
-    return () => clearTimeout(lockTimer);
-  }, [isPoppingShared, popSignal]);
-
-  const openNotebook = useCallback(() => {
-    setIsNotebookOpen(true);
-    setStatusText(`Écoute et glisse le nombre ${MIN_NUMBER}`);
-    triggerPopOutFromBook();
+  useEffect(() => {
     void speak(`${MIN_NUMBER}`, "fr-FR");
-  }, [speak, triggerPopOutFromBook]);
+  }, [speak]);
+
+  useEffect(() => {
+    if (isPaused || hasFinished) return;
+
+    const interval = setInterval(() => {
+      setTime((prev) => prev + 1);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [hasFinished, isPaused]);
 
   const finishGame = useCallback(
     (finalMistakes: number) => {
       if (hasFinished) return;
 
       setHasFinished(true);
-      setStatusText("Bravo ! Tu as terminé les 10 nombres.");
       void speak("Bravo ! Tu as terminé.", "fr-FR");
       setGameScore((prev) => [
         ...prev,
@@ -473,41 +313,10 @@ export default function CountingFlipbookGameScreen() {
           duration: TimerConverter(Math.max(1, time)),
         },
       ]);
+      nextStage();
     },
-    [gameTitle, hasFinished, setGameScore, speak, time]
+    [gameTitle, hasFinished, nextStage, setGameScore, speak, time]
   );
-
-  const resetGameSession = useCallback(() => {
-    setDragPool(createFullPool());
-    setPlacedNumbers([]);
-    setDragResetVersions({});
-    setMistakeCount(0);
-    setTime(0);
-    setIsPaused(false);
-    setHasFinished(false);
-    setIsAnyDragging(false);
-    setIsNotebookOpen(false);
-    isDraggingNumber.value = false;
-    isPoppingShared.value = false;
-    popSignal.value = 0;
-    flipProgress.value = withSpring(0, FLIP_SPRING);
-    setStatusText("Ouvre le cahier pour commencer");
-  }, [
-    flipProgress,
-    isDraggingNumber,
-    isPoppingShared,
-    popSignal,
-  ]);
-
-  useEffect(() => {
-    if (!isNotebookOpen || isPaused || hasFinished) return;
-
-    const interval = setInterval(() => {
-      setTime((prev) => prev + 1);
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [hasFinished, isNotebookOpen, isPaused]);
 
   const replayNumber = useCallback(() => {
     if (!isPaused && currentExpectedNumber <= MAX_NUMBER) {
@@ -523,21 +332,25 @@ export default function CountingFlipbookGameScreen() {
     setIsPaused((paused) => !paused);
   }, []);
 
+  const handleValidate = useCallback(() => {
+    if (placedNumbers.length >= TOTAL_NUMBERS) {
+      finishGame(mistakeCount);
+    } else {
+      replayNumber();
+    }
+  }, [finishGame, mistakeCount, placedNumbers.length, replayNumber]);
+
   const handleDrop = useCallback(
     (draggedValue: number, targetSlot: number) => {
       isDraggingNumber.value = false;
-      setIsAnyDragging(false);
 
       if (isPaused || hasFinished || currentExpectedNumber > MAX_NUMBER) return;
 
-      // A number is valid only when both the token and the destination row
-      // match the next expected value.
       const isCorrect =
         draggedValue === currentExpectedNumber &&
         targetSlot === currentExpectedNumber;
 
       if (isCorrect) {
-        setStatusText("Bravo !");
         void speak("Bravo", "fr-FR");
 
         const updatedPlaced = [...placedNumbers, draggedValue];
@@ -551,7 +364,6 @@ export default function CountingFlipbookGameScreen() {
 
         const nextNumber = currentExpectedNumber + 1;
         setTimeout(() => {
-          setStatusText(`Écoute et glisse le nombre ${nextNumber}`);
           if (nextNumber === 8) {
             void speak("huite", "fr-FR");
           } else {
@@ -559,7 +371,6 @@ export default function CountingFlipbookGameScreen() {
           }
         }, 800);
       } else {
-        setStatusText("Oups ! Ce n'est pas le bon ordre.");
         void speak("Faux", "fr-FR");
         setMistakeCount((prev) => prev + 1);
         setDragResetVersions((prev) => ({
@@ -580,53 +391,12 @@ export default function CountingFlipbookGameScreen() {
     ]
   );
 
-  // The book can be opened once; the page gesture is disabled afterward.
-  const flipPanGesture = Gesture.Pan()
-    .enabled(!isNotebookOpen && !isPaused && !hasFinished && !isAnyDragging)
-    .onBegin(() => {
-      if (isDraggingNumber.value || isPoppingShared.value) return;
-      startFlipProgress.value = flipProgress.value;
-    })
-    .onUpdate((event) => {
-      if (isDraggingNumber.value || isPoppingShared.value) return;
-      const delta = -event.translationX / (pageWidth * 1.25);
-      flipProgress.value = Math.max(
-        0,
-        Math.min(1, startFlipProgress.value + delta)
-      );
-    })
-    .onEnd((event) => {
-      if (isDraggingNumber.value || isPoppingShared.value) return;
-      const velocityBoost = -event.velocityX / 1200;
-      const targetPage = Math.round(
-        Math.max(0, Math.min(1, flipProgress.value + velocityBoost))
-      );
-      flipProgress.value = withSpring(targetPage, FLIP_SPRING, (finished) => {
-        if (finished && targetPage === 1) {
-          runOnJS(openNotebook)();
-        }
-      });
-    });
-
-  // Shifts book spine so closed cover is centered and open spread is centered
-  const bookSpineStyle = useAnimatedStyle(() => {
-    const translateX = interpolate(
-      flipProgress.value,
-      [0, 1, 2, 3],
-      [-pageWidth / 2, 0, 0, pageWidth / 2],
-      Extrapolation.CLAMP
-    );
-    return {
-      transform: [{ translateX }],
-    };
-  }, [pageWidth]);
-
   return (
     <GestureHandlerRootView style={styles.rootView}>
-      <ThemedSafeAreaView style={styles.safeArea}>
+      <ThemedSafeAreaView darkColor="#1e1d1d" style={styles.safeArea}>
         <GameHeader
-          trophiesCount={12}
-          coinsCount={45}
+          trophiesCount={5}
+          coinsCount={4}
           settingsRoute="/games/ayla/settings/SettingsScreen"
           currentProfile={{
             name: "Ayla",
@@ -641,238 +411,109 @@ export default function CountingFlipbookGameScreen() {
         />
 
         <DropProvider>
-          <ThemedView
-            style={styles.gameBody}
-            pointerEvents={isPaused ? "none" : "auto"}
-          >
+          <View style={styles.gameBody}>
             <View
               ref={dragBoundsRef}
               collapsable={false}
               style={styles.dragBounds}
             >
-              {/* Top Pop-Out Tray (no rounded cards) */}
-              <View style={styles.popTray}>
-                {dragPool.map((value, idx) => (
-                  <PoppingNumberToken
-                    key={`pop-num-${value}-${dragResetVersions[value] ?? 0}`}
+              {/* Upper Drag Zone with constant-positioned numbers */}
+              <View
+                pointerEvents={isPaused ? "none" : "auto"}
+                style={styles.dragZone}
+                onLayout={(e) => {
+                  const { width, height } = e.nativeEvent.layout;
+                  setDragZoneSize({ width, height });
+                }}
+              >
+                {dragPool.map((value) => (
+                  <ScatteredNumberToken
+                    key={`drag-num-${value}-${dragResetVersions[value] ?? 0}`}
                     value={value}
-                    popIndex={idx}
-                    popSignal={popSignal}
-                    isDraggingNumber={isDraggingNumber}
+                    position={
+                      DRAG_ZONE_POSITIONS[value] ?? { x: 0.5, y: 0.5 }
+                    }
+                    zoneSize={dragZoneSize}
                     isTablet={isTablet}
-                    isNotebookOpen={isNotebookOpen}
+                    isDraggingNumber={isDraggingNumber}
                     dragBoundsRef={dragBoundsRef}
-                    popDistance={popDistance}
-                    onDragStateChange={setIsAnyDragging}
+                    onDragStateChange={() => { }}
                   />
                 ))}
               </View>
 
-              {/* Book Drop Target */}
-              <GestureDetector gesture={flipPanGesture}>
-                <View
-                  style={[
-                    styles.bookStage,
-                    {
-                      width: screenWidth - 32,
-                      height: pageHeight + 8,
-                    },
-                  ]}
-                >
-                  <Animated.View
-                    style={[
-                      styles.bookSpineAnchor,
-                      { height: pageHeight },
-                      bookSpineStyle,
-                    ]}
-                  >
-                    {/* LEAF 0: FRONT COVER */}
-                    <BookLeaf
-                      index={0}
-                      totalLeaves={TOTAL_LEAVES}
-                      pageWidth={pageWidth}
-                      pageHeight={pageHeight}
-                      progress={flipProgress}
-                      frontFace={
-                        <View style={[styles.cover, styles.frontCover]}>
-                          <ThemedText style={styles.coverTitle}>
-                            CAHIER DE DEVOIR{'\n'}
-                            DE AYLA
-                          </ThemedText>
-                          {/* Avatar 1 */}
-                          <View
-                            style={{ alignItems: "center", justifyContent: "center" }}
-
-                          >
-                            <View style={{
-                              backgroundColor: "#FFDFB9",
-                              borderColor: 'white',
-                              borderRadius: 9999,
-                              shadowColor: "#000",
-                              shadowOffset: { width: 0, height: 2 },
-                              shadowOpacity: 0.25,
-                              shadowRadius: 3.84,
-                              elevation: 5,
-                              alignItems: "center",
-                              justifyContent: "center",
-                              borderWidth: 20
-                            }}>
-                              <SvgAsset
-                                name="PrincessProfileAvatarSvg"
-                                width={100}
-                                height={100}
-                                style={{ aspectRatio: 1 / 1 }}
-                              />
-                            </View>
-                          </View>
-                        </View>
-                      }
-                      backFace={
-                        <View style={[styles.cover, styles.insideCover]}>
-                          <ThemedText style={styles.insideCoverLabel}>
-                            Dépose ici
-                          </ThemedText>
-                        </View>
-                      }
-                    />
-
-                    {/* LEAF 1: RULED NOTEBOOK PAGE (#88B8CC & #F395BC) */}
-                    <BookLeaf
-                      index={1}
-                      totalLeaves={TOTAL_LEAVES}
-                      pageWidth={pageWidth}
-                      pageHeight={pageHeight}
-                      progress={flipProgress}
-                      frontFace={
-                        <NotebookPaper metrics={metrics}>
-                          <NumberDropSlots
-                            placedNumbers={placedNumbers}
-                            currentExpectedNumber={currentExpectedNumber}
-                            onDrop={handleDrop}
-                            onSpeakCurrentNumber={replayNumber}
-                            isTablet={isTablet}
-                          />
-                        </NotebookPaper>
-                      }
-                      backFace={
-                        <NotebookPaper metrics={metrics}>
-                          <ThemedText
-                            style={[
-                              styles.dropHintText,
-                              isTablet && styles.dropHintTextTablet,
-                            ]}
-                          >
-                            Verso
-                          </ThemedText>
-                        </NotebookPaper>
-                      }
-                    />
-
-                    {/* LEAF 2: BACK COVER */}
-                    <BookLeaf
-                      index={2}
-                      totalLeaves={TOTAL_LEAVES}
-                      pageWidth={pageWidth}
-                      pageHeight={pageHeight}
-                      progress={flipProgress}
-                      frontFace={
-                        <View style={[styles.cover, styles.insideCover]}>
-                          <ThemedText style={styles.insideCoverLabel}>
-                            Fin
-                          </ThemedText>
-                        </View>
-                      }
-                      backFace={
-                        <View style={[styles.cover, styles.backCover]}>
-                          <ThemedText style={styles.backCoverText}>
-                            FIN
-                          </ThemedText>
-                        </View>
-                      }
-                    />
-                  </Animated.View>
-                </View>
-              </GestureDetector>
+              {/* Lower Notebook Drop Zone */}
+              <View
+                pointerEvents={isPaused ? "none" : "auto"}
+                style={styles.notebookStage}
+              >
+                <RuledNotebookSheet
+                  metrics={metrics}
+                  placedNumbers={placedNumbers}
+                  currentExpectedNumber={currentExpectedNumber}
+                  onDrop={handleDrop}
+                  onSpeakCurrentNumber={replayNumber}
+                />
+              </View>
             </View>
-          </ThemedView>
+          </View>
         </DropProvider>
-
-        {hasFinished && (
-          <Button onPress={nextStage} style={styles.continueButton}>
-            <Button.Title>Continuer</Button.Title>
-          </Button>
-        )}
-
-        {/* <Button onPress={resetGameSession} style={styles.resetButton}>
-          <Button.Icon icon={IconRefresh} />
-          <Button.Title>Recommencer</Button.Title>
-        </Button> */}
       </ThemedSafeAreaView>
     </GestureHandlerRootView>
   );
 }
 
 const styles = StyleSheet.create({
-  rootView: { flex: 1 },
+  rootView: {
+    flex: 1,
+  },
   safeArea: {
     flex: 1,
     paddingHorizontal: 16,
-    paddingTop: 10,
-    justifyContent: "space-between",
+    paddingTop: 8,
   },
-  controlPanel: {
-    borderRadius: 18,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    alignItems: "center",
-    gap: 8,
-  },
-  statusText: {
-    fontSize: 15,
-    fontWeight: "700",
-    textAlign: "center",
-  },
-  replayButton: {
+  controlsRow: {
     flexDirection: "row",
-    gap: 8,
-    marginTop: 0,
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+  },
+  pauseSwitchPill: {
+    width: 78,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "#28C76F",
+    paddingHorizontal: 4,
+    justifyContent: "center",
+    alignItems: "flex-end",
   },
   gameBody: {
     flex: 1,
-    borderRadius: 24,
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    justifyContent: "flex-start",
-    alignItems: "center",
-    marginVertical: 4,
   },
   dragBounds: {
     flex: 1,
     width: "100%",
-    justifyContent: "flex-start",
-    alignItems: "center",
-    gap: 4,
+    justifyContent: "space-between",
+    paddingBottom: 24,
   },
-  popTray: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: 14,
-    minHeight: 76,
-    paddingHorizontal: 8,
+  dragZone: {
+    width: "100%",
+    height: "36%",
+    position: "relative",
     zIndex: 10,
     elevation: 10,
   },
-  plainNumberItem: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+  scatteredTokenAnchor: {
+    position: "absolute",
     justifyContent: "center",
     alignItems: "center",
   },
-  plainNumberItemTablet: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+  plainNumberItem: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    justifyContent: "center",
+    alignItems: "center",
   },
   numberGlyph: {
     fontSize: 28,
@@ -881,165 +522,55 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   numberGlyphTablet: {
-    fontSize: 36,
-    lineHeight: 42,
+    fontSize: 32,
+    lineHeight: 38,
   },
-  numberGlyphColor: {
-    color: NUMBER_COLOR,
-  },
-  bookStage: {
-    alignSelf: "center",
-    justifyContent: "flex-start",
-    alignItems: "center",
-  },
-  bookSpineAnchor: {
-    width: 0,
-    justifyContent: "center",
-    alignItems: "flex-start",
-  },
-  leafContainer: {
-    position: "absolute",
-    left: 0,
-  },
-  face: {
-    ...StyleSheet.absoluteFillObject,
-    borderTopRightRadius: 8,
-    borderBottomRightRadius: 8,
-    overflow: "hidden",
-    backgroundColor: "#FFFDF9",
-    elevation: 4,
-    shadowColor: "#000",
-    shadowOffset: { width: 2, height: 3 },
-    shadowOpacity: 0.14,
-    shadowRadius: 5,
-  },
-  backFace: {
-    transform: [{ scaleX: -1 }],
-    borderTopRightRadius: 0,
-    borderBottomRightRadius: 0,
-    borderTopLeftRadius: 8,
-    borderBottomLeftRadius: 8,
-  },
-  cover: {
+  notebookStage: {
     flex: 1,
-    padding: 12,
     justifyContent: "center",
     alignItems: "center",
   },
-  frontCover: {
-    backgroundColor: "#4caf50",
-    borderLeftWidth: 7,
-    borderLeftColor: "#4aa74e",
-  },
-  coverTitle: {
-    color: "#F5E6C4",
-    fontSize: 13,
-    fontWeight: "700",
-    letterSpacing: 1.5,
-    textAlign: 'center'
-  },
-  insideCover: {
-    backgroundColor: "#F4EFE6",
-  },
-  insideCoverLabel: {
-    fontSize: 12,
-    fontStyle: "italic",
-    color: "#7A7267",
-  },
-  backCover: {
-    backgroundColor: "#2B3A4A",
-    borderRightWidth: 7,
-    borderRightColor: "#1E2936",
-  },
-  backCoverText: {
-    color: "#4caf50",
-    fontSize: 11,
-    letterSpacing: 1.5,
-  },
-  paperBase: {
-    flex: 1,
-    backgroundColor: "#FFFDF8",
+  notebookSheet: {
     position: "relative",
   },
   verticalMarginLine: {
     position: "absolute",
-    top: 0,
-    bottom: 0,
+    width: 1,
     backgroundColor: "#F395BC",
     zIndex: 2,
   },
-  linesContainer: {
-    flex: 1,
-    paddingHorizontal: 6,
+  horizontalRuleLine: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    height: 1,
+    backgroundColor: "#88B8CC",
   },
-  horizontalLine: {
-    borderBottomColor: "#88B8CC",
-  },
-  paperContent: {
+  slotsOverlay: {
     ...StyleSheet.absoluteFillObject,
-  },
-  dropHintText: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: "#4caf50",
-    marginBottom: 6,
-  },
-  dropHintTextTablet: {
-    fontSize: 16,
-  },
-  slotsContainer: {
-    flex: 1,
-    width: "100%",
-  },
-  numberSlotsList: {
-    flex: 1,
-    width: "100%",
     flexDirection: "row",
     flexWrap: "wrap",
     alignContent: "flex-start",
+    zIndex: 3,
   },
   numberDropSlotWrapper: {
     width: "33.333%",
-  },
-  numberDropSlot: {
-    width: "100%",
-    padding: 0,
     justifyContent: "center",
     alignItems: "center",
-    borderRadius: 5,
-    borderWidth: 1,
-    borderColor: "transparent",
+  },
+  numberDropSlot: {
+    width: "86%",
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 6,
   },
   numberDropSlotActive: {
-    backgroundColor: "rgba(59, 130, 246, 0.10)",
-    borderColor: "#60A5FA",
+    backgroundColor: "rgba(59, 130, 246, 0.06)",
+  },
+  numberDropSlotHover: {
+    backgroundColor: "rgba(59, 130, 246, 0.16)",
+    borderColor: "#3B82F6",
+    borderWidth: 1,
     borderStyle: "dashed",
-  },
-  numberDropSlotPlaced: {
-    backgroundColor: "rgba(22, 163, 74, 0.06)",
-  },
-  placedRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-  },
-  placedGlyph: {
-    fontSize: 18,
-    fontWeight: "800",
-    color: "#16A34A",
-  },
-  placedGlyphTablet: {
-    fontSize: 24,
-  },
-  continueButton: {
-    flexDirection: "row",
-    alignSelf: "center",
-    marginBottom: 4,
-  },
-  resetButton: {
-    flexDirection: "row",
-    gap: 8,
-    alignSelf: "center",
-    marginBottom: 8,
   },
 });

@@ -7,6 +7,7 @@ import { Colors } from '@/constants/Colors';
 export type ThemedViewProps = ViewProps & {
   lightColor?: string;
   darkColor?: string;
+  pointerEvents?: ViewProps['pointerEvents'];
 };
 
 export function ThemedView({ style, lightColor, darkColor, ...otherProps }: ThemedViewProps) {

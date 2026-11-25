@@ -5,8 +5,9 @@ import {
   TouchableOpacity,
   View,
   useWindowDimensions,
+  Text
 } from "react-native";
-import { IconCheck, IconPlayerPause, IconPlayerPlay } from "@tabler/icons-react-native";
+import { IconCheck, IconArrowNarrowRight, IconPlayerPause, IconPlayerPlay } from "@tabler/icons-react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import Animated, {
   useAnimatedRef,
@@ -59,7 +60,7 @@ function useNotebookMetrics(): NotebookMetrics {
     const isTablet = minSide >= 600;
 
     const sheetWidth = isTablet ? Math.min(width * 0.6, 520) : width * 0.88;
-    const lineSpacing = isTablet ? 44 : 20;
+    const lineSpacing = isTablet ? 44 : 30;
     const marginLeft = Math.round(sheetWidth * 0.1);
 
     return {
@@ -304,6 +305,7 @@ export default function CountingNotebookGameScreen() {
       if (hasFinished) return;
 
       setHasFinished(true);
+
       void speak("Bravo ! Tu as terminé.", "fr-FR");
       setGameScore((prev) => [
         ...prev,
@@ -313,7 +315,6 @@ export default function CountingNotebookGameScreen() {
           duration: TimerConverter(Math.max(1, time)),
         },
       ]);
-      nextStage();
     },
     [gameTitle, hasFinished, nextStage, setGameScore, speak, time]
   );
@@ -328,9 +329,6 @@ export default function CountingNotebookGameScreen() {
     }
   }, [currentExpectedNumber, isPaused, speak]);
 
-  const togglePause = useCallback(() => {
-    setIsPaused((paused) => !paused);
-  }, []);
 
   const handleValidate = useCallback(() => {
     if (placedNumbers.length >= TOTAL_NUMBERS) {
@@ -458,6 +456,29 @@ export default function CountingNotebookGameScreen() {
             </View>
           </View>
         </DropProvider>
+        { hasFinished && (
+          <TouchableOpacity
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+              backgroundColor: '#16A34A',
+              paddingVertical: 13,
+              paddingHorizontal: 20,
+              borderRadius: 24,
+            }}
+            onPress={() => nextStage()}
+          >
+            <Text style={{
+              color: '#FFFFFF',
+              fontSize: 15,
+              fontWeight: '700'
+            }}>Continuer</Text>
+            <IconArrowNarrowRight size={21} color="#FFFFFF" />
+          </TouchableOpacity>
+        )
+        }
       </ThemedSafeAreaView>
     </GestureHandlerRootView>
   );

@@ -6,7 +6,6 @@ import { createClient, processLock } from '@supabase/supabase-js'
 
 if (!process.env.EXPO_PUBLIC_SUPABASE_URL || !process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY) {
    Alert.alert('Configuration Error', 'Missing Supabase URL or Anon Key environment variables')
-   throw new Error('Supabase URL and Anon Key are required.') // Stops execution here
 }
 
 export const supabase = createClient(process.env.EXPO_PUBLIC_SUPABASE_URL as string, process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY as string, {

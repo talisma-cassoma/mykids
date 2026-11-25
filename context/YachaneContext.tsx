@@ -95,6 +95,7 @@ export function YachaneProvider({ children }: Props) {
   const [progress, setProgress] = useState(0);
   const [gameScore, setGameScore] = useState<GameScore[]>([]);
   const [selectedGames, setSelectedGames] = useState<GameStage[]>([
+    { name: "Rapid-fire multiplication trainer", href: "/games/yachane/game7" },
     { name: "Mactching Words", href: "/games/yachane/game1" },
   ]);
 

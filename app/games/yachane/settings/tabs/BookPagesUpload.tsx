@@ -54,6 +54,10 @@ export function BookPagesUpload() {
     if (!cameraRef.current) return;
 
     try {
+      if (!supabase) {
+        throw new Error('Supabase is not configured. Check the Supabase environment variables.');
+      }
+
       setUploading(true);
 
       const pageNumVal = pageNumber || '1';
